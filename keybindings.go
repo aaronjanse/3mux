@@ -1,8 +1,10 @@
 package main
 
 import (
+	"fmt"
 	"log"
 
+	"github.com/aaronduino/i3-tmux/ansi"
 	term "github.com/nsf/termbox-go"
 )
 
@@ -68,8 +70,9 @@ func listenForKeypresses() {
 			code := encodeKeypress(ev)
 			// fmt.Println(code)
 			handleKeyCode(code)
+			root.simplify()
 			refreshEverything() // FIXME: inefficient; rendering should be updated by wm-ops
-			// fmt.Print(ansi.MoveTo(0, termH-1) + ansi.EraseToEOL() + root.serialize())
+			fmt.Print(ansi.MoveTo(0, termH-1) + ansi.EraseToEOL() + root.serialize())
 		case term.EventError:
 			panic(ev.Err)
 		}

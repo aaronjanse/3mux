@@ -46,6 +46,8 @@ func (m Markup) rewrite(r Rect, selected bool) Markup {
 
 	if !selected {
 		out = "\033[2m" + out + "\033[m"
+	} else {
+		out = "\033[4m" + out + "\033[m"
 	}
 
 	return out

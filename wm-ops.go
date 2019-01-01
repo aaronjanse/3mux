@@ -157,7 +157,6 @@ func (s *Split) simplify() {
 	for idx, n := range (*s).elements {
 		switch child := n.contents.(type) {
 		case *Split:
-			// child.simplify()
 			if child.verticallyStacked == s.verticallyStacked {
 				for j := range child.elements {
 					child.elements[j].size *= n.size
@@ -177,6 +176,13 @@ func (s *Split) simplify() {
 	}
 	s.elements = newElements
 	s.selectionIdx = selectionIdx
+
+	for _, n := range s.elements {
+		switch child := n.contents.(type) {
+		case *Split:
+			child.simplify()
+		}
+	}
 }
 
 func (s *Split) insertContainer(c Container, idx int) {
