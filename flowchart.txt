@@ -1,0 +1,6 @@
+                      
+HOST -> (keypress) -> ?{captured by config} ->
+                     |
+                                         v
+                       
+KEYPRESS -> <

@@ -1,0 +1,238 @@
+
+// KeySeq represents a single keypress of a series of keys pressed in compination
+type KeySeq struct {
+	mod   ModKey
+	shift bool
+	ch    rune
+	arrow ArrowKey
+}
+
+func toKeySeq(s string) KeySeq {
+	return KeySeq{} // FIXME
+}
+
+func (seq KeySeq) toString() string {
+	out := ""
+
+	switch seq.mod {
+	case modCtrl:
+		out += "Ctrl+"
+	case modAlt:
+		out += "Alt+"
+	}
+
+	if seq.shift {
+		out += "Shift+"
+	}
+
+	if seq.ch == 0 {
+		switch seq.arrow {
+		case keyArrowUp:
+			out += "Up"
+		case keyArrowDown:
+			out += "Down"
+		case keyArrowRight:
+			out += "Right"
+		case keyArrowLeft:
+			out += "Left"
+		}
+	} else {
+		out += string(seq.ch)
+	}
+
+	return out
+}
+
+
+func handleArrowCombo(mod Mod, direction ArrowKey) {
+	if mod != config.modKey {
+		return
+	}
+
+	// if mod == keyCtrl {
+	// 	fmt.Print("Ctrl+")
+	// } else if mod == keyAlt {
+	// 	fmt.Print("Alt+")
+	// }
+
+	if direction == keyArrowUp {
+		fmt.Println("Up")
+	} else if direction == keyArrowDown {
+		fmt.Println("Down")
+	} else if direction == keyArrowRight {
+		fmt.Println("Right")
+	} else if direction == keyArrowLeft {
+		fmt.Println("Left")
+	}
+}
+
+func handleKeyCombo(mod Mod, key rune) {
+	if mod != config.modKey {
+		return
+	}
+
+	// if mod == keyCtrl {
+	// 	fmt.Print("Ctrl+")
+	// } else if mod == keyAlt {
+	// 	fmt.Print("Alt+")
+	// }
+
+	fmt.Println(string(key))
+}
+
+
+func (s *VSplit) render(w, h int) [][]rune {
+	out := getFilledRuneSlice(w, h)
+
+	// // calculate the available vertical space taking the dividers into account
+	// numDividers := len(s.contents) - 1
+	// space := h - numDividers
+
+	dividers := getDividerPositions(h, s.elements)
+	for idx, pos := range dividers {
+		lastPos := -1
+		if idx > 0 {
+			lastPos = dividers[idx-1]
+		}
+
+		childHeight := pos - lastPos - 1
+		childNode := s.elements[idx]
+		childRunes := childNode.contents.render(w, childHeight)
+		for y, row := range childRunes {
+			for x, r := range row {
+				out[lastPos+1+y][x] = r
+			}
+		}
+
+		if idx == len(dividers)-1 {
+			break
+		}
+
+		for i := 0; i < w; i++ {
+			out[pos][i] = '─'
+		}
+	}
+	return out
+}
+
+func (s *HSplit) render(w, h int) [][]rune {
+	out := getFilledRuneSlice(w, h)
+
+	// // calculate the available vertical space taking the dividers into account
+	// numDividers := len(s.contents) - 1
+	// space := h - numDividers
+
+	// draw dividers
+	dividers := getDividerPositions(w, s.elements)
+	for idx, pos := range dividers {
+		lastPos := -1
+		if idx > 0 {
+			lastPos = dividers[idx-1]
+		}
+
+		childWidth := pos - lastPos - 1
+		childNode := s.elements[idx]
+		childRunes := childNode.contents.render(childWidth, h)
+		for y, row := range childRunes {
+			for x, r := range row {
+				out[y][lastPos+1+x] = r
+			}
+		}
+
+		if idx == len(dividers)-1 {
+			break
+		}
+		for i := 0; i < h; i++ {
+			out[i][pos] = '│'
+		}
+	}
+	return out
+}
+
+
+func (t *Term) render(x, y, w, h int, isSelected bool) string {
+	out := ""
+
+	// fillChar := string(strconv.Itoa(t.id)[0])
+	fillChar := " "
+	row := strings.Repeat(fillChar, w)
+	if isSelected {
+		row = "\033[36m" + row + "\033[0m"
+	}
+
+	for j := 0; j < h; j++ {
+		out += ansi.MoveTo(x, y+j) + row
+	}
+
+	return out
+}
+
+func (s *Split) render(x, y, w, h int, isSelected bool) string {
+	// out := getFilledRuneSlice(w, h)
+	out := ""
+
+	// // calculate the available vertical space taking the dividers into account
+	// numDividers := len(s.contents) - 1
+	// space := h - numDividers
+
+	var area int
+	if s.verticallyStacked {
+		area = h
+	} else {
+		area = w
+	}
+	dividers := getDividerPositions(area, s.elements)
+	for idx, pos := range dividers {
+		lastPos := -1
+		if idx > 0 {
+			lastPos = dividers[idx-1]
+		}
+
+		childArea := pos - lastPos - 1
+		if idx == len(dividers)-1 {
+			childArea = area - lastPos - 1
+		}
+
+		childNode := s.elements[idx]
+
+		isChildSelected := (idx == s.selectionIdx) && isSelected
+
+		var childContents string
+		if s.verticallyStacked {
+			childContents = childNode.contents.render(x, y+lastPos+1, w, childArea, isChildSelected)
+		} else {
+			childContents = childNode.contents.render(x+lastPos+1, y, childArea, h, isChildSelected)
+		}
+		out += childContents
+
+		if idx == len(dividers)-1 {
+			break
+		}
+
+		if s.verticallyStacked {
+			for i := 0; i < w; i++ {
+				out += ansi.MoveTo(x+i, y+pos) + "─"
+			}
+		} else {
+			for j := 0; j < h; j++ {
+				out += ansi.MoveTo(x+pos, y+j) + "│"
+			}
+		}
+	}
+	return out
+}
+
+func getFilledRuneSlice(w, h int) [][]rune {
+	out := make([][]rune, 0)
+
+	// fill out with whitespace
+	for i := 0; i < h; i++ {
+		row := make([]rune, 0)
+		for j := 0; j < w; j++ {
+			row = append(row, ' ')
+		}
+		out = append(out, row)
+	}
+
+	return out
+}
