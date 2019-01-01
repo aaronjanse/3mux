@@ -44,32 +44,6 @@ func (s *Split) serialize() string {
 	return out
 }
 
-// var root = Split{
-// 	verticallyStacked: false,
-// 	selectionIdx:      0,
-// 	elements: []Node{
-// 		Node{
-// 			size:     0.4,
-// 			contents: &Term{id: 0},
-// 		},
-// 		Node{
-// 			size: 0.6,
-// 			contents: &Split{
-// 				verticallyStacked: true,
-// 				selectionIdx:      1,
-// 				elements: []Node{
-// 					Node{
-// 						size:     0.7,
-// 						contents: &Term{id: 1},
-// 					},
-// 					Node{
-// 						size:     0.3,
-// 						contents: &Term{id: 2},
-// 					},
-// 				}},
-// 		},
-// 	}}
-
 var root = Split{
 	verticallyStacked: false,
 	selectionIdx:      0,
