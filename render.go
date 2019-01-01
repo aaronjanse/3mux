@@ -148,9 +148,12 @@ func (s *Split) refreshRenderRect() {
 
 func (t *Term) setRenderRect(x, y, w, h int) {
 	t.renderRect = Rect{x, y, w, h}
+	t.forceRedraw()
 
 	// TODO: tell subshell to resize
+}
 
+func (t *Term) forceRedraw() {
 	transformed := t.buffer.rewrite(t.renderRect, t.selected)
 	fmt.Print(transformed)
 }

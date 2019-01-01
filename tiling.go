@@ -76,6 +76,6 @@ var root = Split{
 	elements: []Node{
 		Node{
 			size:     1,
-			contents: newTerm(),
+			contents: newTerm(true),
 		},
 	}}

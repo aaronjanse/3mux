@@ -197,6 +197,12 @@ func (s *Split) insertContainer(c Container, idx int) {
 
 func moveSelection(d Direction) {
 	path := getSelection()
+
+	// deselect the old Term
+	oldTerm := path.getContainer().(*Term)
+	oldTerm.selected = false
+	oldTerm.forceRedraw()
+
 	parent, _ := path.getParent()
 
 	vert := parent.verticallyStacked
@@ -234,10 +240,21 @@ func moveSelection(d Direction) {
 			p = p[:len(p)-1]
 		}
 	}
+
+	// deselect the old Term
+	nowTerm := getSelection().getContainer().(*Term)
+	nowTerm.selected = true
+	nowTerm.forceRedraw()
 }
 
 func newWindow() {
 	path := getSelection()
+
+	// deselect the old Term
+	oldTerm := path.getContainer().(*Term)
+	oldTerm.selected = false
+	// the parent is going to be redrawn so we don't need to redraw the old term right now
+
 	parent, _ := path.getParent()
 
 	size := float32(1) / float32(len(parent.elements)+1)
@@ -251,7 +268,7 @@ func newWindow() {
 	// add new child
 	parent.elements = append(parent.elements, Node{
 		size:     size,
-		contents: newTerm(),
+		contents: newTerm(true),
 	})
 
 	// update selection to new child

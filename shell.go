@@ -21,11 +21,11 @@ type Term struct {
 	selected bool
 }
 
-func newTerm() *Term {
+func newTerm(selected bool) *Term {
 	return &Term{
 		id:       rand.Intn(10),
 		buffer:   "xxxxx",
-		selected: false,
+		selected: selected,
 	}
 }
 
@@ -40,5 +40,13 @@ func (t *Term) handleStdout(text Markup) {
 
 // rewrite CSI codes for an origin at the given coordinates
 func (m Markup) rewrite(r Rect, selected bool) Markup {
-	return Markup(ansi.MoveTo(r.x, r.y)) + m // FIXME: actually rewrite CSI codes
+	// FIXME: actually rewrite CSI codes
+
+	out := Markup(ansi.MoveTo(r.x, r.y)) + m
+
+	if !selected {
+		out = "\033[2m" + out + "\033[m"
+	}
+
+	return out
 }
