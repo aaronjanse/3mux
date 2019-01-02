@@ -10,6 +10,7 @@ type Node struct {
 type Container interface {
 	setRenderRect(x, y, w, h int)
 	serialize() string
+	kill()
 }
 
 // A Split splits a region of the screen into a areas reserved for multiple child nodes

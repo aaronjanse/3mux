@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/aaronduino/i3-tmux/ansi"
+	tsm "github.com/emersion/go-tsm"
 )
 
 func init() {
@@ -74,10 +75,6 @@ func refreshEverything() {
 	root.setRenderRect(0, 0, termW, termH)
 }
 
-// TODO
-func (t *Term) setSelected(s bool) {
-}
-
 // setRenderRect updates the Split's renderRect cache after which it calls refreshRenderRect
 // this for when a split is reshaped
 func (s *Split) setRenderRect(x, y, w, h int) {
@@ -127,10 +124,10 @@ func (s *Split) refreshRenderRect() {
 	w := s.renderRect.w
 	h := s.renderRect.h
 
-	// clear the relevant area of the screen
-	for i := 0; i < h; i++ {
-		fmt.Print(ansi.MoveTo(x, y+i) + strings.Repeat(" ", w))
-	}
+	// // clear the relevant area of the screen
+	// for i := 0; i < h; i++ {
+	// 	fmt.Print(ansi.MoveTo(x, y+i) + strings.Repeat(" ", w))
+	// }
 
 	s.redrawLines()
 
@@ -166,16 +163,52 @@ func (s *Split) refreshRenderRect() {
 	// fmt.Print(out) // draw dividers
 }
 
-func (t *Term) setRenderRect(x, y, w, h int) {
-	t.renderRect = Rect{x, y, w, h}
-	t.forceRedraw()
-
-	// TODO: tell subshell to resize
-}
-
 func (t *Term) forceRedraw() {
-	transformed := t.buffer.rewrite(t.renderRect, t.selected)
-	fmt.Print(transformed)
+	// transformed := t.buffer.rewrite(t, t.renderRect, t.selected)
+	// fmt.Print(transformed)
+
+	t.minAge = t.screen.Draw(func(id uint32, s string, width, posx, posy uint, attr *tsm.ScreenAttr, age uint32) bool {
+		if age >= t.minAge {
+			out := ""
+
+			// if attr.BCCode != 0 {
+			// out += fmt.Sprintf("\033[38;2;%d;%d;%d m", attr.FR, attr.FG, attr.FB)
+			// out += fmt.Sprintf("\033[48;2;%d;%d;%d m", attr.BR, attr.BG, attr.BB)
+			if attr.FCCode != 16 {
+				out += fmt.Sprintf("\033[%dm", 30+attr.FCCode)
+			}
+
+			if attr.BCCode != 17 {
+				out += fmt.Sprintf("\033[%dm", 40+attr.BCCode)
+			}
+			// }
+
+			// if attr.BCCode != 17 {
+			// 	s = " "
+			// }
+
+			if s == "" {
+				s = " "
+			}
+
+			out += fmt.Sprintf("\033[%d;%dH", posy, posx+1)
+			// out += s
+
+			// if s == " " {
+			// 	s = "_"
+			// }
+			// out += strconv.Itoa(int(attr.FCCode))
+			out += s
+
+			if attr.Bold {
+				out = "\033[1m" + out
+			}
+
+			fmt.Print(out + "\033[m")
+			// fmt.Printf(attr.FCCode)
+		}
+		return true
+	})
 
 	if t.selected {
 		// draw dividers around it

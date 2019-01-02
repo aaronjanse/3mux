@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 
 	term "github.com/nsf/termbox-go"
@@ -60,16 +61,23 @@ func listenForKeypresses() {
 		switch ev := term.PollEvent(); ev.Type {
 		case term.EventKey:
 			if ev.Key == term.KeyPgdn || ev.Key == term.KeyCtrlBackslash {
+				root.kill()
 				return
 			}
 
 			// fmt.Println(ev.Key, ev.Mod, ev.Ch)
 
 			code := encodeKeypress(ev)
-			// fmt.Println(code)
+			if code == "" {
+				continue
+			}
+
+			// fmt.Print(code)
+
 			handleKeyCode(code)
 			root.simplify()
 			refreshEverything() // FIXME: inefficient; rendering should be updated by wm-ops
+
 			// fmt.Print(ansi.MoveTo(0, termH-1) + ansi.EraseToEOL() + root.serialize())
 		case term.EventError:
 			panic(ev.Err)
@@ -80,6 +88,9 @@ func listenForKeypresses() {
 func handleKeyCode(code string) {
 	if f, ok := config.bindings[code]; ok {
 		f()
+	} else {
+		t := getSelection().getContainer().(*Term)
+		t.handleStdin(code)
 	}
 }
 
@@ -155,11 +166,34 @@ func encodeKeypress(ev term.Event) string {
 			return "Ctrl+v"
 		case term.KeyCtrlH:
 			return "Ctrl+h"
+
+		case term.KeyCtrlC:
+			return "\003"
+		case term.KeyCtrlD:
+			return "\004"
+
+		case term.KeyEnter:
+			return "\n"
+
+		case term.KeyBackspace2:
+			return "\010"
+		case term.KeyDelete:
+			return "\177"
+
 		default:
+			if ev.Key >= 32 && ev.Key <= 125 {
+				return fmt.Sprintf("%c", int(ev.Key))
+			}
+
 			if r == '\x00' {
 				escSeqBuffer = "\x00"
 			}
 		}
 	}
+
+	if escSeqBuffer != "" {
+		return ""
+	}
+
 	return string(r)
 }

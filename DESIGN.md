@@ -7,3 +7,9 @@ Terminals should always be able to move their contents to another portion of the
 
 The buffer will not be a 2d array of runes because we want to preserve color.
 Rather, the buffer should perhaps just be a string that would render properly at the top-left corner of the screen. This buffer can then be properly translated to the appropriate portion of the screen by rewriting CSI.
+
+## Rendering a window
+
+### Incrememtal Updates
+
+### Force Redraws

@@ -114,7 +114,14 @@ func moveWindow(d Direction) {
 
 func killWindow() {
 	parent, parentPath := getSelection().getParent()
-	parentPath.popContainer(parent.selectionIdx)
+	t := parentPath.popContainer(parent.selectionIdx)
+	t.(*Term).kill()
+}
+
+func (s *Split) kill() {
+	for _, n := range s.elements {
+		n.contents.kill()
+	}
 }
 
 func (p Path) popContainer(idx int) Container {
@@ -134,7 +141,7 @@ func (p Path) popContainer(idx int) Container {
 		s.selectionIdx--
 	}
 
-	if len(s.elements) == 1 {
+	if len(s.elements) == 1 && len(p) >= 1 {
 		t := (*s).elements[0].contents
 		switch val := t.(type) {
 		case *Term:
