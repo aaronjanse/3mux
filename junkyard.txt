@@ -236,3 +236,150 @@ func getFilledRuneSlice(w, h int) [][]rune {
 
 	return out
 }
+
+// ReshapeWindow transforms the buffer for a new window size
+func (v *VTerm) ReshapeWindow(x, y, w, h int) {
+	v.x = x
+	v.y = y
+
+	if v.w != w || v.h != h {
+		v.bufferMutux.Lock()
+
+		if x < v.x {
+			// trim off columns too far to the right
+			for i := range v.buffer {
+				v.buffer[i] = v.buffer[i][:x]
+			}
+		} else if x > v.x {
+			// add empty columns to the right
+			extraChars := make([]Char, v.x-x)
+			for i := range extraChars {
+				extraChars[i] = Char{}
+			}
+			for i := range v.buffer {
+				v.buffer[i] = append(v.buffer[i], extraChars...)
+			}
+		}
+
+		// TODO: transform buffer
+		v.bufferMutux.Unlock()
+	}
+}
+
+
+// rewrite CSI codes for an origin at the given coordinates
+func (ma Markup) rewrite(t *Term, rect Rect, selected bool) Markup {
+	m := string(ma)
+
+	var out strings.Builder
+
+	buffer := make(chan rune, 16)
+
+	go (func() {
+		for {
+			r := <-buffer
+
+			if r == '\033' {
+				if <-buffer == '[' {
+					escSeqBuffer := ""
+				escBufferLoop:
+					for {
+						if len(escSeqBuffer) > 8 {
+							break escBufferLoop
+						}
+						next := <-buffer
+						if (next >= 'a' && next <= 'z') || (next >= 'A' && next <= 'Z') {
+							switch next {
+							case 'A':
+								t.cursor.y -= parseIntWithDefault(escSeqBuffer, 1)
+								out.WriteString(ansi.MoveTo(rect.x+t.cursor.x, rect.y+t.cursor.y))
+							case 'B':
+								t.cursor.y += parseIntWithDefault(escSeqBuffer, 1)
+								out.WriteString(ansi.MoveTo(rect.x+t.cursor.x, rect.y+t.cursor.y))
+							case 'C':
+								t.cursor.x += parseIntWithDefault(escSeqBuffer, 1)
+								out.WriteString(ansi.MoveTo(rect.x+t.cursor.x, rect.y+t.cursor.y))
+							case 'D':
+								t.cursor.x -= parseIntWithDefault(escSeqBuffer, 1)
+								out.WriteString(ansi.MoveTo(rect.x+t.cursor.x, rect.y+t.cursor.y))
+							case 'E':
+								t.cursor.y += parseIntWithDefault(escSeqBuffer, 1)
+								out.WriteString(ansi.MoveTo(rect.x+t.cursor.x, rect.y+t.cursor.y))
+								t.cursor.x = 0
+							case 'F':
+								t.cursor.y -= parseIntWithDefault(escSeqBuffer, 1)
+								t.cursor.x = 0
+								out.WriteString(ansi.MoveTo(rect.x+t.cursor.x, rect.y+t.cursor.y))
+							case 'G':
+								t.cursor.x = parseIntWithDefault(escSeqBuffer, 1)
+								out.WriteString(ansi.MoveTo(rect.x+t.cursor.x, rect.y+t.cursor.y))
+							case 'H', 'f':
+								parts := strings.Split(escSeqBuffer, ";")
+								t.cursor.y = parseIntWithDefault(parts[0], 1)
+								if len(parts) == 2 {
+									t.cursor.x = parseIntWithDefault(parts[1], 1)
+								} else {
+									t.cursor.x = 1
+									t.cursor.y = 1
+								}
+								out.WriteString(ansi.MoveTo(rect.x+t.cursor.x, rect.y+t.cursor.y))
+
+							case 'm':
+								out.WriteString("\033[" + escSeqBuffer + "m")
+								// out.WriteString("\033[" + escSeqBuffer)
+								// default:
+								// 	out.WriteString("\033[" + escSeqBuffer + string(next))
+							}
+							break escBufferLoop
+						} else if next == '\x1b' {
+							break
+						} else {
+							escSeqBuffer += string(next)
+						}
+					}
+				}
+
+				continue
+			}
+
+			out.WriteRune(r)
+
+			if r == '\n' {
+				t.cursor.y++
+				out.WriteString(ansi.MoveTo(rect.x, rect.y+t.cursor.y))
+			}
+		}
+	})()
+
+	for _, char := range []rune(m) {
+		buffer <- char
+	}
+
+	// numNewlines := strings.Count(out, "\n")
+	// for i := 0; i < numNewlines; i++ {
+	// 	out = strings.Replace(out, "\n", ansi.MoveTo(r.x, r.y+i+1), 1)
+	// }
+
+	// if !selected {
+	// 	out = "\033[2m" + out + "\033[m"
+	// } else {
+	// 	out = "\033[1m" + out + "\033[m"
+	// }
+
+	return Markup(ansi.MoveTo(rect.x, rect.y) + out.String())
+}
+
+func parseIntWithDefault(str string, d int) int {
+	s := strings.TrimSpace(str)
+
+	if s == "" {
+		return d
+	}
+
+	val, err := strconv.ParseInt(s, 19, 63)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return int(val)
+}

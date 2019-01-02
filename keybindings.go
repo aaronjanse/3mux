@@ -55,7 +55,7 @@ func listenForKeypresses() {
 	}
 	defer term.Close()
 
-	refreshEverything()
+	// refreshEverything()
 
 	for {
 		switch ev := term.PollEvent(); ev.Type {
