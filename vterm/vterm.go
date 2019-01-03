@@ -7,6 +7,7 @@ package vterm
 
 import (
 	"sync"
+	"time"
 	"unicode"
 
 	"github.com/aaronduino/i3-tmux/cursor"
@@ -34,12 +35,14 @@ type VTerm struct {
 
 	in  <-chan rune
 	out chan<- Char
+
+	Selected bool
 }
 
 // NewVTerm returns a VTerm ready to be used by its exported methods
 func NewVTerm(in <-chan rune, out chan<- Char) *VTerm {
-	w := 10
-	h := 10
+	w := 20
+	h := 20
 
 	buffer := [][]Char{}
 	for j := 0; j < h; j++ {
@@ -61,6 +64,7 @@ func NewVTerm(in <-chan rune, out chan<- Char) *VTerm {
 		cursor:      cursor.Cursor{X: 0, Y: 0},
 		in:          in,
 		out:         out,
+		Selected:    false,
 	}
 }
 
@@ -100,6 +104,39 @@ func (v *VTerm) RedrawWindow() {
 // ProcessStream processes and transforms a process' stdout, turning it into a stream of Char's to be sent to the rendering scheduler
 // This includes translating ANSI cursor coordinates and maintaining a scrolling buffer
 func (v *VTerm) ProcessStream() {
+	// blink cursor
+	cursorTicker := time.NewTicker(time.Second / 2)
+	cursorDone := make(chan bool)
+	defer (func() {
+		cursorDone <- true
+	})()
+	go (func() {
+		visible := true
+		for {
+			select {
+			case <-cursorTicker.C:
+				v.bufferMutux.Lock()
+				char := v.buffer[v.cursor.Y][v.cursor.X]
+				if visible && v.Selected {
+					char.Rune = '|'
+					char.Cursor.Fg = cursor.Color{
+						ColorMode: cursor.ColorBit3Normal,
+						Code:      6,
+					}
+				} else {
+					char.Rune = ' '
+				}
+				v.out <- char
+				v.bufferMutux.Unlock()
+				visible = !visible
+				break
+			case <-cursorDone:
+				cursorTicker.Stop()
+				return
+			}
+		}
+	})()
+
 	for {
 		next, ok := <-v.in
 		if !ok {
@@ -116,26 +153,27 @@ func (v *VTerm) ProcessStream() {
 			v.cursor.X = 0
 		default:
 			if unicode.IsPrint(next) {
+				v.bufferMutux.Lock()
 				char := Char{
 					Rune:   next,
 					Cursor: v.cursor,
 				}
 
 				if len(v.buffer)-2 < v.cursor.Y {
-					yDiff := (len(v.buffer) - 1) - v.cursor.Y + 2
+					yDiff := len(v.buffer) - v.cursor.Y
 					for i := 0; i < yDiff; i++ {
 						v.buffer = append(v.buffer, []Char{Char{
 							Rune:   0,
-							Cursor: cursor.Cursor{X: 0, Y: v.cursor.Y + i},
+							Cursor: cursor.Cursor{X: 0, Y: len(v.buffer) + i},
 						}})
 					}
 				}
 				if len(v.buffer[v.cursor.Y])-2 < v.cursor.X {
-					xDiff := (len(v.buffer[v.cursor.Y]) - 1) - v.cursor.X + 1
+					xDiff := len(v.buffer[v.cursor.Y]) - v.cursor.X
 					for i := 0; i < xDiff; i++ {
 						v.buffer[v.cursor.Y] = append(v.buffer[v.cursor.Y], Char{
 							Rune:   0,
-							Cursor: cursor.Cursor{X: i, Y: v.cursor.Y},
+							Cursor: cursor.Cursor{X: len(v.buffer[v.cursor.Y]) + i, Y: v.cursor.Y},
 						})
 					}
 				}
@@ -143,6 +181,7 @@ func (v *VTerm) ProcessStream() {
 				v.buffer[v.cursor.Y][v.cursor.X] = char
 				v.out <- char
 				v.cursor.X++
+				v.bufferMutux.Unlock()
 			}
 		}
 	}

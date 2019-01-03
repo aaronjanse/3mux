@@ -2,28 +2,14 @@ package cursor
 
 import "fmt"
 
-// ColorMode is the type of color associated with a cursor
-type ColorMode int
-
-const (
-	// ColorNone is the default unset color state
-	ColorNone ColorMode = iota
-	// ColorBit3Normal is for the 8 default non-bright colors
-	ColorBit3Normal
-	// ColorBit3Bright is for the 8 default bright colors
-	ColorBit3Bright
-	// ColorBit8 is specified at https://en.wikipedia.org/w/index.php?title=ANSI_escape_code&oldid=873901864#8-bit
-	ColorBit8
-	// ColorBit24 is specified at https://en.wikipedia.org/w/index.php?title=ANSI_escape_code&oldid=873901864#24-bit
-	ColorBit24
-)
-
 // Cursor is the state of the terminal's drawing modes when printing a given character
 type Cursor struct {
 	Bold, Faint, Italic, Underline, Conceal, CrossedOut bool
 
-	ColorMode
-	Color int
+	// Fg is the foreground color
+	Fg Color
+	// Bg is the background color
+	Bg Color
 
 	X, Y int
 }
@@ -51,13 +37,13 @@ func DeltaMarkup(from, to Cursor) string {
 
 	out += fmt.Sprintf("\033[%d;%dH", to.Y+1, to.X+1)
 
-	if to.ColorMode != from.ColorMode {
-		switch to.ColorMode {
-		case ColorNone:
-			out += "\033[m"
-		case ColorBit3Normal:
-			out += fmt.Sprintf("\033[%dm", 30+to.Color)
-		}
+	if to.Fg.ColorMode != from.Fg.ColorMode || to.Fg.Code != from.Fg.Code {
+		out += to.Fg.ToANSI(false)
+	}
+
+	if to.Bg.ColorMode != from.Bg.ColorMode || to.Bg.Code != from.Bg.Code {
+		out += to.Fg.ToANSI(true)
+
 	}
 
 	return out

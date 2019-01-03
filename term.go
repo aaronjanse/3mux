@@ -37,6 +37,8 @@ func (t *Term) setRenderRect(x, y, w, h int) {
 }
 
 func (t *Term) softRefresh() {
+	t.vterm.Selected = t.selected
+
 	if t.selected {
 		drawSelectionBorder(t.renderRect)
 	}
@@ -55,10 +57,12 @@ func drawSelectionBorder(r Rect) {
 			globalCharAggregate <- vterm.Char{
 				Rune: '│',
 				Cursor: cursor.Cursor{
-					X:         r.x - 1,
-					Y:         r.y + i,
-					ColorMode: cursor.ColorBit3Normal,
-					Color:     6,
+					X: r.x - 1,
+					Y: r.y + i,
+					Fg: cursor.Color{
+						ColorMode: cursor.ColorBit3Normal,
+						Code:      6,
+					},
 				},
 			}
 		}
@@ -69,10 +73,12 @@ func drawSelectionBorder(r Rect) {
 			globalCharAggregate <- vterm.Char{
 				Rune: '│',
 				Cursor: cursor.Cursor{
-					X:         r.x + r.w + 1,
-					Y:         r.y + i,
-					ColorMode: cursor.ColorBit3Normal,
-					Color:     6,
+					X: r.x + r.w + 1,
+					Y: r.y + i,
+					Fg: cursor.Color{
+						ColorMode: cursor.ColorBit3Normal,
+						Code:      6,
+					},
 				},
 			}
 		}
@@ -83,10 +89,12 @@ func drawSelectionBorder(r Rect) {
 			globalCharAggregate <- vterm.Char{
 				Rune: '─',
 				Cursor: cursor.Cursor{
-					X:         r.x + i,
-					Y:         r.y - 1,
-					ColorMode: cursor.ColorBit3Normal,
-					Color:     6,
+					X: r.x + i,
+					Y: r.y - 1,
+					Fg: cursor.Color{
+						ColorMode: cursor.ColorBit3Normal,
+						Code:      6,
+					},
 				},
 			}
 		}
@@ -97,10 +105,12 @@ func drawSelectionBorder(r Rect) {
 			globalCharAggregate <- vterm.Char{
 				Rune: '─',
 				Cursor: cursor.Cursor{
-					X:         r.x + i,
-					Y:         r.y + r.h + 1,
-					ColorMode: cursor.ColorBit3Normal,
-					Color:     6,
+					X: r.x + i,
+					Y: r.y + r.h + 1,
+					Fg: cursor.Color{
+						ColorMode: cursor.ColorBit3Normal,
+						Code:      6,
+					},
 				},
 			}
 		}
@@ -112,10 +122,12 @@ func drawSelectionBorder(r Rect) {
 		globalCharAggregate <- vterm.Char{
 			Rune: '┌',
 			Cursor: cursor.Cursor{
-				X:         r.x - 1,
-				Y:         r.y - 1,
-				ColorMode: cursor.ColorBit3Normal,
-				Color:     6,
+				X: r.x - 1,
+				Y: r.y - 1,
+				Fg: cursor.Color{
+					ColorMode: cursor.ColorBit3Normal,
+					Code:      6,
+				},
 			},
 		}
 	}
@@ -124,10 +136,12 @@ func drawSelectionBorder(r Rect) {
 		globalCharAggregate <- vterm.Char{
 			Rune: '┐',
 			Cursor: cursor.Cursor{
-				X:         r.x + r.w + 1,
-				Y:         r.y - 1,
-				ColorMode: cursor.ColorBit3Normal,
-				Color:     6,
+				X: r.x + r.w + 1,
+				Y: r.y - 1,
+				Fg: cursor.Color{
+					ColorMode: cursor.ColorBit3Normal,
+					Code:      6,
+				},
 			},
 		}
 	}
@@ -136,10 +150,12 @@ func drawSelectionBorder(r Rect) {
 		globalCharAggregate <- vterm.Char{
 			Rune: '└',
 			Cursor: cursor.Cursor{
-				X:         r.x - 1,
-				Y:         r.y + r.h + 1,
-				ColorMode: cursor.ColorBit3Normal,
-				Color:     6,
+				X: r.x - 1,
+				Y: r.y + r.h + 1,
+				Fg: cursor.Color{
+					ColorMode: cursor.ColorBit3Normal,
+					Code:      6,
+				},
 			},
 		}
 	}
@@ -148,10 +164,12 @@ func drawSelectionBorder(r Rect) {
 		globalCharAggregate <- vterm.Char{
 			Rune: '┘',
 			Cursor: cursor.Cursor{
-				X:         r.x + r.w + 1,
-				Y:         r.y + r.h + 1,
-				ColorMode: cursor.ColorBit3Normal,
-				Color:     6,
+				X: r.x + r.w + 1,
+				Y: r.y + r.h + 1,
+				Fg: cursor.Color{
+					ColorMode: cursor.ColorBit3Normal,
+					Code:      6,
+				},
 			},
 		}
 	}
