@@ -37,7 +37,7 @@ type Term struct {
 
 func newTerm(selected bool) *Term {
 	// Create arbitrary command.
-	c := exec.Command("sh")
+	c := exec.Command("zsh")
 
 	// Start the command with a pty.
 	ptmx, err := pty.Start(c)
