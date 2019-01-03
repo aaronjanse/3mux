@@ -7,14 +7,9 @@ import (
 	"os/exec"
 	"strconv"
 	"strings"
-	"sync"
 )
 
-var globalDrawingMutex *sync.Mutex
-
 func init() {
-	globalDrawingMutex = &sync.Mutex{}
-
 	rand.Seed(42)
 }
 

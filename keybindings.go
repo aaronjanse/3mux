@@ -62,6 +62,7 @@ func listenForKeypresses() {
 		case term.EventKey:
 			if ev.Key == term.KeyPgdn || ev.Key == term.KeyCtrlBackslash {
 				root.kill()
+				close(globalCharAggregate)
 				return
 			}
 

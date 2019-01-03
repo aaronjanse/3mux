@@ -142,15 +142,14 @@ func (p Path) popContainer(idx int) Container {
 	}
 
 	if len(s.elements) == 1 && len(p) >= 1 {
-		t := (*s).elements[0].contents
-		switch val := t.(type) {
+		switch val := (*s).elements[0].contents.(type) {
 		case *Term:
 			parent, _ := p.getParent()
-			parent.elements[p[len(p)-1]].contents = t
+			parent.elements[p[len(p)-1]].contents = val
 		case *Split:
 			s.verticallyStacked = val.verticallyStacked
-			s.selectionIdx = val.selectionIdx
 			s.elements = val.elements
+			s.selectionIdx = val.selectionIdx
 		}
 	}
 
@@ -159,30 +158,39 @@ func (p Path) popContainer(idx int) Container {
 
 // stuff like h(h(x), y) -> h(x, y)
 func (s *Split) simplify() {
-	newElements := []Node{}
-	selectionIdx := (*s).selectionIdx
-	for idx, n := range (*s).elements {
-		switch child := n.contents.(type) {
+	if len(s.elements) == 1 {
+		switch child := (*s).elements[0].contents.(type) {
 		case *Split:
-			if child.verticallyStacked == s.verticallyStacked {
-				for j := range child.elements {
-					child.elements[j].size *= n.size
+			s.verticallyStacked = child.verticallyStacked
+			s.elements = child.elements
+			s.selectionIdx = child.selectionIdx
+		}
+	} else {
+		newElements := []Node{}
+		selectionIdx := (*s).selectionIdx
+		for idx, n := range (*s).elements {
+			switch child := n.contents.(type) {
+			case *Split:
+				if child.verticallyStacked == s.verticallyStacked {
+					for j := range child.elements {
+						child.elements[j].size *= n.size
+					}
+					newElements = append(newElements, child.elements...)
+					if idx == s.selectionIdx {
+						selectionIdx += child.selectionIdx
+					} else if idx < s.selectionIdx {
+						selectionIdx += len(child.elements) - 1
+					}
+				} else {
+					newElements = append(newElements, n)
 				}
-				newElements = append(newElements, child.elements...)
-				if idx == s.selectionIdx {
-					selectionIdx += child.selectionIdx
-				} else if idx < s.selectionIdx {
-					selectionIdx += len(child.elements) - 1
-				}
-			} else {
+			case *Term:
 				newElements = append(newElements, n)
 			}
-		case *Term:
-			newElements = append(newElements, n)
 		}
+		s.elements = newElements
+		s.selectionIdx = selectionIdx
 	}
-	s.elements = newElements
-	s.selectionIdx = selectionIdx
 
 	for _, n := range s.elements {
 		switch child := n.contents.(type) {
@@ -214,7 +222,7 @@ func moveSelection(d Direction) {
 	// deselect the old Term
 	oldTerm := path.getContainer().(*Term)
 	oldTerm.selected = false
-	oldTerm.forceRedraw()
+	oldTerm.softRefresh()
 
 	parent, _ := path.getParent()
 
@@ -257,7 +265,7 @@ func moveSelection(d Direction) {
 	// deselect the old Term
 	nowTerm := getSelection().getContainer().(*Term)
 	nowTerm.selected = true
-	nowTerm.forceRedraw()
+	nowTerm.softRefresh()
 }
 
 func newWindow() {

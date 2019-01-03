@@ -7,16 +7,17 @@ import (
 	"syscall"
 
 	"github.com/aaronduino/i3-tmux/cursor"
+	"github.com/aaronduino/i3-tmux/vterm"
 	"github.com/kr/pty"
 )
 
 func (t *Term) setRenderRect(x, y, w, h int) {
 	t.renderRect = Rect{x, y, w, h}
 
+	t.softRefresh()
+
 	t.vterm.Reshape(w, h)
 	t.vterm.RedrawWindow()
-
-	t.screen.Resize(uint(w), uint(h))
 
 	// Handle pty size.
 	ch := make(chan os.Signal, 1)
@@ -33,25 +34,25 @@ func (t *Term) setRenderRect(x, y, w, h int) {
 		}
 	}()
 	ch <- syscall.SIGWINCH // Initial resize.
+}
 
+func (t *Term) softRefresh() {
 	if t.selected {
 		drawSelectionBorder(t.renderRect)
 	}
 }
 
 func drawSelectionBorder(r Rect) {
-	borderCol := "\033[36m"
-
 	leftBorder := r.x > 0
-	rightBorder := r.x+r.w < termW
+	rightBorder := r.x+r.w+1 < termW
 	topBorder := r.y > 0
-	bottomBorder := r.y+r.h < termH
+	bottomBorder := r.y+r.h+1 < termH
 
 	// draw lines
 	if leftBorder {
-		for i := 0; i < r.h; i++ {
+		for i := 0; i < r.h+1; i++ {
 			// fmt.Print(ansi.MoveTo(r.x-1, r.y+i) + borderCol + "│\033[0m")
-			globalCharAggregate <- Char{
+			globalCharAggregate <- vterm.Char{
 				Rune: '│',
 				Cursor: cursor.Cursor{
 					X:         r.x - 1,
@@ -63,12 +64,12 @@ func drawSelectionBorder(r Rect) {
 		}
 	}
 	if rightBorder {
-		for i := 0; i < r.h; i++ {
+		for i := 0; i < r.h+1; i++ {
 			// fmt.Print(ansi.MoveTo(r.x+r.w, r.y+i) + borderCol + "│\033[0m")
-			globalCharAggregate <- Char{
+			globalCharAggregate <- vterm.Char{
 				Rune: '│',
 				Cursor: cursor.Cursor{
-					X:         r.x + r.w,
+					X:         r.x + r.w + 1,
 					Y:         r.y + i,
 					ColorMode: cursor.ColorBit3Normal,
 					Color:     6,
@@ -78,11 +79,11 @@ func drawSelectionBorder(r Rect) {
 	}
 	if topBorder {
 		// fmt.Print(ansi.MoveTo(r.x, r.y-1) + borderCol + strings.Repeat("─", r.w) + "\033[0m")
-		for i := 0; i < r.w; i++ {
-			globalCharAggregate <- Char{
+		for i := 0; i < r.w+1; i++ {
+			globalCharAggregate <- vterm.Char{
 				Rune: '─',
 				Cursor: cursor.Cursor{
-					X:         r.x,
+					X:         r.x + i,
 					Y:         r.y - 1,
 					ColorMode: cursor.ColorBit3Normal,
 					Color:     6,
@@ -92,12 +93,12 @@ func drawSelectionBorder(r Rect) {
 	}
 	if bottomBorder {
 		// fmt.Print(ansi.MoveTo(r.x, r.y+r.h) + borderCol + strings.Repeat("─", r.w) + "\033[0m")
-		for i := 0; i < r.w; i++ {
-			globalCharAggregate <- Char{
+		for i := 0; i < r.w+1; i++ {
+			globalCharAggregate <- vterm.Char{
 				Rune: '─',
 				Cursor: cursor.Cursor{
-					X:         r.x,
-					Y:         r.y + r.h,
+					X:         r.x + i,
+					Y:         r.y + r.h + 1,
 					ColorMode: cursor.ColorBit3Normal,
 					Color:     6,
 				},
@@ -108,7 +109,7 @@ func drawSelectionBorder(r Rect) {
 	// draw corners
 	if topBorder && leftBorder {
 		// fmt.Print(ansi.MoveTo(r.x-1, r.y-1) + borderCol + "┌\033[0m")
-		globalCharAggregate <- Char{
+		globalCharAggregate <- vterm.Char{
 			Rune: '┌',
 			Cursor: cursor.Cursor{
 				X:         r.x - 1,
@@ -120,10 +121,10 @@ func drawSelectionBorder(r Rect) {
 	}
 	if topBorder && rightBorder {
 		// fmt.Print(ansi.MoveTo(r.x+r.w, r.y-1) + borderCol + "┐\033[0m")
-		globalCharAggregate <- Char{
+		globalCharAggregate <- vterm.Char{
 			Rune: '┐',
 			Cursor: cursor.Cursor{
-				X:         r.x + r.w,
+				X:         r.x + r.w + 1,
 				Y:         r.y - 1,
 				ColorMode: cursor.ColorBit3Normal,
 				Color:     6,
@@ -132,11 +133,11 @@ func drawSelectionBorder(r Rect) {
 	}
 	if bottomBorder && leftBorder {
 		// fmt.Print(ansi.MoveTo(r.x-1, r.y+r.h) + borderCol + "└\033[0m")
-		globalCharAggregate <- Char{
+		globalCharAggregate <- vterm.Char{
 			Rune: '└',
 			Cursor: cursor.Cursor{
 				X:         r.x - 1,
-				Y:         r.y + r.h,
+				Y:         r.y + r.h + 1,
 				ColorMode: cursor.ColorBit3Normal,
 				Color:     6,
 			},
@@ -144,11 +145,11 @@ func drawSelectionBorder(r Rect) {
 	}
 	if bottomBorder && rightBorder {
 		// fmt.Print(ansi.MoveTo(r.x+r.w, r.y+r.h) + borderCol + "┘\033[0m")
-		globalCharAggregate <- Char{
+		globalCharAggregate <- vterm.Char{
 			Rune: '┘',
 			Cursor: cursor.Cursor{
-				X:         r.x + r.w,
-				Y:         r.y + r.h,
+				X:         r.x + r.w + 1,
+				Y:         r.y + r.h + 1,
 				ColorMode: cursor.ColorBit3Normal,
 				Color:     6,
 			},

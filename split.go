@@ -1,7 +1,12 @@
 package main
 
 import (
+	"fmt"
+	"strings"
+
+	"github.com/aaronduino/i3-tmux/ansi"
 	"github.com/aaronduino/i3-tmux/cursor"
+	"github.com/aaronduino/i3-tmux/vterm"
 )
 
 // setRenderRect updates the Split's renderRect cache after which it calls refreshRenderRect
@@ -19,10 +24,10 @@ func (s *Split) refreshRenderRect() {
 	w := s.renderRect.w
 	h := s.renderRect.h
 
-	// // clear the relevant area of the screen
-	// for i := 0; i < h; i++ {
-	// 	fmt.Print(ansi.MoveTo(x, y+i) + strings.Repeat(" ", w))
-	// }
+	// clear the relevant area of the screen
+	for i := 0; i < h; i++ {
+		fmt.Print(ansi.MoveTo(x, y+i) + strings.Repeat(" ", w))
+	}
 
 	s.redrawLines()
 
@@ -47,9 +52,9 @@ func (s *Split) refreshRenderRect() {
 		childNode := s.elements[idx]
 
 		if s.verticallyStacked {
-			childNode.contents.setRenderRect(x, y+lastPos+1, w, childArea)
+			childNode.contents.setRenderRect(x, y+lastPos+1, w, childArea-1)
 		} else {
-			childNode.contents.setRenderRect(x+lastPos+1, y, childArea, h)
+			childNode.contents.setRenderRect(x+lastPos+1, y, childArea-1, h)
 		}
 	}
 }
@@ -74,14 +79,14 @@ func (s *Split) redrawLines() {
 
 		if s.verticallyStacked {
 			for i := 0; i < w; i++ {
-				globalCharAggregate <- Char{
+				globalCharAggregate <- vterm.Char{
 					Rune:   '─',
 					Cursor: cursor.Cursor{X: x + i, Y: y + pos},
 				}
 			}
 		} else {
 			for j := 0; j < h; j++ {
-				globalCharAggregate <- Char{
+				globalCharAggregate <- vterm.Char{
 					Rune:   '│',
 					Cursor: cursor.Cursor{X: x + pos, Y: y + j},
 				}

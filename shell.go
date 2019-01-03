@@ -1,14 +1,12 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"math/rand"
 	"os"
 	"os/exec"
 
 	"github.com/aaronduino/i3-tmux/vterm"
-	tsm "github.com/emersion/go-tsm"
 	"github.com/kr/pty"
 )
 
@@ -47,9 +45,10 @@ func newTerm(selected bool) *Term {
 		log.Fatal(err)
 	}
 
-	screen := tsm.NewScreen()
-	screen.SetFlags(tsm.ScreenInsertMode)
-	vte := tsm.NewVTE(screen, func(b []byte) {})
+	vtermIn := make(chan rune, 32)
+	vtermOut := make(chan vterm.Char, 32)
+
+	vt := vterm.NewVTerm(vtermIn, vtermOut)
 
 	t := &Term{
 		id:       rand.Intn(10),
@@ -57,11 +56,20 @@ func newTerm(selected bool) *Term {
 		ptmx:     ptmx,
 		cmd:      c,
 
-		vtermIn:  make(chan rune, 32),
-		vtermOut: make(chan vterm.Char, 32),
+		vterm:    vt,
+		vtermIn:  vtermIn,
+		vtermOut: vtermOut,
 	}
 
 	go (func() {
+		defer func() {
+			if r := recover(); r != nil {
+				if r != "send on closed channel" {
+					panic(r)
+				}
+			}
+		}()
+
 		for {
 			b := make([]byte, 1)
 			_, err := ptmx.Read(b)
@@ -74,11 +82,14 @@ func newTerm(selected bool) *Term {
 
 	go (func() {
 		for {
-			globalDrawingMutex.Lock()
-			fmt.Print()
-			globalDrawingMutex.Lock()
+			char := <-vtermOut
+			char.Cursor.X += t.renderRect.x
+			char.Cursor.Y += t.renderRect.y
+			globalCharAggregate <- char
 		}
 	})()
+
+	go vt.ProcessStream()
 
 	return t
 }

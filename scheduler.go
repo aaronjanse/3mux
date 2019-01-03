@@ -11,7 +11,7 @@ import (
 var globalCharAggregate chan vterm.Char
 
 func init() {
-	globalCharAggregate := make(chan vterm.Char, 64)
+	globalCharAggregate = make(chan vterm.Char)
 }
 
 func render() {
@@ -19,18 +19,19 @@ func render() {
 	for {
 		char, ok := <-globalCharAggregate
 		if !ok {
+			fmt.Println("Exiting scheduler")
 			return
 		}
 
 		escCode := cursor.DeltaMarkup(lastCursor, char.Cursor)
 		fmt.Print(escCode)
 
-		fmt.Print(char.Rune)
+		fmt.Print(string(char.Rune))
 
 		lastCursor = char.Cursor
 
 		if unicode.IsPrint(char.Rune) {
-			lastCursor.x++
+			lastCursor.X++
 		}
 	}
 }

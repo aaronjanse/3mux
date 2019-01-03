@@ -36,6 +36,34 @@ type VTerm struct {
 	out chan<- Char
 }
 
+// NewVTerm returns a VTerm ready to be used by its exported methods
+func NewVTerm(in <-chan rune, out chan<- Char) *VTerm {
+	w := 10
+	h := 10
+
+	buffer := [][]Char{}
+	for j := 0; j < h; j++ {
+		row := []Char{}
+		for i := 0; i < w; i++ {
+			row = append(row, Char{
+				Rune:   0,
+				Cursor: cursor.Cursor{X: i, Y: j},
+			})
+		}
+		buffer = append(buffer, row)
+	}
+
+	return &VTerm{
+		w:           w,
+		h:           h,
+		buffer:      buffer,
+		bufferMutux: &sync.Mutex{},
+		cursor:      cursor.Cursor{X: 0, Y: 0},
+		in:          in,
+		out:         out,
+	}
+}
+
 // Reshape safely updates a VTerm's width & height
 func (v *VTerm) Reshape(w, h int) {
 	v.bufferMutux.Lock()
@@ -49,7 +77,7 @@ func (v *VTerm) RedrawWindow() {
 	v.bufferMutux.Lock()
 
 	verticalArea := v.h
-	if v.h < len(v.buffer) {
+	if v.h > len(v.buffer) {
 		verticalArea = len(v.buffer)
 	}
 
@@ -71,7 +99,7 @@ func (v *VTerm) RedrawWindow() {
 
 // ProcessStream processes and transforms a process' stdout, turning it into a stream of Char's to be sent to the rendering scheduler
 // This includes translating ANSI cursor coordinates and maintaining a scrolling buffer
-func (v *VTerm) ProcessStream(in <-chan rune, out chan<- Char) {
+func (v *VTerm) ProcessStream() {
 	for {
 		next, ok := <-v.in
 		if !ok {
@@ -92,8 +120,28 @@ func (v *VTerm) ProcessStream(in <-chan rune, out chan<- Char) {
 					Rune:   next,
 					Cursor: v.cursor,
 				}
-				v.buffer[v.cursor.X][v.cursor.Y] = char
-				out <- char
+
+				if len(v.buffer)-2 < v.cursor.Y {
+					yDiff := (len(v.buffer) - 1) - v.cursor.Y + 2
+					for i := 0; i < yDiff; i++ {
+						v.buffer = append(v.buffer, []Char{Char{
+							Rune:   0,
+							Cursor: cursor.Cursor{X: 0, Y: v.cursor.Y + i},
+						}})
+					}
+				}
+				if len(v.buffer[v.cursor.Y])-2 < v.cursor.X {
+					xDiff := (len(v.buffer[v.cursor.Y]) - 1) - v.cursor.X + 1
+					for i := 0; i < xDiff; i++ {
+						v.buffer[v.cursor.Y] = append(v.buffer[v.cursor.Y], Char{
+							Rune:   0,
+							Cursor: cursor.Cursor{X: i, Y: v.cursor.Y},
+						})
+					}
+				}
+
+				v.buffer[v.cursor.Y][v.cursor.X] = char
+				v.out <- char
 				v.cursor.X++
 			}
 		}
@@ -186,6 +234,7 @@ func (v *VTerm) handleCSISequence() {
 			case 'u': // Restore Cursor Positon
 				break
 			}
+			return
 		}
 	}
 }
