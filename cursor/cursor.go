@@ -1,6 +1,8 @@
 package cursor
 
-import "fmt"
+import (
+	"fmt"
+)
 
 // Cursor is the state of the terminal's drawing modes when printing a given character
 type Cursor struct {
@@ -43,7 +45,18 @@ func DeltaMarkup(from, to Cursor) string {
 
 	if to.Bg.ColorMode != from.Bg.ColorMode || to.Bg.Code != from.Bg.Code {
 		out += to.Fg.ToANSI(true)
+	}
 
+	/* removing effects */
+
+	if from.Faint && !to.Faint {
+		out += "\033[22m"
+	}
+
+	/* adding effects */
+
+	if !from.Faint && to.Faint {
+		out += "\033[2m"
 	}
 
 	return out
@@ -57,4 +70,7 @@ func (c *Cursor) Reset() {
 	c.Underline = false
 	c.Conceal = false
 	c.CrossedOut = false
+
+	c.Fg.ColorMode = ColorNone
+	c.Bg.ColorMode = ColorNone
 }

@@ -6,6 +6,8 @@ A Char is a character printed using a given cursor (which is stored alongside th
 package vterm
 
 import (
+	"fmt"
+	"log"
 	"sync"
 	"time"
 	"unicode"
@@ -35,6 +37,8 @@ type VTerm struct {
 
 	in  <-chan rune
 	out chan<- Char
+
+	storedCursorX, storedCursorY int
 
 	Selected bool
 }
@@ -144,8 +148,13 @@ func (v *VTerm) ProcessStream() {
 		}
 
 		switch next {
-		case '\x00':
+		case '\x1b':
 			v.handleEscapeCode()
+		case 8, 127:
+			v.cursor.X--
+			if v.cursor.X < 0 {
+				v.cursor.X = 0
+			}
 		case '\n':
 			v.cursor.Y++
 			v.cursor.X = 0
@@ -154,26 +163,31 @@ func (v *VTerm) ProcessStream() {
 		default:
 			if unicode.IsPrint(next) {
 				v.bufferMutux.Lock()
+				if v.cursor.X < 0 {
+					v.cursor.X = 0
+				}
+				if v.cursor.Y < 0 {
+					v.cursor.Y = 0
+				}
+
 				char := Char{
 					Rune:   next,
 					Cursor: v.cursor,
 				}
 
-				if len(v.buffer)-2 < v.cursor.Y {
-					yDiff := len(v.buffer) - v.cursor.Y
-					for i := 0; i < yDiff; i++ {
+				if len(v.buffer)-1 < v.cursor.Y {
+					for i := len(v.buffer); i < v.cursor.Y+1; i++ {
 						v.buffer = append(v.buffer, []Char{Char{
 							Rune:   0,
-							Cursor: cursor.Cursor{X: 0, Y: len(v.buffer) + i},
+							Cursor: cursor.Cursor{X: 0, Y: i},
 						}})
 					}
 				}
-				if len(v.buffer[v.cursor.Y])-2 < v.cursor.X {
-					xDiff := len(v.buffer[v.cursor.Y]) - v.cursor.X
-					for i := 0; i < xDiff; i++ {
+				if len(v.buffer[v.cursor.Y])-1 < v.cursor.X {
+					for i := len(v.buffer[v.cursor.Y]); i < v.cursor.X+1; i++ {
 						v.buffer[v.cursor.Y] = append(v.buffer[v.cursor.Y], Char{
 							Rune:   0,
-							Cursor: cursor.Cursor{X: len(v.buffer[v.cursor.Y]) + i, Y: v.cursor.Y},
+							Cursor: cursor.Cursor{X: i, Y: v.cursor.Y},
 						})
 					}
 				}
@@ -182,6 +196,8 @@ func (v *VTerm) ProcessStream() {
 				v.out <- char
 				v.cursor.X++
 				v.bufferMutux.Unlock()
+			} else {
+				v.debug(fmt.Sprintf("%x    ", next))
 			}
 		}
 	}
@@ -190,16 +206,21 @@ func (v *VTerm) ProcessStream() {
 func (v *VTerm) handleEscapeCode() {
 	next, ok := <-v.in
 	if !ok {
+		log.Fatal("not ok")
 		return
 	}
 
 	switch next {
 	case '[':
 		v.handleCSISequence()
+	default:
+		v.debug("ESC Code: " + string(next))
 	}
 }
 
 func (v *VTerm) handleCSISequence() {
+	privateSequence := false
+
 	parameterCode := ""
 	for {
 		next, ok := <-v.in
@@ -209,11 +230,40 @@ func (v *VTerm) handleCSISequence() {
 
 		if unicode.IsDigit(next) || next == ';' || next == ' ' {
 			parameterCode += string(next)
+		} else if next == '?' {
+			privateSequence = true
+		} else if privateSequence {
+			switch next {
+			case 'h':
+				switch parameterCode {
+				case "25": // show cursor
+					break // TODO
+				case "1024": // enable alt screen buffer
+					break // TODO
+				case "2004": // disable alt screen buffer
+					break // TODO
+				}
+			case 'l':
+				switch parameterCode {
+				case "25": // show cursor
+					break // TODO
+				case "1024": // enable alt screen buffer
+					break // TODO
+				case "2004": // disable alt screen buffer
+					break // TODO
+				}
+			default:
+				v.debug("CSI Private Code: " + parameterCode + string(next))
+			}
+			return
 		} else {
 			switch next {
 			case 'A': // Cursor Up
 				seq := parseSemicolonNumSeq(parameterCode, 1)
 				v.cursor.Y -= seq[0]
+				if v.cursor.Y < 0 {
+					v.cursor.Y = 0
+				}
 			case 'B': // Cursor Down
 				seq := parseSemicolonNumSeq(parameterCode, 1)
 				v.cursor.Y += seq[0]
@@ -223,6 +273,9 @@ func (v *VTerm) handleCSISequence() {
 			case 'D': // Cursor Left
 				seq := parseSemicolonNumSeq(parameterCode, 1)
 				v.cursor.X -= seq[0]
+				if v.cursor.X < 0 {
+					v.cursor.X = 0
+				}
 			case 'E': // Cursor Next Line
 				seq := parseSemicolonNumSeq(parameterCode, 1)
 				v.cursor.Y += seq[0]
@@ -231,47 +284,60 @@ func (v *VTerm) handleCSISequence() {
 				seq := parseSemicolonNumSeq(parameterCode, 1)
 				v.cursor.Y -= seq[0]
 				v.cursor.X = 0
+				if v.cursor.Y < 0 {
+					v.cursor.Y = 0
+				}
 			case 'G': // Cursor Horizontal Absolute
 				seq := parseSemicolonNumSeq(parameterCode, 1)
-				v.cursor.X = seq[0]
+				v.cursor.X = seq[0] - 1
 			case 'H', 'f': // Cursor Position
 				seq := parseSemicolonNumSeq(parameterCode, 1)
-				v.cursor.Y = seq[0]
+				v.cursor.Y = seq[0] - 1
+				if v.cursor.Y < 0 {
+					v.cursor.Y = 0
+				}
 				if len(seq) > 1 {
-					v.cursor.X = seq[1]
+					v.cursor.X = seq[1] - 1
+					if v.cursor.X < 0 {
+						v.cursor.X = 0
+					}
 				}
 			case 'J': // Erase in Display
 				seq := parseSemicolonNumSeq(parameterCode, 0)
 				switch seq[0] {
 				case 0: // clear from cursor to end of screen
-					break // TODO
 				case 1: // clear from cursor to beginning of screen
-					break // TODO
 				case 2: // clear entire screen (and move cursor to top left?)
-					break // TODO
 				case 3: // clear entire screen and delete all lines saved in scrollback buffer
-					break // TODO
 				}
 			case 'K': // Erase in Line
 				seq := parseSemicolonNumSeq(parameterCode, 0)
 				switch seq[0] {
 				case 0: // clear from cursor to end of line
-					break // TODO
+					for i := v.cursor.X; i < len(v.buffer[v.cursor.Y]); i++ {
+						v.buffer[v.cursor.Y][i].Rune = 0
+					}
 				case 1: // clear from cursor to beginning of line
-					break // TODO
+					for i := 0; i < v.cursor.X; i++ {
+						v.buffer[v.cursor.Y][i].Rune = 0
+					}
 				case 2: // clear entire line; cursor position remains the same
-					break // TODO
+					for i := 0; i < len(v.buffer[v.cursor.Y]); i++ {
+						v.buffer[v.cursor.Y][i].Rune = 0
+					}
 				}
 			case 'S': // Scroll Up; new lines added to bottom
-				break // TODO
 			case 'T': // Scroll Down; new lines added to top
-				break // TODO
 			case 'm': // Select Graphic Rendition
 				v.handleSDR(parameterCode)
 			case 's': // Save Cursor Position
-				break
+				v.storedCursorX = v.cursor.X
+				v.storedCursorY = v.cursor.Y
 			case 'u': // Restore Cursor Positon
-				break
+				v.cursor.X = v.storedCursorX
+				v.cursor.Y = v.storedCursorY
+			default:
+				v.debug("CSI Code: " + string(next))
 			}
 			return
 		}
@@ -281,7 +347,9 @@ func (v *VTerm) handleCSISequence() {
 func (v *VTerm) handleSDR(parameterCode string) {
 	seq := parseSemicolonNumSeq(parameterCode, 0)
 
-	switch seq[0] {
+	c := seq[0]
+
+	switch c {
 	case 0:
 		v.cursor.Reset()
 	case 1:
@@ -293,17 +361,13 @@ func (v *VTerm) handleSDR(parameterCode string) {
 	case 4:
 		v.cursor.Underline = true
 	case 5: // slow blink
-		break // TODO
 	case 6: // rapid blink
-		break // TODO
 	case 7: // swap foreground & background; see case 27
-		break // TODO
 	case 8:
 		v.cursor.Conceal = true
 	case 9:
 		v.cursor.CrossedOut = true
 	case 10: // primary/default font
-		break // TODO
 	case 22:
 		v.cursor.Bold = false
 		v.cursor.Faint = false
@@ -312,7 +376,6 @@ func (v *VTerm) handleSDR(parameterCode string) {
 	case 24:
 		v.cursor.Underline = false
 	case 25: // blink off
-		break // TODO
 	case 27: // inverse off; see case 7
 		break // TODO
 	case 28:
@@ -320,8 +383,46 @@ func (v *VTerm) handleSDR(parameterCode string) {
 	case 29:
 		v.cursor.CrossedOut = false
 	case 38: // set foreground color
-		break // TODO
+	case 39: // default foreground color
 	case 48: // set background color
-		break // TODO
+	case 49: // default background color
+	default:
+		if c >= 30 && c <= 37 {
+			if len(seq) > 1 && seq[1] == 1 {
+				v.cursor.Fg = cursor.Color{
+					ColorMode: cursor.ColorBit3Bright,
+					Code:      int32(c - 30),
+				}
+			} else {
+				v.cursor.Fg = cursor.Color{
+					ColorMode: cursor.ColorBit3Normal,
+					Code:      int32(c - 30),
+				}
+			}
+		} else if c >= 40 && c <= 47 {
+			if len(seq) > 1 && seq[1] == 1 {
+				v.cursor.Bg = cursor.Color{
+					ColorMode: cursor.ColorBit3Bright,
+					Code:      int32(c - 40),
+				}
+			} else {
+				v.cursor.Bg = cursor.Color{
+					ColorMode: cursor.ColorBit3Normal,
+					Code:      int32(c - 40),
+				}
+			}
+		} else if c >= 90 && c <= 97 {
+			v.cursor.Fg = cursor.Color{
+				ColorMode: cursor.ColorBit3Bright,
+				Code:      int32(c - 90),
+			}
+		} else if c >= 100 && c <= 107 {
+			v.cursor.Bg = cursor.Color{
+				ColorMode: cursor.ColorBit3Bright,
+				Code:      int32(c - 100),
+			}
+		} else {
+			v.debug("SGR Code: " + string(parameterCode))
+		}
 	}
 }

@@ -181,6 +181,15 @@ func encodeKeypress(ev term.Event) string {
 		case term.KeyDelete:
 			return "\177"
 
+		case term.KeyArrowUp:
+			return "\x1b[A"
+		case term.KeyArrowDown:
+			return "\x1b[B"
+		case term.KeyArrowRight:
+			return "\x1b[C"
+		case term.KeyArrowLeft:
+			return "\x1b[D"
+
 		default:
 			if ev.Key >= 32 && ev.Key <= 125 {
 				return fmt.Sprintf("%c", int(ev.Key))
