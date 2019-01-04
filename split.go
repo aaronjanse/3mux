@@ -1,10 +1,6 @@
 package main
 
 import (
-	"fmt"
-	"strings"
-
-	"github.com/aaronduino/i3-tmux/ansi"
 	"github.com/aaronduino/i3-tmux/cursor"
 	"github.com/aaronduino/i3-tmux/vterm"
 )
@@ -24,10 +20,15 @@ func (s *Split) refreshRenderRect() {
 	w := s.renderRect.w
 	h := s.renderRect.h
 
-	// clear the relevant area of the screen
-	for i := 0; i < h; i++ {
-		fmt.Print(ansi.MoveTo(x, y+i) + strings.Repeat(" ", w))
-	}
+	// // clear the relevant area of the screen
+	// for j := 0; j < h; j++ {
+	// 	for i := 0; i < w; i++ {
+	// 		globalCharAggregate <- vterm.Char{
+	// 			Rune:   ' ',
+	// 			Cursor: cursor.Cursor{X: x + i, Y: y + j},
+	// 		}
+	// 	}
+	// }
 
 	s.redrawLines()
 

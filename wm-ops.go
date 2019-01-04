@@ -116,6 +116,8 @@ func killWindow() {
 	parent, parentPath := getSelection().getParent()
 	t := parentPath.popContainer(parent.selectionIdx)
 	t.(*Term).kill()
+
+	getSelection().getContainer().(*Term).vterm.StartBlinker()
 }
 
 func (s *Split) kill() {
@@ -223,6 +225,7 @@ func moveSelection(d Direction) {
 	oldTerm := path.getContainer().(*Term)
 	oldTerm.selected = false
 	oldTerm.softRefresh()
+	oldTerm.vterm.StopBlinker()
 
 	parent, _ := path.getParent()
 
@@ -266,6 +269,7 @@ func moveSelection(d Direction) {
 	nowTerm := getSelection().getContainer().(*Term)
 	nowTerm.selected = true
 	nowTerm.softRefresh()
+	nowTerm.vterm.StartBlinker()
 }
 
 func newWindow() {
@@ -274,6 +278,7 @@ func newWindow() {
 	// deselect the old Term
 	oldTerm := path.getContainer().(*Term)
 	oldTerm.selected = false
+	oldTerm.vterm.StopBlinker()
 	// the parent is going to be redrawn so we don't need to redraw the old term right now
 
 	parent, _ := path.getParent()
@@ -287,10 +292,12 @@ func newWindow() {
 	}
 
 	// add new child
+	createdTerm := newTerm(true)
 	parent.elements = append(parent.elements, Node{
 		size:     size,
-		contents: newTerm(true),
+		contents: createdTerm,
 	})
+	createdTerm.vterm.StartBlinker()
 
 	// update selection to new child
 	parent.selectionIdx = len(parent.elements) - 1

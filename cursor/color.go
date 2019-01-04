@@ -35,7 +35,7 @@ func (c Color) ToANSI(bg bool) string {
 
 	switch c.ColorMode {
 	case ColorNone:
-		return "\033[m"
+		return fmt.Sprintf("\033[%dm", 39+offset)
 	case ColorBit3Normal:
 		return fmt.Sprintf("\033[%dm", 30+offset+c.Code)
 	case ColorBit3Bright:

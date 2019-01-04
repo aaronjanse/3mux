@@ -16,10 +16,6 @@ type Cursor struct {
 	X, Y int
 }
 
-func (c Cursor) toMarkup() {
-
-}
-
 // DeltaMarkup returns markup to transform from one cursor to another
 func DeltaMarkup(from, to Cursor) string {
 	out := ""
@@ -39,12 +35,12 @@ func DeltaMarkup(from, to Cursor) string {
 
 	out += fmt.Sprintf("\033[%d;%dH", to.Y+1, to.X+1)
 
-	if to.Fg.ColorMode != from.Fg.ColorMode || to.Fg.Code != from.Fg.Code {
-		out += to.Fg.ToANSI(false)
+	if to.Bg.ColorMode != from.Bg.ColorMode || to.Bg.Code != from.Bg.Code {
+		out += to.Bg.ToANSI(true)
 	}
 
-	if to.Bg.ColorMode != from.Bg.ColorMode || to.Bg.Code != from.Bg.Code {
-		out += to.Fg.ToANSI(true)
+	if to.Fg.ColorMode != from.Fg.ColorMode || to.Fg.Code != from.Fg.Code {
+		out += to.Fg.ToANSI(false)
 	}
 
 	/* removing effects */

@@ -29,7 +29,7 @@ type Term struct {
 
 func newTerm(selected bool) *Term {
 	// Create arbitrary command.
-	c := exec.Command("sh")
+	c := exec.Command("zsh")
 
 	// Start the command with a pty.
 	ptmx, err := pty.Start(c)
@@ -87,6 +87,8 @@ func newTerm(selected bool) *Term {
 }
 
 func (t *Term) kill() {
+	t.vterm.StopBlinker()
+
 	close(t.vtermIn)
 
 	err := t.ptmx.Close()
