@@ -123,7 +123,7 @@ func (v *VTerm) ProcessStream() {
 				char := v.buffer[v.cursor.Y][v.cursor.X]
 				if visible && v.Selected {
 					char.Rune = '|'
-					char.Cursor.Fg = cursor.Color{
+					char.Cursor.Bg = cursor.Color{
 						ColorMode: cursor.ColorBit3Normal,
 						Code:      6,
 					}
