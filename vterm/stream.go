@@ -93,6 +93,8 @@ func (v *VTerm) handleEscapeCode() {
 	switch next {
 	case '[':
 		v.handleCSISequence()
+	case '(': // Character set
+		// TODO
 	default:
 		v.debug("ESC Code: " + string(next))
 	}
@@ -117,20 +119,20 @@ func (v *VTerm) handleCSISequence() {
 			case 'h':
 				switch parameterCode {
 				case "25": // show cursor
-					break // TODO
+					// TODO
 				case "1024": // enable alt screen buffer
-					break // TODO
+					// TODO
 				case "2004": // disable alt screen buffer
-					break // TODO
+					// TODO
 				}
 			case 'l':
 				switch parameterCode {
 				case "25": // show cursor
-					break // TODO
+					// TODO
 				case "1024": // enable alt screen buffer
-					break // TODO
+					// TODO
 				case "2004": // disable alt screen buffer
-					break // TODO
+					// TODO
 				}
 			default:
 				v.debug("CSI Private Code: " + parameterCode + string(next))
@@ -266,7 +268,7 @@ func (v *VTerm) handleSDR(parameterCode string) {
 		v.cursor.Underline = false
 	case 25: // blink off
 	case 27: // inverse off; see case 7
-		break // TODO
+		// TODO
 	case 28:
 		v.cursor.Conceal = false
 	case 29:
