@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"log"
 	"sync"
-	"time"
 	"unicode"
 
 	"github.com/aaronduino/i3-tmux/cursor"
@@ -39,8 +38,6 @@ type VTerm struct {
 	out chan<- Char
 
 	storedCursorX, storedCursorY int
-
-	Selected bool
 }
 
 // NewVTerm returns a VTerm ready to be used by its exported methods
@@ -68,7 +65,6 @@ func NewVTerm(in <-chan rune, out chan<- Char) *VTerm {
 		cursor:      cursor.Cursor{X: 0, Y: 0},
 		in:          in,
 		out:         out,
-		Selected:    false,
 	}
 }
 
@@ -108,39 +104,6 @@ func (v *VTerm) RedrawWindow() {
 // ProcessStream processes and transforms a process' stdout, turning it into a stream of Char's to be sent to the rendering scheduler
 // This includes translating ANSI cursor coordinates and maintaining a scrolling buffer
 func (v *VTerm) ProcessStream() {
-	// blink cursor
-	cursorTicker := time.NewTicker(time.Second / 2)
-	cursorDone := make(chan bool)
-	defer (func() {
-		cursorDone <- true
-	})()
-	go (func() {
-		visible := true
-		for {
-			select {
-			case <-cursorTicker.C:
-				v.bufferMutux.Lock()
-				char := v.buffer[v.cursor.Y][v.cursor.X]
-				if visible && v.Selected {
-					char.Rune = '|'
-					char.Cursor.Bg = cursor.Color{
-						ColorMode: cursor.ColorBit3Normal,
-						Code:      6,
-					}
-				} else {
-					char.Rune = ' '
-				}
-				v.out <- char
-				v.bufferMutux.Unlock()
-				visible = !visible
-				break
-			case <-cursorDone:
-				cursorTicker.Stop()
-				return
-			}
-		}
-	})()
-
 	for {
 		next, ok := <-v.in
 		if !ok {

@@ -2,16 +2,11 @@ package main
 
 import (
 	"log"
-	"math/rand"
 	"os"
 	"os/exec"
 	"strconv"
 	"strings"
 )
-
-func init() {
-	rand.Seed(42)
-}
 
 // Rect is a rectangle with an origin x, origin y, width, and height
 type Rect struct {

@@ -15,6 +15,36 @@ func init() {
 }
 
 func render() {
+	// // blink cursor
+	// cursorTicker := time.NewTicker(time.Second / 2)
+	// cursorDone := make(chan bool)
+	// defer (func() {
+	// 	cursorDone <- true
+	// })()
+	// go (func() {
+	// 	visible := true
+	// 	for {
+	// 		select {
+	// 		case <-cursorTicker.C:
+	// 			t := getSelection().getContainer().(*Term)
+
+	// 			v.bufferMutux.Lock()
+	// 			char := v.buffer[v.Cursor.Y][v.Cursor.X]
+	// 			if visible && v.Selected {
+	// 				char.Cursor.Underline = true
+	// 			}
+	// 			v.out <- char
+
+	// 			v.bufferMutux.Unlock()
+	// 			visible = !visible
+	// 			break
+	// 		case <-cursorDone:
+	// 			cursorTicker.Stop()
+	// 			return
+	// 		}
+	// 	}
+	// })()
+
 	lastCursor := cursor.Cursor{}
 	for {
 		char, ok := <-globalCharAggregate

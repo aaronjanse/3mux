@@ -37,8 +37,6 @@ func (t *Term) setRenderRect(x, y, w, h int) {
 }
 
 func (t *Term) softRefresh() {
-	t.vterm.Selected = t.selected
-
 	if t.selected {
 		drawSelectionBorder(t.renderRect)
 	}

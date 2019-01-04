@@ -53,10 +53,18 @@ func DeltaMarkup(from, to Cursor) string {
 		out += "\033[22m"
 	}
 
+	if from.Underline && !to.Underline {
+		out += "\033[24m"
+	}
+
 	/* adding effects */
 
 	if !from.Faint && to.Faint {
 		out += "\033[2m"
+	}
+
+	if !from.Underline && to.Underline {
+		out += "\033[4m"
 	}
 
 	return out

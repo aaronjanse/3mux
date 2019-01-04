@@ -10,14 +10,6 @@ import (
 	"github.com/kr/pty"
 )
 
-// Coords is a pair of x and y coordinates
-type Coords struct {
-	x, y int
-}
-
-// Markup is text that may or may not contain special escape codes such as ANSI CSI Sequences
-type Markup string
-
 // A Term is the fundamental leaf unit of screen space
 type Term struct {
 	id int
@@ -37,7 +29,7 @@ type Term struct {
 
 func newTerm(selected bool) *Term {
 	// Create arbitrary command.
-	c := exec.Command("zsh")
+	c := exec.Command("sh")
 
 	// Start the command with a pty.
 	ptmx, err := pty.Start(c)
