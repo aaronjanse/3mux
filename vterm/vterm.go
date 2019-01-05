@@ -74,16 +74,6 @@ func (v *VTerm) Reshape(w, h int) {
 	v.w = w
 	v.h = h
 
-	// // clear the relevant area of the screen
-	// for j := 0; j < v.h; j++ {
-	// 	for i := 0; i < v.w; i++ {
-	// 		v.out <- Char{
-	// 			Rune:   '_',
-	// 			Cursor: cursor.Cursor{X: i, Y: j},
-	// 		}
-	// 	}
-	// }
-
 	v.bufferMutux.Unlock()
 }
 

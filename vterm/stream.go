@@ -125,6 +125,7 @@ func (v *VTerm) handleCSISequence() {
 					// TODO
 				case "7": // Auto-wrap Mode (DECAWM)
 					// TODO
+				case "12": // start blinking cursor
 				case "25": // show cursor
 					// TODO
 				case "1024": // enable alt screen buffer
@@ -139,6 +140,7 @@ func (v *VTerm) handleCSISequence() {
 			case 'l':
 				switch parameterCode {
 				case "1": // Normal cursor keys (DECCKM)
+				case "12": // stop blinking cursor
 				case "25": // hide cursor
 					// TODO
 				case "1024": // disable alt screen buffer
@@ -218,7 +220,25 @@ func (v *VTerm) handleCSISequence() {
 				seq := parseSemicolonNumSeq(parameterCode, 0)
 				switch seq[0] {
 				case 0: // clear from cursor to end of screen
+					for i := v.cursor.X; i < len(v.buffer[v.cursor.Y]); i++ {
+						v.buffer[v.cursor.Y][i].Rune = 0
+					}
+					if v.cursor.Y+1 < len(v.buffer) {
+						for j := v.cursor.Y; j < len(v.buffer); j++ {
+							for i := 0; i < len(v.buffer[j]); i++ {
+								v.buffer[j][i].Rune = 0
+							}
+						}
+					}
 				case 1: // clear from cursor to beginning of screen
+					for j := 0; j < v.cursor.Y; j++ {
+						for i := 0; i < len(v.buffer[j]); j++ {
+							v.buffer[j][i].Rune = 0
+						}
+					}
+					for i := 0; i < v.cursor.X; i++ {
+						v.buffer[v.cursor.Y][i].Rune = 0
+					}
 				case 2: // clear entire screen (and move cursor to top left?)
 					for i := range v.buffer {
 						for j := range v.buffer[i] {
@@ -250,10 +270,10 @@ func (v *VTerm) handleCSISequence() {
 				v.cursor.Y = 0
 			// case 'S': // Scroll Up; new lines added to bottom
 			// case 'T': // Scroll Down; new lines added to top
-			// case 'l': // Insert Lines
-			// seq := parseSemicolonNumSeq(parameterCode, 1)
-			// v.cursor.X = 0
-			// v.cursor.Y -= seq[0]
+			case 'l': // Insert Lines
+				seq := parseSemicolonNumSeq(parameterCode, 1)
+				v.cursor.X = 0
+				v.cursor.Y -= seq[0]
 			case 'm': // Select Graphic Rendition
 				v.handleSDR(parameterCode)
 			case 's': // Save Cursor Position

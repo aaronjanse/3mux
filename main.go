@@ -14,12 +14,14 @@ func main() {
 		t.vterm.StartBlinker()
 	})()
 
+	refreshEverything()
+
 	keypress.Listen(func(name string, raw []byte) {
 		if f, ok := config.bindings[name]; ok {
 			f()
 			root.simplify()
 			refreshEverything()
-			debug(root.serialize())
+			// debug(root.serialize())
 		} else {
 			t := getSelection().getContainer().(*Term)
 			t.handleStdin(string(raw))
