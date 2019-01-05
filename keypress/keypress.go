@@ -75,7 +75,11 @@ func Listen(callback func(name string, raw []byte)) {
 				if data[0] <= 26 {
 					handle("Ctrl+" + string('A'+data[0]-1))
 				} else {
-					handle(string(data[0]))
+					letter := string(data[0])
+					if letter == "q" {
+						return
+					}
+					handle(letter)
 				}
 			}
 		}

@@ -25,6 +25,8 @@ func main() {
 			t.handleStdin(string(raw))
 		}
 	})
+
+	root.kill()
 }
 
 func debug(s string) {

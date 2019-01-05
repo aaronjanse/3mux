@@ -42,7 +42,7 @@ type VTerm struct {
 // NewVTerm returns a VTerm ready to be used by its exported methods
 func NewVTerm(in <-chan rune, out chan<- Char) *VTerm {
 	w := 30
-	h := 30
+	h := 10
 
 	buffer := [][]Char{}
 	for j := 0; j < h; j++ {
@@ -91,26 +91,34 @@ func (v *VTerm) Reshape(w, h int) {
 func (v *VTerm) RedrawWindow() {
 	v.bufferMutux.Lock()
 
-	verticalArea := v.h
-	if v.h > len(v.buffer) {
-		verticalArea = len(v.buffer)
+	var visibleBuffer [][]Char
+	if len(v.buffer) > v.h {
+		visibleBuffer = v.buffer[len(v.buffer)-v.h:]
+	} else {
+		visibleBuffer = v.buffer
 	}
 
-	for y, row := range v.buffer[len(v.buffer)-verticalArea:] {
-		for i := 0; i < v.w; i++ {
-			if i > len(row)-1 {
-				v.out <- Char{
-					Rune: ' ',
-					Cursor: cursor.Cursor{
-						X: i,
-						Y: y,
-					},
-				}
-			} else {
+	for j := 0; j <= v.h; j++ {
+		var row []Char
+		if j < len(visibleBuffer) {
+			row = visibleBuffer[j]
+		} else {
+			row = []Char{}
+		}
+
+		for i := 0; i <= v.w; i++ {
+			if i < len(row) {
 				char := row[i]
+				char.Cursor.X = i
+				char.Cursor.Y = j
 				if char.Rune != 0 {
 					v.out <- char
+					continue
 				}
+			}
+			v.out <- Char{
+				Rune:   ' ',
+				Cursor: cursor.Cursor{X: i, Y: j},
 			}
 		}
 	}
