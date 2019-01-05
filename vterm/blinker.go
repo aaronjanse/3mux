@@ -55,31 +55,37 @@ func (v *VTerm) updateBlinker() {
 
 func (v *VTerm) startFade() {
 	cleanUp := func() {
-		oldChar := v.buffer[v.blinker.y][v.blinker.x]
+		if v.blinker.y > len(v.screen)-1 || v.blinker.x > len(v.screen[v.blinker.y])-1 {
+			return
+		}
+		oldChar := v.screen[v.blinker.y][v.blinker.x]
 		if oldChar.Rune == 0 {
 			oldChar.Rune = ' '
 		}
+		oldChar.Cursor.X = v.blinker.x
+		oldChar.Cursor.Y = v.blinker.y
 		v.out <- oldChar
 	}
 
 	cleanUp()
 
-	if v.cursor.Y > len(v.buffer)-1 || v.cursor.X > len(v.buffer[v.cursor.Y])-1 {
+	if v.cursor.Y > len(v.screen)-1 || v.cursor.X > len(v.screen[v.cursor.Y])-1 {
 		return
 	}
 
 	v.blinker.x = v.cursor.X
 	v.blinker.y = v.cursor.Y
 
-	char := v.buffer[v.blinker.y][v.blinker.x]
+	char := v.screen[v.blinker.y][v.blinker.x]
 	char.Cursor.Bg = cursor.Color{
 		ColorMode: cursor.ColorBit3Bright,
 		Code:      7,
 	}
+	char.Cursor.X = v.blinker.x
+	char.Cursor.Y = v.blinker.y
 	if char.Rune == 0 {
 		char.Rune = ' '
 	}
-	// char.Rune = '0'
 	v.out <- char
 
 	go (func() {

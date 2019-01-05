@@ -6,8 +6,6 @@ A Char is a character printed using a given cursor (which is stored alongside th
 package vterm
 
 import (
-	"sync"
-
 	"github.com/aaronduino/i3-tmux/cursor"
 )
 
@@ -26,8 +24,12 @@ It both transforms an inbound stream of bytes into Char's and provides the optio
 type VTerm struct {
 	w, h int
 
-	buffer      [][]Char
-	bufferMutux *sync.Mutex
+	// visible screen; char cursor coords are ignored
+	screen [][]Char
+
+	scrollback [][]Char // disabled when using alt screen; char cursor coords are ignored
+
+	usingAltScreen bool
 
 	cursor cursor.Cursor
 
@@ -41,10 +43,10 @@ type VTerm struct {
 
 // NewVTerm returns a VTerm ready to be used by its exported methods
 func NewVTerm(in <-chan rune, out chan<- Char) *VTerm {
-	w := 30
+	w := 10
 	h := 10
 
-	buffer := [][]Char{}
+	screen := [][]Char{}
 	for j := 0; j < h; j++ {
 		row := []Char{}
 		for i := 0; i < w; i++ {
@@ -53,45 +55,49 @@ func NewVTerm(in <-chan rune, out chan<- Char) *VTerm {
 				Cursor: cursor.Cursor{X: i, Y: j},
 			})
 		}
-		buffer = append(buffer, row)
+		screen = append(screen, row)
 	}
 
 	return &VTerm{
-		w:           w,
-		h:           h,
-		buffer:      buffer,
-		bufferMutux: &sync.Mutex{},
-		cursor:      cursor.Cursor{X: 0, Y: 0},
-		in:          in,
-		out:         out,
-		blinker:     newBlinker(),
+		w:              w,
+		h:              h,
+		screen:         screen,
+		scrollback:     [][]Char{},
+		usingAltScreen: false,
+		cursor:         cursor.Cursor{X: 0, Y: 0},
+		in:             in,
+		out:            out,
+		blinker:        newBlinker(),
 	}
 }
 
 // Reshape safely updates a VTerm's width & height
 func (v *VTerm) Reshape(w, h int) {
-	v.bufferMutux.Lock()
+	if h > len(v.screen) { // move lines from scrollback
+		linesToAdd := h - len(v.screen)
+		if linesToAdd > len(v.scrollback) {
+			linesToAdd = len(v.scrollback)
+		}
+
+		v.screen = append(v.scrollback[len(v.scrollback)-linesToAdd:], v.screen...)
+		v.scrollback = v.scrollback[:len(v.scrollback)-linesToAdd]
+	} else if h < len(v.screen) { // move lines to scrollback
+		linesToMove := len(v.screen) - h
+
+		v.scrollback = append(v.scrollback, v.screen[:linesToMove]...)
+		v.screen = v.screen[linesToMove:]
+	}
+
 	v.w = w
 	v.h = h
-
-	v.bufferMutux.Unlock()
 }
 
 // RedrawWindow draws the entire visible window from scratch, sending the Char's to the scheduler via the out channel
 func (v *VTerm) RedrawWindow() {
-	v.bufferMutux.Lock()
-
-	var visibleBuffer [][]Char
-	if len(v.buffer) > v.h {
-		visibleBuffer = v.buffer[len(v.buffer)-v.h:]
-	} else {
-		visibleBuffer = v.buffer
-	}
-
 	for j := 0; j <= v.h; j++ {
 		var row []Char
-		if j < len(visibleBuffer) {
-			row = visibleBuffer[j]
+		if j < len(v.screen) {
+			row = v.screen[j]
 		} else {
 			row = []Char{}
 		}
@@ -112,6 +118,17 @@ func (v *VTerm) RedrawWindow() {
 			}
 		}
 	}
+}
 
-	v.bufferMutux.Unlock()
+func (v *VTerm) updateCursor() {
+	if v.cursor.Y > v.h-1 { // move lines to scrollback
+		linesToMove := v.cursor.Y - v.h + 1
+		v.scrollback = append(v.scrollback, v.screen[:linesToMove]...)
+		v.screen = v.screen[linesToMove:]
+
+		v.cursor.Y = v.h - 1
+
+		v.RedrawWindow()
+	}
+	v.updateBlinker()
 }

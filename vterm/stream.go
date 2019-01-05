@@ -25,17 +25,16 @@ func (v *VTerm) ProcessStream() {
 			if v.cursor.X < 0 {
 				v.cursor.X = 0
 			}
-			v.updateBlinker()
+			v.updateCursor()
 		case '\n':
 			v.cursor.Y++
 			v.cursor.X = 0
-			v.updateBlinker()
+			v.updateCursor()
 		case '\r':
 			v.cursor.X = 0
-			v.updateBlinker()
+			v.updateCursor()
 		default:
 			if unicode.IsPrint(next) {
-				v.bufferMutux.Lock()
 				if v.cursor.X < 0 {
 					v.cursor.X = 0
 				}
@@ -48,34 +47,31 @@ func (v *VTerm) ProcessStream() {
 					Cursor: v.cursor,
 				}
 
-				if len(v.buffer)-1 < v.cursor.Y {
-					for i := len(v.buffer); i < v.cursor.Y+1; i++ {
-						v.buffer = append(v.buffer, []Char{Char{
-							Rune:   0,
-							Cursor: cursor.Cursor{X: 0, Y: i},
+				if len(v.screen)-1 < v.cursor.Y {
+					for i := len(v.screen); i < v.cursor.Y+1; i++ {
+						v.screen = append(v.screen, []Char{Char{
+							Rune: 0,
 						}})
 					}
 				}
-				if len(v.buffer[v.cursor.Y])-1 < v.cursor.X {
-					for i := len(v.buffer[v.cursor.Y]); i < v.cursor.X+1; i++ {
-						v.buffer[v.cursor.Y] = append(v.buffer[v.cursor.Y], Char{
-							Rune:   0,
-							Cursor: cursor.Cursor{X: i, Y: v.cursor.Y},
+				if len(v.screen[v.cursor.Y])-1 < v.cursor.X {
+					for i := len(v.screen[v.cursor.Y]); i < v.cursor.X+1; i++ {
+						v.screen[v.cursor.Y] = append(v.screen[v.cursor.Y], Char{
+							Rune: 0,
 						})
 					}
 				}
 
-				v.buffer[v.cursor.Y][v.cursor.X] = char
+				v.screen[v.cursor.Y][v.cursor.X] = char
 
 				if v.cursor.X < v.w && v.cursor.Y < v.h {
+					char.Cursor.X = v.cursor.X
+					char.Cursor.Y = v.cursor.Y
 					v.out <- char
-
 				}
 
 				v.cursor.X++
-				v.updateBlinker()
-
-				v.bufferMutux.Unlock()
+				v.updateCursor()
 			} else {
 				v.debug(fmt.Sprintf("%x    ", next))
 			}
@@ -162,31 +158,31 @@ func (v *VTerm) handleCSISequence() {
 				if v.cursor.Y < 0 {
 					v.cursor.Y = 0
 				}
-				v.updateBlinker()
+				v.updateCursor()
 			case 'B': // Cursor Down
 				seq := parseSemicolonNumSeq(parameterCode, 1)
 				v.cursor.Y += seq[0]
-				v.updateBlinker()
+				v.updateCursor()
 			case 'C': // Cursor Right
 				seq := parseSemicolonNumSeq(parameterCode, 1)
 				v.cursor.X += seq[0]
-				v.updateBlinker()
+				v.updateCursor()
 			case 'D': // Cursor Left
 				seq := parseSemicolonNumSeq(parameterCode, 1)
 				v.cursor.X -= seq[0]
 				if v.cursor.X < 0 {
 					v.cursor.X = 0
 				}
-				v.updateBlinker()
+				v.updateCursor()
 			case 'd': // Vertical Line Position Absolute (VPA)
 				seq := parseSemicolonNumSeq(parameterCode, 1)
 				v.cursor.Y = seq[0] - 1
-				v.updateBlinker()
+				v.updateCursor()
 			case 'E': // Cursor Next Line
 				seq := parseSemicolonNumSeq(parameterCode, 1)
 				v.cursor.Y += seq[0]
 				v.cursor.X = 0
-				v.updateBlinker()
+				v.updateCursor()
 			case 'F': // Cursor Previous Line
 				seq := parseSemicolonNumSeq(parameterCode, 1)
 				v.cursor.Y -= seq[0]
@@ -194,7 +190,7 @@ func (v *VTerm) handleCSISequence() {
 				if v.cursor.Y < 0 {
 					v.cursor.Y = 0
 				}
-				v.updateBlinker()
+				v.updateCursor()
 			case 'G': // Cursor Horizontal Absolute
 				seq := parseSemicolonNumSeq(parameterCode, 1)
 				v.cursor.X = seq[0] - 1
@@ -215,75 +211,89 @@ func (v *VTerm) handleCSISequence() {
 						}
 					}
 				}
-				v.updateBlinker()
+				v.updateCursor()
 			case 'J': // Erase in Display
 				seq := parseSemicolonNumSeq(parameterCode, 0)
 				switch seq[0] {
 				case 0: // clear from cursor to end of screen
-					for i := v.cursor.X; i < len(v.buffer[v.cursor.Y]); i++ {
-						v.buffer[v.cursor.Y][i].Rune = 0
+					for i := v.cursor.X; i < len(v.screen[v.cursor.Y]); i++ {
+						v.screen[v.cursor.Y][i].Rune = 0
 					}
-					if v.cursor.Y+1 < len(v.buffer) {
-						for j := v.cursor.Y; j < len(v.buffer); j++ {
-							for i := 0; i < len(v.buffer[j]); i++ {
-								v.buffer[j][i].Rune = 0
+					if v.cursor.Y+1 < len(v.screen) {
+						for j := v.cursor.Y; j < len(v.screen); j++ {
+							for i := 0; i < len(v.screen[j]); i++ {
+								v.screen[j][i].Rune = 0
 							}
 						}
 					}
 				case 1: // clear from cursor to beginning of screen
 					for j := 0; j < v.cursor.Y; j++ {
-						for i := 0; i < len(v.buffer[j]); j++ {
-							v.buffer[j][i].Rune = 0
+						for i := 0; i < len(v.screen[j]); j++ {
+							v.screen[j][i].Rune = 0
 						}
 					}
 					for i := 0; i < v.cursor.X; i++ {
-						v.buffer[v.cursor.Y][i].Rune = 0
+						v.screen[v.cursor.Y][i].Rune = 0
 					}
 				case 2: // clear entire screen (and move cursor to top left?)
-					for i := range v.buffer {
-						for j := range v.buffer[i] {
-							v.buffer[i][j].Rune = ' '
+					for i := range v.screen {
+						for j := range v.screen[i] {
+							v.screen[i][j].Rune = ' '
 						}
 					}
 					v.cursor.X = 0
 					v.cursor.Y = 0
 				case 3: // clear entire screen and delete all lines saved in scrollback buffer
 				}
+				v.RedrawWindow()
 			case 'K': // Erase in Line
 				seq := parseSemicolonNumSeq(parameterCode, 0)
 				switch seq[0] {
 				case 0: // clear from cursor to end of line
-					for i := v.cursor.X; i < len(v.buffer[v.cursor.Y]); i++ {
-						v.buffer[v.cursor.Y][i].Rune = 0
+					for i := v.cursor.X; i < len(v.screen[v.cursor.Y]); i++ {
+						v.screen[v.cursor.Y][i].Rune = 0
 					}
 				case 1: // clear from cursor to beginning of line
 					for i := 0; i < v.cursor.X; i++ {
-						v.buffer[v.cursor.Y][i].Rune = 0
+						v.screen[v.cursor.Y][i].Rune = 0
 					}
 				case 2: // clear entire line; cursor position remains the same
-					for i := 0; i < len(v.buffer[v.cursor.Y]); i++ {
-						v.buffer[v.cursor.Y][i].Rune = 0
+					for i := 0; i < len(v.screen[v.cursor.Y]); i++ {
+						v.screen[v.cursor.Y][i].Rune = 0
 					}
 				}
+				v.RedrawWindow()
 			case 'r': // Set Scrolling Region
+				// FIXME
 				v.cursor.X = 0
 				v.cursor.Y = 0
-			// case 'S': // Scroll Up; new lines added to bottom
-			// case 'T': // Scroll Down; new lines added to top
+			case 'S': // Scroll Up; new lines added to bottom
+				seq := parseSemicolonNumSeq(parameterCode, 1)
+				numLines := seq[0]
+				v.scrollback = append(v.scrollback, v.screen[:numLines]...)
+				v.screen = v.screen[numLines:]
+				v.RedrawWindow()
+			case 'T': // Scroll Down; new lines added to top
+				seq := parseSemicolonNumSeq(parameterCode, 1)
+				numLines := seq[0]
+				v.screen = append(v.scrollback[len(v.scrollback)-numLines:], v.screen...)
+				v.scrollback = v.scrollback[:len(v.scrollback)-numLines]
+				v.RedrawWindow()
 			case 'l': // Insert Lines
 				seq := parseSemicolonNumSeq(parameterCode, 1)
 				v.cursor.X = 0
 				v.cursor.Y -= seq[0]
+				v.updateCursor()
 			case 'm': // Select Graphic Rendition
 				v.handleSDR(parameterCode)
 			case 's': // Save Cursor Position
 				v.storedCursorX = v.cursor.X
 				v.storedCursorY = v.cursor.Y
-				v.updateBlinker()
+				v.updateCursor()
 			case 'u': // Restore Cursor Positon
 				v.cursor.X = v.storedCursorX
 				v.cursor.Y = v.storedCursorY
-				v.updateBlinker()
+				v.updateCursor()
 			default:
 				v.debug("CSI Code: " + string(next) + " ; " + parameterCode)
 			}
