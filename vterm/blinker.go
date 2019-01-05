@@ -56,37 +56,54 @@ func (v *VTerm) updateBlinker() {
 func (v *VTerm) startFade() {
 	cleanUp := func() {
 		if v.blinker.y > len(v.screen)-1 || v.blinker.x > len(v.screen[v.blinker.y])-1 {
-			return
+			char := Char{
+				Rune: ' ',
+				Cursor: cursor.Cursor{
+					X: v.blinker.x, Y: v.blinker.y,
+				},
+			}
+			v.out <- char
+		} else {
+			oldChar := v.screen[v.blinker.y][v.blinker.x]
+			if oldChar.Rune == 0 {
+				oldChar.Rune = ' '
+			}
+			oldChar.Cursor.X = v.blinker.x
+			oldChar.Cursor.Y = v.blinker.y
+			v.out <- oldChar
 		}
-		oldChar := v.screen[v.blinker.y][v.blinker.x]
-		if oldChar.Rune == 0 {
-			oldChar.Rune = ' '
-		}
-		oldChar.Cursor.X = v.blinker.x
-		oldChar.Cursor.Y = v.blinker.y
-		v.out <- oldChar
 	}
 
 	cleanUp()
 
-	if v.cursor.Y > len(v.screen)-1 || v.cursor.X > len(v.screen[v.cursor.Y])-1 {
-		return
-	}
-
 	v.blinker.x = v.cursor.X
 	v.blinker.y = v.cursor.Y
 
-	char := v.screen[v.blinker.y][v.blinker.x]
-	char.Cursor.Bg = cursor.Color{
-		ColorMode: cursor.ColorBit3Bright,
-		Code:      7,
+	if v.cursor.Y > len(v.screen)-1 || v.cursor.X > len(v.screen[v.cursor.Y])-1 {
+		char := Char{
+			Rune: ' ',
+			Cursor: cursor.Cursor{
+				X: v.blinker.x, Y: v.blinker.y,
+				Bg: cursor.Color{
+					ColorMode: cursor.ColorBit3Bright,
+					Code:      7,
+				},
+			},
+		}
+		v.out <- char
+	} else {
+		char := v.screen[v.blinker.y][v.blinker.x]
+		char.Cursor.Bg = cursor.Color{
+			ColorMode: cursor.ColorBit3Bright,
+			Code:      7,
+		}
+		char.Cursor.X = v.blinker.x
+		char.Cursor.Y = v.blinker.y
+		if char.Rune == 0 {
+			char.Rune = ' '
+		}
+		v.out <- char
 	}
-	char.Cursor.X = v.blinker.x
-	char.Cursor.Y = v.blinker.y
-	if char.Rune == 0 {
-		char.Rune = ' '
-	}
-	v.out <- char
 
 	go (func() {
 		fadeTimer := time.NewTimer(time.Second / 2)

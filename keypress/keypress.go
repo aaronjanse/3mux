@@ -76,9 +76,9 @@ func Listen(callback func(name string, raw []byte)) {
 					handle("Ctrl+" + string('A'+data[0]-1))
 				} else {
 					letter := string(data[0])
-					if letter == "q" {
-						return
-					}
+					// if letter == "q" {
+					// 	return
+					// }
 					handle(letter)
 				}
 			}
