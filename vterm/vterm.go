@@ -49,7 +49,7 @@ func NewVTerm(in <-chan rune, out chan<- Char) *VTerm {
 		row := []Char{}
 		for i := 0; i < w; i++ {
 			row = append(row, Char{
-				Rune:   0,
+				Rune:   ' ',
 				Cursor: cursor.Cursor{X: i, Y: j},
 			})
 		}
@@ -73,6 +73,17 @@ func (v *VTerm) Reshape(w, h int) {
 	v.bufferMutux.Lock()
 	v.w = w
 	v.h = h
+
+	// // clear the relevant area of the screen
+	// for j := 0; j < v.h; j++ {
+	// 	for i := 0; i < v.w; i++ {
+	// 		v.out <- Char{
+	// 			Rune:   '_',
+	// 			Cursor: cursor.Cursor{X: i, Y: j},
+	// 		}
+	// 	}
+	// }
+
 	v.bufferMutux.Unlock()
 }
 
@@ -85,15 +96,21 @@ func (v *VTerm) RedrawWindow() {
 		verticalArea = len(v.buffer)
 	}
 
-	for _, row := range v.buffer[len(v.buffer)-verticalArea:] {
-		for _, char := range row {
-			// truncate characters past the width
-			if char.Cursor.X > v.w {
-				break
-			}
-
-			if char.Rune != 0 {
-				v.out <- char
+	for y, row := range v.buffer[len(v.buffer)-verticalArea:] {
+		for i := 0; i < v.w; i++ {
+			if i > len(row)-1 {
+				v.out <- Char{
+					Rune: ' ',
+					Cursor: cursor.Cursor{
+						X: i,
+						Y: y,
+					},
+				}
+			} else {
+				char := row[i]
+				if char.Rune != 0 {
+					v.out <- char
+				}
 			}
 		}
 	}

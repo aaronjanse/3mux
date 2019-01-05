@@ -9,6 +9,17 @@ import (
 // this for when a split is reshaped
 func (s *Split) setRenderRect(x, y, w, h int) {
 	s.renderRect = Rect{x, y, w, h}
+
+	// // clear the relevant area of the screen
+	// for j := 0; j < h; j++ {
+	// 	for i := 0; i < w; i++ {
+	// 		globalCharAggregate <- vterm.Char{
+	// 			Rune:   '~',
+	// 			Cursor: cursor.Cursor{X: x + i, Y: y + j},
+	// 		}
+	// 	}
+	// }
+
 	s.refreshRenderRect()
 }
 
@@ -19,16 +30,6 @@ func (s *Split) refreshRenderRect() {
 	y := s.renderRect.y
 	w := s.renderRect.w
 	h := s.renderRect.h
-
-	// // clear the relevant area of the screen
-	// for j := 0; j < h; j++ {
-	// 	for i := 0; i < w; i++ {
-	// 		globalCharAggregate <- vterm.Char{
-	// 			Rune:   ' ',
-	// 			Cursor: cursor.Cursor{X: x + i, Y: y + j},
-	// 		}
-	// 	}
-	// }
 
 	s.redrawLines()
 

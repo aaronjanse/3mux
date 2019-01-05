@@ -20,7 +20,7 @@ func (v *VTerm) ProcessStream() {
 		switch next {
 		case '\x1b':
 			v.handleEscapeCode()
-		case 8, 127:
+		case 8:
 			v.cursor.X--
 			if v.cursor.X < 0 {
 				v.cursor.X = 0
@@ -94,6 +94,7 @@ func (v *VTerm) handleEscapeCode() {
 	case '[':
 		v.handleCSISequence()
 	case '(': // Character set
+		<-v.in
 		// TODO
 	default:
 		v.debug("ESC Code: " + string(next))
@@ -102,6 +103,8 @@ func (v *VTerm) handleEscapeCode() {
 
 func (v *VTerm) handleCSISequence() {
 	privateSequence := false
+
+	// <-time.NewTimer(time.Second / 8).C
 
 	parameterCode := ""
 	for {
@@ -118,21 +121,32 @@ func (v *VTerm) handleCSISequence() {
 			switch next {
 			case 'h':
 				switch parameterCode {
+				case "1": // application arrow keys (DECCKM)
+					// TODO
+				case "7": // Auto-wrap Mode (DECAWM)
+					// TODO
 				case "25": // show cursor
 					// TODO
 				case "1024": // enable alt screen buffer
 					// TODO
-				case "2004": // disable alt screen buffer
+				case "1049": // enable alt screen buffer
 					// TODO
+				case "2004": // enable bracketed paste mode
+					// TODO
+				default:
+					v.debug("CSI Private H Code: " + parameterCode + string(next))
 				}
 			case 'l':
 				switch parameterCode {
-				case "25": // show cursor
+				case "1": // Normal cursor keys (DECCKM)
+				case "25": // hide cursor
 					// TODO
-				case "1024": // enable alt screen buffer
+				case "1024": // disable alt screen buffer
 					// TODO
-				case "2004": // disable alt screen buffer
+				case "2004": // disable bracketed paste mode
 					// TODO
+				default:
+					v.debug("CSI Private L Code: " + parameterCode + string(next))
 				}
 			default:
 				v.debug("CSI Private Code: " + parameterCode + string(next))
@@ -162,6 +176,10 @@ func (v *VTerm) handleCSISequence() {
 					v.cursor.X = 0
 				}
 				v.updateBlinker()
+			case 'd': // Vertical Line Position Absolute (VPA)
+				seq := parseSemicolonNumSeq(parameterCode, 1)
+				v.cursor.Y = seq[0] - 1
+				v.updateBlinker()
 			case 'E': // Cursor Next Line
 				seq := parseSemicolonNumSeq(parameterCode, 1)
 				v.cursor.Y += seq[0]
@@ -180,14 +198,19 @@ func (v *VTerm) handleCSISequence() {
 				v.cursor.X = seq[0] - 1
 			case 'H', 'f': // Cursor Position
 				seq := parseSemicolonNumSeq(parameterCode, 1)
-				v.cursor.Y = seq[0] - 1
-				if v.cursor.Y < 0 {
+				if parameterCode == "" {
+					v.cursor.X = 0
 					v.cursor.Y = 0
-				}
-				if len(seq) > 1 {
-					v.cursor.X = seq[1] - 1
-					if v.cursor.X < 0 {
-						v.cursor.X = 0
+				} else {
+					v.cursor.Y = seq[0] - 1
+					if v.cursor.Y < 0 {
+						v.cursor.Y = 0
+					}
+					if len(seq) > 1 {
+						v.cursor.X = seq[1] - 1
+						if v.cursor.X < 0 {
+							v.cursor.X = 0
+						}
 					}
 				}
 				v.updateBlinker()
@@ -197,6 +220,13 @@ func (v *VTerm) handleCSISequence() {
 				case 0: // clear from cursor to end of screen
 				case 1: // clear from cursor to beginning of screen
 				case 2: // clear entire screen (and move cursor to top left?)
+					for i := range v.buffer {
+						for j := range v.buffer[i] {
+							v.buffer[i][j].Rune = ' '
+						}
+					}
+					v.cursor.X = 0
+					v.cursor.Y = 0
 				case 3: // clear entire screen and delete all lines saved in scrollback buffer
 				}
 			case 'K': // Erase in Line
@@ -215,8 +245,15 @@ func (v *VTerm) handleCSISequence() {
 						v.buffer[v.cursor.Y][i].Rune = 0
 					}
 				}
-			case 'S': // Scroll Up; new lines added to bottom
-			case 'T': // Scroll Down; new lines added to top
+			case 'r': // Set Scrolling Region
+				v.cursor.X = 0
+				v.cursor.Y = 0
+			// case 'S': // Scroll Up; new lines added to bottom
+			// case 'T': // Scroll Down; new lines added to top
+			// case 'l': // Insert Lines
+			// seq := parseSemicolonNumSeq(parameterCode, 1)
+			// v.cursor.X = 0
+			// v.cursor.Y -= seq[0]
 			case 'm': // Select Graphic Rendition
 				v.handleSDR(parameterCode)
 			case 's': // Save Cursor Position
@@ -228,7 +265,7 @@ func (v *VTerm) handleCSISequence() {
 				v.cursor.Y = v.storedCursorY
 				v.updateBlinker()
 			default:
-				v.debug("CSI Code: " + string(next))
+				v.debug("CSI Code: " + string(next) + " ; " + parameterCode)
 			}
 			return
 		}
@@ -237,6 +274,12 @@ func (v *VTerm) handleCSISequence() {
 
 func (v *VTerm) handleSDR(parameterCode string) {
 	seq := parseSemicolonNumSeq(parameterCode, 0)
+
+	if parameterCode == "39;49" {
+		v.cursor.Fg.ColorMode = cursor.ColorNone
+		v.cursor.Bg.ColorMode = cursor.ColorNone
+		return
+	}
 
 	c := seq[0]
 
@@ -275,8 +318,10 @@ func (v *VTerm) handleSDR(parameterCode string) {
 		v.cursor.CrossedOut = false
 	case 38: // set foreground color
 	case 39: // default foreground color
+		v.cursor.Fg.ColorMode = cursor.ColorNone
 	case 48: // set background color
 	case 49: // default background color
+		v.cursor.Bg.ColorMode = cursor.ColorNone
 	default:
 		if c >= 30 && c <= 37 {
 			if len(seq) > 1 && seq[1] == 1 {

@@ -1,7 +1,9 @@
 package main
 
 import (
+	"github.com/aaronduino/i3-tmux/cursor"
 	"github.com/aaronduino/i3-tmux/keypress"
+	"github.com/aaronduino/i3-tmux/vterm"
 )
 
 func main() {
@@ -17,10 +19,22 @@ func main() {
 			f()
 			root.simplify()
 			refreshEverything()
+			debug(root.serialize())
 		} else {
 			t := getSelection().getContainer().(*Term)
 			t.handleStdin(string(raw))
-			refreshEverything()
 		}
 	})
+}
+
+func debug(s string) {
+	for i, r := range []rune(s) {
+		globalCharAggregate <- vterm.Char{
+			Rune: r,
+			Cursor: cursor.Cursor{
+				X: i,
+				Y: termH - 1,
+			},
+		}
+	}
 }

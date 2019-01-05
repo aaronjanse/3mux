@@ -75,6 +75,12 @@ func newTerm(selected bool) *Term {
 	go (func() {
 		for {
 			char := <-vtermOut
+			if char.Cursor.X > t.renderRect.w {
+				continue
+			}
+			if char.Cursor.Y > t.renderRect.h {
+				continue
+			}
 			char.Cursor.X += t.renderRect.x
 			char.Cursor.Y += t.renderRect.y
 			globalCharAggregate <- char
