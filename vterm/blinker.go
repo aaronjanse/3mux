@@ -27,6 +27,10 @@ func newBlinker() *Blinker {
 // StartBlinker starts blinking a cursor at the vterm's selection.
 // The cursor should be visible immediately after this function is called.
 func (v *VTerm) StartBlinker() {
+	if v.blinker.blinking {
+		return
+	}
+
 	v.startFade()
 
 	v.blinker.blinking = true
@@ -121,7 +125,9 @@ func (v *VTerm) startFade() {
 
 // StopBlinker immediately hides and stops blinking the vterm's cursor.
 func (v *VTerm) StopBlinker() {
-	if v.blinker.blinking {
-		v.blinker.stopBlinking <- true
+	if !v.blinker.blinking {
+		return
 	}
+
+	v.blinker.stopBlinking <- true
 }

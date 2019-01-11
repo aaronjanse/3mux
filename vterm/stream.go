@@ -118,29 +118,29 @@ func (v *VTerm) handleCSISequence() {
 			case 'h':
 				switch parameterCode {
 				case "1": // application arrow keys (DECCKM)
-					// TODO
 				case "7": // Auto-wrap Mode (DECAWM)
-					// TODO
 				case "12": // start blinking cursor
 				case "25": // show cursor
-					// TODO
-				case "1024": // enable alt screen buffer
-					// TODO
-				case "1049": // enable alt screen buffer
-					// TODO
+					v.StartBlinker()
+				case "1049", "1047", "47": // switch to alt screen buffer
+					if !v.usingAltScreen {
+						v.screenBackup = v.screen
+					}
 				case "2004": // enable bracketed paste mode
-					// TODO
 				default:
 					v.debug("CSI Private H Code: " + parameterCode + string(next))
 				}
 			case 'l':
 				switch parameterCode {
 				case "1": // Normal cursor keys (DECCKM)
+				case "7": // No Auto-wrap Mode (DECAWM)
 				case "12": // stop blinking cursor
 				case "25": // hide cursor
-					// TODO
-				case "1024": // disable alt screen buffer
-					// TODO
+					v.StopBlinker()
+				case "1049", "1047", "47": // switch to normal screen buffer
+					if v.usingAltScreen {
+						v.screen = v.screenBackup
+					}
 				case "2004": // disable bracketed paste mode
 					// TODO
 				default:
@@ -244,13 +244,14 @@ func (v *VTerm) handleCSISequence() {
 					v.cursor.X = 0
 					v.cursor.Y = 0
 				case 3: // clear entire screen and delete all lines saved in scrollback buffer
+					// TODO
 				}
 				v.RedrawWindow()
 			case 'K': // Erase in Line
 				seq := parseSemicolonNumSeq(parameterCode, 0)
 				switch seq[0] {
 				case 0: // clear from cursor to end of line
-					for i := v.cursor.X; i < len(v.screen[v.cursor.Y]); i++ {
+					for i := v.cursor.X; i < len(v.screen[v.cursor.Y]); i++ { // FIXME: sometimes crashes
 						v.screen[v.cursor.Y][i].Rune = 0
 					}
 				case 1: // clear from cursor to beginning of line

@@ -73,7 +73,11 @@ func Listen(callback func(name string, raw []byte)) {
 		default:
 			if ev.N == 1 {
 				if data[0] <= 26 {
-					handle("Ctrl+" + string('A'+data[0]-1))
+					letter := string('A' + data[0] - 1)
+					if letter == "Q" {
+						return
+					}
+					handle("Ctrl+" + letter)
 				} else {
 					letter := string(data[0])
 					// if letter == "q" {

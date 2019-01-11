@@ -9,6 +9,13 @@ import (
 	"github.com/aaronduino/i3-tmux/cursor"
 )
 
+// ScrollingRegion holds the state for an ANSI scrolling region
+type ScrollingRegion struct {
+	enabled bool
+	top     int
+	bottom  int
+}
+
 // Char represents one character in the terminal's grid
 type Char struct {
 	Rune rune
@@ -30,6 +37,7 @@ type VTerm struct {
 	scrollback [][]Char // disabled when using alt screen; char cursor coords are ignored
 
 	usingAltScreen bool
+	screenBackup   [][]Char
 
 	cursor cursor.Cursor
 
@@ -39,6 +47,8 @@ type VTerm struct {
 	storedCursorX, storedCursorY int
 
 	blinker *Blinker
+
+	scrollingRegion ScrollingRegion
 }
 
 // NewVTerm returns a VTerm ready to be used by its exported methods
@@ -121,9 +131,13 @@ func (v *VTerm) RedrawWindow() {
 }
 
 func (v *VTerm) updateCursor() {
-	if v.cursor.Y > v.h-1 { // move lines to scrollback
+	if v.cursor.Y > v.h-1 {
 		linesToMove := v.cursor.Y - v.h + 1
-		v.scrollback = append(v.scrollback, v.screen[:linesToMove]...)
+
+		if !v.usingAltScreen {
+			v.scrollback = append(v.scrollback, v.screen[:linesToMove]...)
+		}
+
 		v.screen = v.screen[linesToMove:]
 
 		v.cursor.Y = v.h - 1
