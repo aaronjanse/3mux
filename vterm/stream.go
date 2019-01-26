@@ -3,6 +3,7 @@ package vterm
 import (
 	"fmt"
 	"log"
+	"strconv"
 	"unicode"
 
 	"github.com/aaronduino/i3-tmux/cursor"
@@ -27,8 +28,25 @@ func (v *VTerm) ProcessStream() {
 			}
 			v.updateCursor()
 		case '\n':
-			v.cursor.Y++
 			v.cursor.X = 0
+			if v.cursor.Y == v.scrollingRegion.bottom {
+				// disable scrollback if using alt screen
+				if !v.usingAltScreen {
+					// v.scrollback = append(v.scrollback, v.screen[len(v.screen)-1:]...)
+					v.scrollback = append(v.scrollback, v.screen[v.scrollingRegion.top])
+				}
+
+				// v.screen = append(v.screen[:len(v.screen)-1], []Char{})
+				v.screen = append(append(append(
+					v.screen[:v.scrollingRegion.top],
+					v.screen[v.scrollingRegion.top+1:v.scrollingRegion.bottom+1]...),
+					[]Char{}),
+					v.screen[v.scrollingRegion.bottom+1:]...)
+
+				v.RedrawWindow()
+			} else {
+				v.cursor.Y++
+			}
 			v.updateCursor()
 		case '\r':
 			v.cursor.X = 0
@@ -151,6 +169,9 @@ func (v *VTerm) handleCSISequence() {
 			}
 			return
 		} else {
+			// if next != 'H' && next != 'C' {
+			// 	v.debug(string(next))
+			// }
 			switch next {
 			case 'A': // Cursor Up
 				seq := parseSemicolonNumSeq(parameterCode, 1)
@@ -247,44 +268,96 @@ func (v *VTerm) handleCSISequence() {
 					// TODO
 				}
 				v.RedrawWindow()
-			case 'K': // Erase in Line
-				seq := parseSemicolonNumSeq(parameterCode, 0)
-				switch seq[0] {
-				case 0: // clear from cursor to end of line
-					for i := v.cursor.X; i < len(v.screen[v.cursor.Y]); i++ { // FIXME: sometimes crashes
-						v.screen[v.cursor.Y][i].Rune = 0
-					}
-				case 1: // clear from cursor to beginning of line
-					for i := 0; i < v.cursor.X; i++ {
-						v.screen[v.cursor.Y][i].Rune = 0
-					}
-				case 2: // clear entire line; cursor position remains the same
-					for i := 0; i < len(v.screen[v.cursor.Y]); i++ {
-						v.screen[v.cursor.Y][i].Rune = 0
-					}
-				}
-				v.RedrawWindow()
+			// case 'K': // Erase in Line
+			// 	seq := parseSemicolonNumSeq(parameterCode, 0)
+			// 	switch seq[0] {
+			// 	case 0: // clear from cursor to end of line
+			// 		for i := v.cursor.X; i < len(v.screen[v.cursor.Y]); i++ { // FIXME: sometimes crashes
+			// 			v.screen[v.cursor.Y][i].Rune = 0
+			// 		}
+			// 	case 1: // clear from cursor to beginning of line
+			// 		for i := 0; i < v.cursor.X; i++ {
+			// 			v.screen[v.cursor.Y][i].Rune = 0
+			// 		}
+			// 	case 2: // clear entire line; cursor position remains the same
+			// 		for i := 0; i < len(v.screen[v.cursor.Y]); i++ {
+			// 			v.screen[v.cursor.Y][i].Rune = 0
+			// 		}
+			// 	}
+			// 	v.RedrawWindow()
 			case 'r': // Set Scrolling Region
-				// FIXME
+				seq := parseSemicolonNumSeq(parameterCode, 1)
+				v.scrollingRegion.top = seq[0] - 1
+				if len(seq) > 1 {
+					v.scrollingRegion.bottom = seq[1] - 1
+				} else {
+					v.scrollingRegion.bottom = v.h - 1
+				}
 				v.cursor.X = 0
 				v.cursor.Y = 0
-			case 'S': // Scroll Up; new lines added to bottom
-				seq := parseSemicolonNumSeq(parameterCode, 1)
-				numLines := seq[0]
-				v.scrollback = append(v.scrollback, v.screen[:numLines]...)
-				v.screen = v.screen[numLines:]
-				v.RedrawWindow()
-			case 'T': // Scroll Down; new lines added to top
-				seq := parseSemicolonNumSeq(parameterCode, 1)
-				numLines := seq[0]
-				v.screen = append(v.scrollback[len(v.scrollback)-numLines:], v.screen...)
-				v.scrollback = v.scrollback[:len(v.scrollback)-numLines]
-				v.RedrawWindow()
-			case 'l': // Insert Lines
+			// case 'S': // Scroll Up; new lines added to bottom
+			// 	seq := parseSemicolonNumSeq(parameterCode, 1)
+			// 	numLines := seq[0]
+			// 	// v.scrollback = append(v.scrollback, v.screen[:numLines]...)
+			// 	// v.screen = v.screen[numLines:]
+			// 	if !v.usingAltScreen {
+			// 		// v.scrollback = append(v.scrollback, v.screen[len(v.screen)-1:]...)
+			// 		v.scrollback = append(v.scrollback, v.screen[v.scrollingRegion.top:v.scrollingRegion.top+numLines]...)
+			// 	}
+
+			// 	newLines := make([][]Char, numLines)
+
+			// 	// v.screen = append(v.screen[:len(v.screen)-1], []Char{})
+			// 	v.screen = append(append(append(
+			// 		v.screen[:v.scrollingRegion.top],
+			// 		v.screen[v.scrollingRegion.top+numLines:v.scrollingRegion.bottom+1]...),
+			// 		newLines...),
+			// 		v.screen[v.scrollingRegion.bottom+1:]...)
+
+			// 	v.RedrawWindow()
+			// case 'T': // Scroll Down; new lines added to top
+			// 	seq := parseSemicolonNumSeq(parameterCode, 1)
+			// 	numLines := seq[0]
+			// 	// v.screen = append(v.scrollback[len(v.scrollback)-numLines:], v.screen...)
+			// 	// v.scrollback = v.scrollback[:len(v.scrollback)-numLines]
+
+			// 	newLines := make([][]Char, numLines)
+
+			// 	// v.screen = append(v.screen[:len(v.screen)-1], []Char{})
+			// 	v.screen = append(append(append(
+			// 		v.screen[:v.scrollingRegion.top],
+			// 		newLines...),
+			// 		v.screen[v.scrollingRegion.top:v.scrollingRegion.bottom-numLines]...),
+			// 		v.screen[v.scrollingRegion.bottom+1:]...)
+
+			// 	v.RedrawWindow()
+			case 'l', 'L': // Insert Lines
 				seq := parseSemicolonNumSeq(parameterCode, 1)
 				v.cursor.X = 0
-				v.cursor.Y -= seq[0]
+
+				if v.cursor.Y < v.scrollingRegion.top || v.cursor.Y > v.scrollingRegion.bottom {
+					v.debug("unhandled insert line operation")
+					return
+				}
+
+				numLines := seq[0]
+				newLines := make([][]Char, numLines)
+
+				above := [][]Char{}
+				if v.cursor.Y > 0 {
+					above = v.screen[:v.cursor.Y]
+				}
+
+				v.screen = append(append(append(
+					above,
+					newLines...),
+					v.screen[v.cursor.Y:v.scrollingRegion.bottom-numLines+1]...),
+					v.screen[v.scrollingRegion.bottom+1:]...)
+
+				v.cursor.Y++
 				v.updateCursor()
+				v.RedrawWindow()
+				v.debug("                        " + strconv.Itoa(v.cursor.Y))
 			case 'm': // Select Graphic Rendition
 				v.handleSDR(parameterCode)
 			case 's': // Save Cursor Position
@@ -296,7 +369,7 @@ func (v *VTerm) handleCSISequence() {
 				v.cursor.Y = v.storedCursorY
 				v.updateCursor()
 			default:
-				v.debug("CSI Code: " + string(next) + " ; " + parameterCode)
+				// v.debug("CSI Code: " + string(next) + " ; " + parameterCode)
 			}
 			return
 		}

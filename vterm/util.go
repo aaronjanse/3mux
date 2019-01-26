@@ -38,8 +38,8 @@ func (v *VTerm) debug(s string) {
 		v.out <- Char{
 			Rune: r,
 			Cursor: cursor.Cursor{
-				X: i,
-				Y: 10,
+				X: i + 20,
+				Y: 3,
 			},
 		}
 	}
