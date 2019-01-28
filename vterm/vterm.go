@@ -137,20 +137,5 @@ func (v *VTerm) RedrawWindow() {
 }
 
 func (v *VTerm) updateCursor() {
-	// if v.cursor.Y == v.scrollingRegion.bottom {
-	// 	linesToMove := v.cursor.Y - v.scrollingRegion.bottom
-
-	// 	if !v.usingAltScreen {
-	// 		v.scrollback = append(v.scrollback, v.screen[:linesToMove]...)
-	// 	}
-
-	// 	if linesToMove < len(v.screen)-1 {
-	// 		v.screen = v.screen[linesToMove:]
-	// 	}
-
-	// 	v.cursor.Y = v.scrollingRegion.bottom
-
-	// 	v.RedrawWindow()
-	// }
 	v.updateBlinker()
 }

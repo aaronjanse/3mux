@@ -7,6 +7,11 @@ import (
 )
 
 func main() {
+	// fmt.Println("\xe2\x94\x82")
+	// fmt.Println(string(rune('\xe2'<<16 + '\x94'<<8 + '\x82')))
+
+	// return
+
 	go render()
 
 	// go (func() {

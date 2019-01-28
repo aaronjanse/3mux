@@ -29,7 +29,7 @@ type Term struct {
 
 func newTerm(selected bool) *Term {
 	// Create arbitrary command.
-	c := exec.Command("sh")
+	c := exec.Command("zsh")
 
 	// Start the command with a pty.
 	ptmx, err := pty.Start(c)
@@ -68,7 +68,13 @@ func newTerm(selected bool) *Term {
 			if err != nil {
 				return
 			}
-			t.vtermIn <- rune(b[0])
+			r := rune(b[0])
+			if r == '\t' { // FIXME
+				t.vtermIn <- ' '
+				t.vtermIn <- ' '
+			} else {
+				t.vtermIn <- r
+			}
 		}
 	})()
 

@@ -3,9 +3,8 @@ package vterm
 import (
 	"fmt"
 	"log"
-	"strconv"
-	"time"
 	"unicode"
+	"unicode/utf8"
 
 	"github.com/aaronduino/i3-tmux/cursor"
 )
@@ -19,6 +18,30 @@ func (v *VTerm) ProcessStream() {
 			return
 		}
 
+		// <-time.NewTimer(time.Second / 32).C
+
+		if next > 127 {
+			value := []byte{byte(next)}
+
+			leadingHex := next >> 4
+			// v.debug(fmt.Sprintf("%x", next>>4))
+			switch leadingHex {
+			case 12: // 1100
+				value = append(value, byte(<-v.in))
+			case 14: // 1110
+				value = append(value, byte(<-v.in))
+				value = append(value, byte(<-v.in))
+			case 15: // 1111
+				value = append(value, byte(<-v.in))
+				value = append(value, byte(<-v.in))
+				value = append(value, byte(<-v.in))
+			}
+
+			// v.debug(fmt.Sprintf("%x", value))
+
+			next, _ = utf8.DecodeRune(value)
+		}
+
 		switch next {
 		case '\x1b':
 			v.handleEscapeCode()
@@ -29,7 +52,7 @@ func (v *VTerm) ProcessStream() {
 			}
 			v.updateCursor()
 		case '\n':
-			v.cursor.X = 0
+			// v.cursor.X = 0
 			if v.cursor.Y == v.scrollingRegion.bottom {
 				// disable scrollback if using alt screen
 				if !v.usingAltScreen {
@@ -119,7 +142,7 @@ func (v *VTerm) handleEscapeCode() {
 func (v *VTerm) handleCSISequence() {
 	privateSequence := false
 
-	<-time.NewTimer(time.Second / 4).C
+	// <-time.NewTimer(time.Second / 2).C
 
 	parameterCode := ""
 	for {
@@ -140,7 +163,7 @@ func (v *VTerm) handleCSISequence() {
 				case "7": // Auto-wrap Mode (DECAWM)
 				case "12": // start blinking cursor
 				case "25": // show cursor
-					v.StartBlinker()
+					// v.StartBlinker()
 				case "1049", "1047", "47": // switch to alt screen buffer
 					if !v.usingAltScreen {
 						v.screenBackup = v.screen
@@ -155,7 +178,7 @@ func (v *VTerm) handleCSISequence() {
 				case "7": // No Auto-wrap Mode (DECAWM)
 				case "12": // stop blinking cursor
 				case "25": // hide cursor
-					v.StopBlinker()
+					// v.StopBlinker()
 				case "1049", "1047", "47": // switch to normal screen buffer
 					if v.usingAltScreen {
 						v.screen = v.screenBackup
@@ -359,7 +382,7 @@ func (v *VTerm) handleCSISequence() {
 				v.cursor.Y++
 				v.updateCursor()
 				v.RedrawWindow()
-				v.debug("                        " + strconv.Itoa(v.cursor.Y))
+				// v.debug("                        " + strconv.Itoa(v.cursor.Y))
 			case 'm': // Select Graphic Rendition
 				v.handleSDR(parameterCode)
 			case 's': // Save Cursor Position
@@ -423,9 +446,31 @@ func (v *VTerm) handleSDR(parameterCode string) {
 	case 29:
 		v.cursor.CrossedOut = false
 	case 38: // set foreground color
+		if seq[1] == 5 {
+			v.cursor.Fg = cursor.Color{
+				ColorMode: cursor.ColorBit8,
+				Code:      int32(seq[2]),
+			}
+		} else if seq[1] == 2 {
+			v.cursor.Fg = cursor.Color{
+				ColorMode: cursor.ColorBit24,
+				Code:      int32(seq[2]<<16 + seq[3]<<8 + seq[4]),
+			}
+		}
 	case 39: // default foreground color
 		v.cursor.Fg.ColorMode = cursor.ColorNone
 	case 48: // set background color
+		if seq[1] == 5 {
+			v.cursor.Bg = cursor.Color{
+				ColorMode: cursor.ColorBit8,
+				Code:      int32(seq[2]),
+			}
+		} else if seq[1] == 2 {
+			v.cursor.Bg = cursor.Color{
+				ColorMode: cursor.ColorBit24,
+				Code:      int32(seq[2]<<16 + seq[3]<<8 + seq[4]),
+			}
+		}
 	case 49: // default background color
 		v.cursor.Bg.ColorMode = cursor.ColorNone
 	default:

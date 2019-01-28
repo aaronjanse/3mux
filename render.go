@@ -50,5 +50,5 @@ func init() {
 }
 
 func refreshEverything() {
-	root.setRenderRect(0, 0, termW, termH)
+	root.setRenderRect(0, 0, termW, termH-1)
 }
