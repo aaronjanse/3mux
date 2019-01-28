@@ -9,10 +9,10 @@ import (
 func main() {
 	go render()
 
-	go (func() {
-		t := getSelection().getContainer().(*Term)
-		t.vterm.StartBlinker()
-	})()
+	// go (func() {
+	t := getSelection().getContainer().(*Term)
+	t.vterm.StartBlinker()
+	// })()
 
 	refreshEverything()
 

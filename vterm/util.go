@@ -39,7 +39,7 @@ func (v *VTerm) debug(s string) {
 			Rune: r,
 			Cursor: cursor.Cursor{
 				X: i + 20,
-				Y: 3,
+				Y: 10,
 			},
 		}
 	}

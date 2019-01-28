@@ -68,15 +68,16 @@ func NewVTerm(in <-chan rune, out chan<- Char) *VTerm {
 	}
 
 	return &VTerm{
-		w:              w,
-		h:              h,
-		screen:         screen,
-		scrollback:     [][]Char{},
-		usingAltScreen: false,
-		cursor:         cursor.Cursor{X: 0, Y: 0},
-		in:             in,
-		out:            out,
-		blinker:        newBlinker(),
+		w:               w,
+		h:               h,
+		screen:          screen,
+		scrollback:      [][]Char{},
+		usingAltScreen:  false,
+		cursor:          cursor.Cursor{X: 0, Y: 0},
+		in:              in,
+		out:             out,
+		blinker:         newBlinker(),
+		scrollingRegion: ScrollingRegion{top: 0, bottom: h - 1},
 	}
 }
 
@@ -84,17 +85,23 @@ func NewVTerm(in <-chan rune, out chan<- Char) *VTerm {
 func (v *VTerm) Reshape(w, h int) {
 	if h > len(v.screen) { // move lines from scrollback
 		linesToAdd := h - len(v.screen)
-		if linesToAdd > len(v.scrollback) {
-			linesToAdd = len(v.scrollback)
+		scrollbackLinesToAdd := linesToAdd
+		if scrollbackLinesToAdd > len(v.scrollback) {
+			scrollbackLinesToAdd = len(v.scrollback)
 		}
 
-		v.screen = append(v.scrollback[len(v.scrollback)-linesToAdd:], v.screen...)
-		v.scrollback = v.scrollback[:len(v.scrollback)-linesToAdd]
+		v.screen = append(v.scrollback[len(v.scrollback)-scrollbackLinesToAdd:], v.screen...)
+		v.screen = append(v.screen, make([][]Char, linesToAdd-scrollbackLinesToAdd)...)
+		v.scrollback = v.scrollback[:len(v.scrollback)-scrollbackLinesToAdd]
 	} else if h < len(v.screen) { // move lines to scrollback
 		linesToMove := len(v.screen) - h
 
 		v.scrollback = append(v.scrollback, v.screen[:linesToMove]...)
 		v.screen = v.screen[linesToMove:]
+	}
+
+	if v.scrollingRegion.top == 0 && v.scrollingRegion.bottom == v.h-1 {
+		v.scrollingRegion.bottom = h - 1
 	}
 
 	v.w = w

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"strconv"
+	"time"
 	"unicode"
 
 	"github.com/aaronduino/i3-tmux/cursor"
@@ -118,7 +119,7 @@ func (v *VTerm) handleEscapeCode() {
 func (v *VTerm) handleCSISequence() {
 	privateSequence := false
 
-	// <-time.NewTimer(time.Second / 8).C
+	<-time.NewTimer(time.Second / 4).C
 
 	parameterCode := ""
 	for {
@@ -169,9 +170,10 @@ func (v *VTerm) handleCSISequence() {
 			}
 			return
 		} else {
-			// if next != 'H' && next != 'C' {
+			// if next != 'H' && next != 'C' && next != 'G' && next != 'm' {
 			// 	v.debug(string(next))
 			// }
+			// v.debug(string(next))
 			switch next {
 			case 'A': // Cursor Up
 				seq := parseSemicolonNumSeq(parameterCode, 1)
@@ -268,23 +270,23 @@ func (v *VTerm) handleCSISequence() {
 					// TODO
 				}
 				v.RedrawWindow()
-			// case 'K': // Erase in Line
-			// 	seq := parseSemicolonNumSeq(parameterCode, 0)
-			// 	switch seq[0] {
-			// 	case 0: // clear from cursor to end of line
-			// 		for i := v.cursor.X; i < len(v.screen[v.cursor.Y]); i++ { // FIXME: sometimes crashes
-			// 			v.screen[v.cursor.Y][i].Rune = 0
-			// 		}
-			// 	case 1: // clear from cursor to beginning of line
-			// 		for i := 0; i < v.cursor.X; i++ {
-			// 			v.screen[v.cursor.Y][i].Rune = 0
-			// 		}
-			// 	case 2: // clear entire line; cursor position remains the same
-			// 		for i := 0; i < len(v.screen[v.cursor.Y]); i++ {
-			// 			v.screen[v.cursor.Y][i].Rune = 0
-			// 		}
-			// 	}
-			// 	v.RedrawWindow()
+			case 'K': // Erase in Line
+				seq := parseSemicolonNumSeq(parameterCode, 0)
+				switch seq[0] {
+				case 0: // clear from cursor to end of line
+					for i := v.cursor.X; i < len(v.screen[v.cursor.Y]); i++ { // FIXME: sometimes crashes
+						v.screen[v.cursor.Y][i].Rune = 0
+					}
+				case 1: // clear from cursor to beginning of line
+					for i := 0; i < v.cursor.X; i++ {
+						v.screen[v.cursor.Y][i].Rune = 0
+					}
+				case 2: // clear entire line; cursor position remains the same
+					for i := 0; i < len(v.screen[v.cursor.Y]); i++ {
+						v.screen[v.cursor.Y][i].Rune = 0
+					}
+				}
+				v.RedrawWindow()
 			case 'r': // Set Scrolling Region
 				seq := parseSemicolonNumSeq(parameterCode, 1)
 				v.scrollingRegion.top = seq[0] - 1
@@ -295,43 +297,43 @@ func (v *VTerm) handleCSISequence() {
 				}
 				v.cursor.X = 0
 				v.cursor.Y = 0
-			// case 'S': // Scroll Up; new lines added to bottom
-			// 	seq := parseSemicolonNumSeq(parameterCode, 1)
-			// 	numLines := seq[0]
-			// 	// v.scrollback = append(v.scrollback, v.screen[:numLines]...)
-			// 	// v.screen = v.screen[numLines:]
-			// 	if !v.usingAltScreen {
-			// 		// v.scrollback = append(v.scrollback, v.screen[len(v.screen)-1:]...)
-			// 		v.scrollback = append(v.scrollback, v.screen[v.scrollingRegion.top:v.scrollingRegion.top+numLines]...)
-			// 	}
+			case 'S': // Scroll Up; new lines added to bottom
+				seq := parseSemicolonNumSeq(parameterCode, 1)
+				numLines := seq[0]
+				// v.scrollback = append(v.scrollback, v.screen[:numLines]...)
+				// v.screen = v.screen[numLines:]
+				if !v.usingAltScreen {
+					// v.scrollback = append(v.scrollback, v.screen[len(v.screen)-1:]...)
+					v.scrollback = append(v.scrollback, v.screen[v.scrollingRegion.top:v.scrollingRegion.top+numLines]...)
+				}
 
-			// 	newLines := make([][]Char, numLines)
+				newLines := make([][]Char, numLines)
 
-			// 	// v.screen = append(v.screen[:len(v.screen)-1], []Char{})
-			// 	v.screen = append(append(append(
-			// 		v.screen[:v.scrollingRegion.top],
-			// 		v.screen[v.scrollingRegion.top+numLines:v.scrollingRegion.bottom+1]...),
-			// 		newLines...),
-			// 		v.screen[v.scrollingRegion.bottom+1:]...)
+				// v.screen = append(v.screen[:len(v.screen)-1], []Char{})
+				v.screen = append(append(append(
+					v.screen[:v.scrollingRegion.top],
+					v.screen[v.scrollingRegion.top+numLines:v.scrollingRegion.bottom+1]...),
+					newLines...),
+					v.screen[v.scrollingRegion.bottom+1:]...)
 
-			// 	v.RedrawWindow()
-			// case 'T': // Scroll Down; new lines added to top
-			// 	seq := parseSemicolonNumSeq(parameterCode, 1)
-			// 	numLines := seq[0]
-			// 	// v.screen = append(v.scrollback[len(v.scrollback)-numLines:], v.screen...)
-			// 	// v.scrollback = v.scrollback[:len(v.scrollback)-numLines]
+				v.RedrawWindow()
+			case 'T': // Scroll Down; new lines added to top
+				seq := parseSemicolonNumSeq(parameterCode, 1)
+				numLines := seq[0]
+				// v.screen = append(v.scrollback[len(v.scrollback)-numLines:], v.screen...)
+				// v.scrollback = v.scrollback[:len(v.scrollback)-numLines]
 
-			// 	newLines := make([][]Char, numLines)
+				newLines := make([][]Char, numLines)
 
-			// 	// v.screen = append(v.screen[:len(v.screen)-1], []Char{})
-			// 	v.screen = append(append(append(
-			// 		v.screen[:v.scrollingRegion.top],
-			// 		newLines...),
-			// 		v.screen[v.scrollingRegion.top:v.scrollingRegion.bottom-numLines]...),
-			// 		v.screen[v.scrollingRegion.bottom+1:]...)
+				// v.screen = append(v.screen[:len(v.screen)-1], []Char{})
+				v.screen = append(append(append(
+					v.screen[:v.scrollingRegion.top],
+					newLines...),
+					v.screen[v.scrollingRegion.top:v.scrollingRegion.bottom-numLines]...),
+					v.screen[v.scrollingRegion.bottom+1:]...)
 
-			// 	v.RedrawWindow()
-			case 'l', 'L': // Insert Lines
+				v.RedrawWindow()
+			case 'L': // Insert Lines
 				seq := parseSemicolonNumSeq(parameterCode, 1)
 				v.cursor.X = 0
 
@@ -369,7 +371,7 @@ func (v *VTerm) handleCSISequence() {
 				v.cursor.Y = v.storedCursorY
 				v.updateCursor()
 			default:
-				// v.debug("CSI Code: " + string(next) + " ; " + parameterCode)
+				v.debug("CSI Code: " + string(next) + " ; " + parameterCode)
 			}
 			return
 		}
