@@ -54,20 +54,21 @@ func (v *VTerm) ProcessStream() {
 		case '\n':
 			// v.cursor.X = 0
 			if v.cursor.Y == v.scrollingRegion.bottom {
-				// disable scrollback if using alt screen
-				if !v.usingAltScreen {
-					// v.scrollback = append(v.scrollback, v.screen[len(v.screen)-1:]...)
-					v.scrollback = append(v.scrollback, v.screen[v.scrollingRegion.top])
-				}
+				v.scrollDown(1)
+				// // disable scrollback if using alt screen
+				// if !v.usingAltScreen {
+				// 	// v.scrollback = append(v.scrollback, v.screen[len(v.screen)-1:]...)
+				// 	v.scrollback = append(v.scrollback, v.screen[v.scrollingRegion.top])
+				// }
 
-				// v.screen = append(v.screen[:len(v.screen)-1], []Char{})
-				v.screen = append(append(append(
-					v.screen[:v.scrollingRegion.top],
-					v.screen[v.scrollingRegion.top+1:v.scrollingRegion.bottom+1]...),
-					[]Char{}),
-					v.screen[v.scrollingRegion.bottom+1:]...)
+				// // v.screen = append(v.screen[:len(v.screen)-1], []Char{})
+				// v.screen = append(append(append(
+				// 	v.screen[:v.scrollingRegion.top],
+				// 	v.screen[v.scrollingRegion.top+1:v.scrollingRegion.bottom+1]...),
+				// 	[]Char{}),
+				// 	v.screen[v.scrollingRegion.bottom+1:]...)
 
-				v.RedrawWindow()
+				// v.RedrawWindow()
 			} else {
 				v.cursor.Y++
 			}
@@ -323,23 +324,7 @@ func (v *VTerm) handleCSISequence() {
 			case 'S': // Scroll Up; new lines added to bottom
 				seq := parseSemicolonNumSeq(parameterCode, 1)
 				numLines := seq[0]
-				// v.scrollback = append(v.scrollback, v.screen[:numLines]...)
-				// v.screen = v.screen[numLines:]
-				if !v.usingAltScreen {
-					// v.scrollback = append(v.scrollback, v.screen[len(v.screen)-1:]...)
-					v.scrollback = append(v.scrollback, v.screen[v.scrollingRegion.top:v.scrollingRegion.top+numLines]...)
-				}
-
-				newLines := make([][]Char, numLines)
-
-				// v.screen = append(v.screen[:len(v.screen)-1], []Char{})
-				v.screen = append(append(append(
-					v.screen[:v.scrollingRegion.top],
-					v.screen[v.scrollingRegion.top+numLines:v.scrollingRegion.bottom+1]...),
-					newLines...),
-					v.screen[v.scrollingRegion.bottom+1:]...)
-
-				v.RedrawWindow()
+				v.scrollDown(numLines)
 			case 'T': // Scroll Down; new lines added to top
 				seq := parseSemicolonNumSeq(parameterCode, 1)
 				numLines := seq[0]
