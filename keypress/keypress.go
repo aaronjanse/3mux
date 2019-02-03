@@ -32,6 +32,13 @@ func Listen(callback func(name string, raw []byte)) {
 		switch data[0] {
 		// case 3: // Ctrl+C
 		// 	return
+		case 195:
+			letter := rune(data[1] - 128 + 64)
+			if unicode.IsUpper(letter) {
+				handle("Alt+Shift+" + string(unicode.ToUpper(letter)))
+			} else {
+				handle("Alt+" + string(unicode.ToUpper(letter)))
+			}
 		case 27:
 			if ev.N == 1 { // Lone Esc Key
 				handle("Esc")
