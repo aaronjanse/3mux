@@ -23,8 +23,9 @@ type Term struct {
 
 	vterm *vterm.VTerm
 
-	vtermIn  chan<- rune
-	vtermOut <-chan vterm.Char
+	vtermIn         chan<- rune
+	vtermOut        <-chan vterm.Char
+	vtermOperations <-chan vterm.Operation
 }
 
 func newTerm(selected bool) *Term {
@@ -39,8 +40,9 @@ func newTerm(selected bool) *Term {
 
 	vtermIn := make(chan rune, 32)
 	vtermOut := make(chan vterm.Char, 32)
+	vtermOperations := make(chan vterm.Operation, 32)
 
-	vt := vterm.NewVTerm(vtermIn, vtermOut)
+	vt := vterm.NewVTerm(vtermIn, vtermOut, vtermOperations)
 
 	t := &Term{
 		id:       rand.Intn(10),
@@ -48,9 +50,10 @@ func newTerm(selected bool) *Term {
 		ptmx:     ptmx,
 		cmd:      c,
 
-		vterm:    vt,
-		vtermIn:  vtermIn,
-		vtermOut: vtermOut,
+		vterm:           vt,
+		vtermIn:         vtermIn,
+		vtermOut:        vtermOut,
+		vtermOperations: vtermOperations,
 	}
 
 	go (func() {
@@ -90,6 +93,14 @@ func newTerm(selected bool) *Term {
 			char.Cursor.X += t.renderRect.x
 			char.Cursor.Y += t.renderRect.y
 			globalCharAggregate <- char
+		}
+	})()
+
+	go (func() {
+		for {
+			oper := <-vtermOperations
+			text := oper.Serialize(t.renderRect.x, t.renderRect.y, t.renderRect.w, t.renderRect.h, globalCursor)
+			globalRawAggregate <- text
 		}
 	})()
 

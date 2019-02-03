@@ -9,29 +9,37 @@ import (
 )
 
 var globalCharAggregate chan vterm.Char
+var globalRawAggregate chan string
+
+var globalCursor cursor.Cursor
 
 func init() {
 	globalCharAggregate = make(chan vterm.Char)
+	globalRawAggregate = make(chan string)
+	globalCursor = cursor.Cursor{}
 }
 
 func render() {
-	lastCursor := cursor.Cursor{}
 	for {
-		char, ok := <-globalCharAggregate
-		if !ok {
-			fmt.Println("Exiting scheduler")
-			return
-		}
+		select {
+		case char, ok := <-globalCharAggregate:
+			if !ok {
+				fmt.Println("Exiting scheduler")
+				return
+			}
 
-		escCode := cursor.DeltaMarkup(lastCursor, char.Cursor)
-		fmt.Print(escCode)
+			escCode := cursor.DeltaMarkup(globalCursor, char.Cursor)
+			fmt.Print(escCode)
 
-		fmt.Print(string(char.Rune))
+			fmt.Print(string(char.Rune))
 
-		lastCursor = char.Cursor
+			globalCursor = char.Cursor
 
-		if unicode.IsPrint(char.Rune) {
-			lastCursor.X++
+			if unicode.IsPrint(char.Rune) {
+				globalCursor.X++
+			}
+		case s := <-globalRawAggregate:
+			fmt.Print(s)
 		}
 	}
 }

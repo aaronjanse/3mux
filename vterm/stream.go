@@ -54,19 +54,22 @@ func (v *VTerm) ProcessStream() {
 		case '\n':
 			// v.cursor.X = 0
 			if v.cursor.Y == v.scrollingRegion.bottom {
-				v.scrollDown(1)
-				// // disable scrollback if using alt screen
-				// if !v.usingAltScreen {
-				// 	// v.scrollback = append(v.scrollback, v.screen[len(v.screen)-1:]...)
-				// 	v.scrollback = append(v.scrollback, v.screen[v.scrollingRegion.top])
-				// }
+				// v.scrollDown(1)
 
-				// // v.screen = append(v.screen[:len(v.screen)-1], []Char{})
-				// v.screen = append(append(append(
-				// 	v.screen[:v.scrollingRegion.top],
-				// 	v.screen[v.scrollingRegion.top+1:v.scrollingRegion.bottom+1]...),
-				// 	[]Char{}),
-				// 	v.screen[v.scrollingRegion.bottom+1:]...)
+				// disable scrollback if using alt screen
+				if !v.usingAltScreen && len(v.screen) > v.scrollingRegion.top {
+					// v.scrollback = append(v.scrollback, v.screen[len(v.screen)-1:]...)
+					v.scrollback = append(v.scrollback, v.screen[v.scrollingRegion.top])
+				}
+
+				// v.screen = append(v.screen[:len(v.screen)-1], []Char{})
+				v.screen = append(append(append(
+					v.screen[:v.scrollingRegion.top],
+					v.screen[v.scrollingRegion.top+1:v.scrollingRegion.bottom+1]...),
+					[]Char{}),
+					v.screen[v.scrollingRegion.bottom+1:]...)
+
+				v.oper <- ScrollDown{}
 
 				// v.RedrawWindow()
 			} else {
