@@ -40,6 +40,9 @@ func (s *Split) refreshRenderRect() {
 		area = w
 	}
 	dividers := getDividerPositions(area, s.elements)
+	if len(s.elements) == 1 {
+		dividers = []int{area}
+	}
 	for idx, pos := range dividers {
 		lastPos := -1
 		if idx > 0 {
@@ -47,7 +50,7 @@ func (s *Split) refreshRenderRect() {
 		}
 
 		childArea := pos - lastPos - 1
-		if idx == len(dividers)-1 {
+		if idx == len(dividers)-1 && idx != 0 {
 			childArea = area - lastPos - 1
 		}
 

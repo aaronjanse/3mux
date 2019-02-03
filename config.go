@@ -2,33 +2,35 @@ package main
 
 // Config stores all user configuration values
 type Config struct {
-	bindings map[string]func()
+	statusBar bool
+	bindings  map[string]string
 }
 
 var config = Config{
-	bindings: map[string]func(){
-		"Alt+N": newWindow,
+	statusBar: false,
+	bindings: map[string]string{
+		"Alt+N": "newWindow",
 
-		"Alt+Shift+Up":    func() { moveWindow(Up) },
-		"Alt+Shift+Down":  func() { moveWindow(Down) },
-		"Alt+Shift+Left":  func() { moveWindow(Left) },
-		"Alt+Shift+Right": func() { moveWindow(Right) },
+		"Alt+Shift+Up":    "moveWindow(Up)",
+		"Alt+Shift+Down":  "moveWindow(Down)",
+		"Alt+Shift+Left":  "moveWindow(Left)",
+		"Alt+Shift+Right": "moveWindow(Right)",
 
-		"Alt+Shift+I": func() { moveWindow(Up) },
-		"Alt+Shift+K": func() { moveWindow(Down) },
-		"Alt+Shift+J": func() { moveWindow(Left) },
-		"Alt+Shift+L": func() { moveWindow(Right) },
+		"Alt+Shift+I": "moveWindow(Up)",
+		"Alt+Shift+K": "moveWindow(Down)",
+		"Alt+Shift+J": "moveWindow(Left)",
+		"Alt+Shift+L": "moveWindow(Right)",
 
-		"Alt+Up":    func() { moveSelection(Up) },
-		"Alt+Down":  func() { moveSelection(Down) },
-		"Alt+Left":  func() { moveSelection(Left) },
-		"Alt+Right": func() { moveSelection(Right) },
+		"Alt+Up":    "moveSelection(Up)",
+		"Alt+Down":  "moveSelection(Down)",
+		"Alt+Left":  "moveSelection(Left)",
+		"Alt+Right": "moveSelection(Right)",
 
-		"Alt+I": func() { moveSelection(Up) },
-		"Alt+K": func() { moveSelection(Down) },
-		"Alt+J": func() { moveSelection(Left) },
-		"Alt+L": func() { moveSelection(Right) },
+		"Alt+I": "moveSelection(Up)",
+		"Alt+K": "moveSelection(Down)",
+		"Alt+J": "moveSelection(Left)",
+		"Alt+L": "moveSelection(Right)",
 
-		"Alt+Shift+Q": killWindow,
+		"Alt+Shift+Q": "killWindow",
 	},
 }

@@ -6,6 +6,10 @@ A Char is a character printed using a given cursor (which is stored alongside th
 package vterm
 
 import (
+	"fmt"
+	"os"
+	"strconv"
+
 	"github.com/aaronduino/i3-tmux/capabilities"
 	"github.com/aaronduino/i3-tmux/cursor"
 )
@@ -102,11 +106,15 @@ func (v *VTerm) Reshape(w, h int) {
 		v.screen = append(v.scrollback[len(v.scrollback)-scrollbackLinesToAdd:], v.screen...)
 		v.screen = append(v.screen, make([][]Char, linesToAdd-scrollbackLinesToAdd)...)
 		v.scrollback = v.scrollback[:len(v.scrollback)-scrollbackLinesToAdd]
-	} else if h < len(v.screen) { // move lines to scrollback
+	} else if h < len(v.screen)-1 { // move lines to scrollback
 		linesToMove := len(v.screen) - h
 
 		v.scrollback = append(v.scrollback, v.screen[:linesToMove]...)
-		v.screen = v.screen[linesToMove:]
+		// v.debug(strconv.Itoa(linesToMove))
+		fmt.Fprintln(os.Stdout, strconv.Itoa(len(v.screen)-linesToMove))
+		if linesToMove < len(v.screen) {
+			v.screen = v.screen[linesToMove:]
+		}
 	}
 
 	if v.scrollingRegion.top == 0 && v.scrollingRegion.bottom == v.h-1 {

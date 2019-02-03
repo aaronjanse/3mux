@@ -55,6 +55,8 @@ func moveWindow(d Direction) {
 		parent.elements[idx] = tmp
 
 		parent.selectionIdx--
+
+		parent.refreshRenderRect()
 	} else if (!vert && d == Right) || (vert && d == Down) {
 		idx := parent.selectionIdx
 
@@ -67,6 +69,8 @@ func moveWindow(d Direction) {
 		parent.elements[idx] = tmp
 
 		parent.selectionIdx++
+
+		parent.refreshRenderRect()
 	} else {
 		movingVert := d == Up || d == Down
 
@@ -83,6 +87,8 @@ func moveWindow(d Direction) {
 					s.insertContainer(tmp, s.selectionIdx+1)
 					s.selectionIdx++
 				}
+
+				s.refreshRenderRect()
 				break
 			}
 			p = p[:len(p)-1]
@@ -91,7 +97,16 @@ func moveWindow(d Direction) {
 		if len(p) == 0 {
 			tmp := parentPath.popContainer(parent.selectionIdx)
 			tmpRoot := root
+
+			var h int
+			if config.statusBar {
+				h = termH - 1
+			} else {
+				h = termH
+			}
+
 			root = Split{
+				renderRect:        Rect{w: termW, h: h},
 				verticallyStacked: movingVert,
 				selectionIdx:      0,
 				elements: []Node{
@@ -108,6 +123,8 @@ func moveWindow(d Direction) {
 			}
 			root.insertContainer(tmp, insertIdx)
 			root.selectionIdx = insertIdx
+
+			root.refreshRenderRect()
 		}
 	}
 }
@@ -301,6 +318,8 @@ func newWindow() {
 
 	// update selection to new child
 	parent.selectionIdx = len(parent.elements) - 1
+
+	parent.refreshRenderRect()
 }
 
 func (p Path) getParent() (*Split, Path) {
