@@ -13,8 +13,7 @@ func (v *VTerm) scrollDown(numLines int) {
 		newLines...),
 		v.screen[v.scrollingRegion.bottom+1:]...)
 
-	supportsScrollingRegions := true
-	if supportsScrollingRegions {
+	if hostCaps.ScrollingRegionTopBottom && hostCaps.ScrollingRegionLeftRight {
 		v.oper <- ScrollDown{numLines}
 	} else {
 		v.RedrawWindow()

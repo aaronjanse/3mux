@@ -6,8 +6,15 @@ A Char is a character printed using a given cursor (which is stored alongside th
 package vterm
 
 import (
+	"github.com/aaronduino/i3-tmux/capabilities"
 	"github.com/aaronduino/i3-tmux/cursor"
 )
+
+var hostCaps capabilities.Caps
+
+func init() {
+	hostCaps = capabilities.Capabilities
+}
 
 // ScrollingRegion holds the state for an ANSI scrolling region
 type ScrollingRegion struct {
