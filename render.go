@@ -107,19 +107,3 @@ func render() {
 		}
 	}
 }
-
-func refreshEverything() {
-	// fmt.Print("\033[2J")
-
-	var h int
-	if config.statusBar {
-		h = termH - 1
-	} else {
-		h = termH
-	}
-	root.setRenderRect(0, 0, termW, h)
-
-	if config.statusBar {
-		debug(root.serialize())
-	}
-}

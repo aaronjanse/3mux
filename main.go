@@ -15,13 +15,22 @@ func main() {
 	t := getSelection().getContainer().(*Term)
 	t.vterm.StartBlinker()
 
-	refreshEverything()
+	var h int
+	if config.statusBar {
+		h = termH - 1
+	} else {
+		h = termH
+	}
+	root.setRenderRect(0, 0, termW, h)
+
+	if config.statusBar {
+		debug(root.serialize())
+	}
 
 	keypress.Listen(func(name string, raw []byte) {
 		if operationCode, ok := config.bindings[name]; ok {
 			executeOperationCode(operationCode)
 			root.simplify()
-			// refreshEverything()
 		} else {
 			t := getSelection().getContainer().(*Term)
 			t.handleStdin(string(raw))
