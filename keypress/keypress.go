@@ -4,6 +4,7 @@ Package keypress is a library for advanced keypress detection and parsing.
 package keypress
 
 import (
+	"fmt"
 	"log"
 	"unicode"
 
@@ -18,6 +19,8 @@ func Listen(callback func(name string, raw []byte)) {
 		log.Fatal(err)
 	}
 	defer term.Close()
+
+	fmt.Print("\033[?12h\033[?25h")
 
 	for {
 		data := make([]byte, 16)

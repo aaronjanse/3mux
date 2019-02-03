@@ -28,8 +28,8 @@ func init() {
 		}
 	default:
 		Capabilities = Caps{
-			ScrollingRegionTopBottom: false,
-			ScrollingRegionLeftRight: false,
+			ScrollingRegionTopBottom: true,
+			ScrollingRegionLeftRight: true,
 		}
 	}
 }

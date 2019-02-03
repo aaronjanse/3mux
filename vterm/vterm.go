@@ -45,7 +45,7 @@ type VTerm struct {
 	usingAltScreen bool
 	screenBackup   [][]Char
 
-	cursor cursor.Cursor
+	Cursor cursor.Cursor
 
 	in   <-chan rune
 	out  chan<- Char
@@ -53,7 +53,7 @@ type VTerm struct {
 
 	storedCursorX, storedCursorY int
 
-	blinker *Blinker
+	Blinker *Blinker
 
 	scrollingRegion ScrollingRegion
 }
@@ -81,11 +81,11 @@ func NewVTerm(in <-chan rune, out chan<- Char, oper chan<- Operation) *VTerm {
 		screen:          screen,
 		scrollback:      [][]Char{},
 		usingAltScreen:  false,
-		cursor:          cursor.Cursor{X: 0, Y: 0},
+		Cursor:          cursor.Cursor{X: 0, Y: 0},
 		in:              in,
 		out:             out,
 		oper:            oper,
-		blinker:         newBlinker(),
+		Blinker:         &Blinker{X: 0, Y: 0, Visible: true},
 		scrollingRegion: ScrollingRegion{top: 0, bottom: h - 1},
 	}
 }

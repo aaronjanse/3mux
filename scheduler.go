@@ -38,6 +38,16 @@ func render() {
 			if unicode.IsPrint(char.Rune) {
 				globalCursor.X++
 			}
+
+			desiredCursor := char.Cursor
+
+			t := getSelection().getContainer().(*Term)
+			desiredCursor.X = t.vterm.Cursor.X + t.renderRect.x
+			desiredCursor.Y = t.vterm.Cursor.Y + t.renderRect.y
+
+			fmt.Print(cursor.DeltaMarkup(globalCursor, desiredCursor))
+
+			globalCursor = desiredCursor
 		case s := <-globalRawAggregate:
 			fmt.Print(s)
 		}
