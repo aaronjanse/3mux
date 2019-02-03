@@ -13,5 +13,10 @@ func (v *VTerm) scrollDown(numLines int) {
 		newLines...),
 		v.screen[v.scrollingRegion.bottom+1:]...)
 
-	v.RedrawWindow()
+	supportsScrollingRegions := true
+	if supportsScrollingRegions {
+		v.oper <- ScrollDown{numLines}
+	} else {
+		v.RedrawWindow()
+	}
 }
