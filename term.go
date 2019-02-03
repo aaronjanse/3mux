@@ -61,7 +61,6 @@ func drawSelectionBorder(r Rect) {
 	// draw lines
 	if leftBorder {
 		for i := 0; i <= r.h; i++ {
-			// fmt.Print(ansi.MoveTo(r.x-1, r.y+i) + borderCol + "│\033[0m")
 			globalCharAggregate <- vterm.Char{
 				Rune: '│',
 				Cursor: cursor.Cursor{
@@ -77,7 +76,6 @@ func drawSelectionBorder(r Rect) {
 	}
 	if rightBorder {
 		for i := 0; i <= r.h; i++ {
-			// fmt.Print(ansi.MoveTo(r.x+r.w, r.y+i) + borderCol + "│\033[0m")
 			globalCharAggregate <- vterm.Char{
 				Rune: '│',
 				Cursor: cursor.Cursor{
@@ -92,7 +90,6 @@ func drawSelectionBorder(r Rect) {
 		}
 	}
 	if topBorder {
-		// fmt.Print(ansi.MoveTo(r.x, r.y-1) + borderCol + strings.Repeat("─", r.w) + "\033[0m")
 		for i := 0; i <= r.w; i++ {
 			globalCharAggregate <- vterm.Char{
 				Rune: '─',
@@ -108,7 +105,6 @@ func drawSelectionBorder(r Rect) {
 		}
 	}
 	if bottomBorder {
-		// fmt.Print(ansi.MoveTo(r.x, r.y+r.h) + borderCol + strings.Repeat("─", r.w) + "\033[0m")
 		for i := 0; i <= r.w; i++ {
 			globalCharAggregate <- vterm.Char{
 				Rune: '─',
@@ -126,7 +122,6 @@ func drawSelectionBorder(r Rect) {
 
 	// draw corners
 	if topBorder && leftBorder {
-		// fmt.Print(ansi.MoveTo(r.x-1, r.y-1) + borderCol + "┌\033[0m")
 		globalCharAggregate <- vterm.Char{
 			Rune: '┌',
 			Cursor: cursor.Cursor{
@@ -140,7 +135,6 @@ func drawSelectionBorder(r Rect) {
 		}
 	}
 	if topBorder && rightBorder {
-		// fmt.Print(ansi.MoveTo(r.x+r.w, r.y-1) + borderCol + "┐\033[0m")
 		globalCharAggregate <- vterm.Char{
 			Rune: '┐',
 			Cursor: cursor.Cursor{
@@ -154,7 +148,6 @@ func drawSelectionBorder(r Rect) {
 		}
 	}
 	if bottomBorder && leftBorder {
-		// fmt.Print(ansi.MoveTo(r.x-1, r.y+r.h) + borderCol + "└\033[0m")
 		globalCharAggregate <- vterm.Char{
 			Rune: '└',
 			Cursor: cursor.Cursor{
@@ -168,7 +161,6 @@ func drawSelectionBorder(r Rect) {
 		}
 	}
 	if bottomBorder && rightBorder {
-		// fmt.Print(ansi.MoveTo(r.x+r.w, r.y+r.h) + borderCol + "┘\033[0m")
 		globalCharAggregate <- vterm.Char{
 			Rune: '┘',
 			Cursor: cursor.Cursor{

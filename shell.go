@@ -116,12 +116,12 @@ func (t *Term) kill() {
 
 	err := t.ptmx.Close()
 	if err != nil {
-		log.Fatal("TERM_CLOSE", err)
+		log.Fatal("failed to close ptmx", err)
 	}
 
 	err = t.cmd.Process.Kill()
 	if err != nil {
-		log.Fatal("TERM_KILL", err)
+		log.Fatal("failed to kill term process", err)
 	}
 }
 

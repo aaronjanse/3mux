@@ -72,7 +72,9 @@ func render() {
 				return
 			}
 
-			fmt.Print("\033[?25l")
+			fmt.Print("\033[?25l") // hide cursor
+
+			/* draw the character we just got */
 
 			escCode := cursor.DeltaMarkup(globalCursor, char.Cursor)
 			fmt.Print(escCode)
@@ -87,6 +89,8 @@ func render() {
 				globalCursor.X++
 			}
 
+			/* move the cursor to the correct place in the selected pane */
+
 			desiredCursor := char.Cursor
 
 			t := getSelection().getContainer().(*Term)
@@ -95,7 +99,7 @@ func render() {
 
 			fmt.Print(cursor.DeltaMarkup(globalCursor, desiredCursor))
 
-			fmt.Print("\033[?25h")
+			fmt.Print("\033[?25h") // show cursor
 
 			globalCursor = desiredCursor
 		case s := <-globalRawAggregate:

@@ -3,9 +3,12 @@ package vterm
 import (
 	"strconv"
 	"strings"
+
+	"github.com/aaronduino/i3-tmux/cursor"
 )
 
 // parseSemicolonNumSeq parses a series of numbers separated by semicolons, replacing empty values with the given default value
+// FIXME: this function is an unclean way to parse parameters, espcially when it comes to default values
 func parseSemicolonNumSeq(s string, d int) []int {
 	s = strings.TrimSpace(s)
 
@@ -32,13 +35,13 @@ func parseSemicolonNumSeq(s string, d int) []int {
 }
 
 func (v *VTerm) debug(s string) {
-	// for i, r := range []rune(s) {
-	// 	v.out <- Char{
-	// 		Rune: r,
-	// 		Cursor: cursor.Cursor{
-	// 			X: i + 20,
-	// 			Y: 10,
-	// 		},
-	// 	}
-	// }
+	for i, r := range []rune(s) {
+		v.out <- Char{
+			Rune: r,
+			Cursor: cursor.Cursor{
+				X: i + 20,
+				Y: 10,
+			},
+		}
+	}
 }

@@ -99,7 +99,7 @@ func (s *Split) redrawLines() {
 
 func getDividerPositions(area int, contents []Node) []int {
 	var dividerPositions []int
-	for idx, node := range contents { // contents[:len(contents)-1]
+	for idx, node := range contents {
 		var lastPos int
 		if idx == 0 {
 			lastPos = 0

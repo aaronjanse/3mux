@@ -16,6 +16,7 @@ func (v *VTerm) StartBlinker() {
 	v.Blinker.Visible = true
 }
 
+// updateBlinker sends the char under the cursor to the renderer to keep the host's cursor location up-to-date
 func (v *VTerm) updateBlinker() {
 	if len(v.screen) > v.Cursor.Y && len(v.screen[v.Cursor.Y]) > v.Cursor.X {
 		char := v.screen[v.Cursor.Y][v.Cursor.X]

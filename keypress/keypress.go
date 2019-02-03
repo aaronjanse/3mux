@@ -33,9 +33,7 @@ func Listen(callback func(name string, raw []byte)) {
 		}
 
 		switch data[0] {
-		// case 3: // Ctrl+C
-		// 	return
-		case 195:
+		case 195: // Alt
 			letter := rune(data[1] - 128 + 64)
 			if unicode.IsUpper(letter) {
 				handle("Alt+Shift+" + string(unicode.ToUpper(letter)))
@@ -82,22 +80,20 @@ func Listen(callback func(name string, raw []byte)) {
 			}
 		default:
 			if ev.N == 1 {
-				if data[0] <= 26 {
+				if data[0] <= 26 { // Ctrl
 					letter := string('A' + data[0] - 1)
-					if letter == "Q" {
+					if letter == "Q" { // exit upon Ctrl+Q
 						return
 					}
 					handle("Ctrl+" + letter)
 				} else {
 					letter := string(data[0])
-					// if letter == "q" {
-					// 	return
-					// }
 					handle(letter)
 				}
 			}
 		}
 
+		// // debugging code
 		// fmt.Println(ev)
 		// fmt.Println(data)
 		// fmt.Println()

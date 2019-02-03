@@ -15,12 +15,10 @@ func main() {
 	refreshEverything()
 
 	keypress.Listen(func(name string, raw []byte) {
-		// fmt.Println(name)
 		if f, ok := config.bindings[name]; ok {
 			f()
 			root.simplify()
 			refreshEverything()
-			// debug(root.serialize())
 		} else {
 			t := getSelection().getContainer().(*Term)
 			t.handleStdin(string(raw))

@@ -1,5 +1,7 @@
 package vterm
 
+/* actions.go implements functions for common operations upon the vterm screen */
+
 func (v *VTerm) scrollDown(numLines int) {
 	lazyScroll := hostCaps.ScrollingRegionTopBottom && hostCaps.ScrollingRegionLeftRight
 

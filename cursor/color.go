@@ -48,6 +48,6 @@ func (c Color) ToANSI(bg bool) string {
 			(c.Code>>16)&0xff, (c.Code>>8)&0xff, c.Code&0xff,
 		)
 	default:
-		return "" // FIXME
+		panic(fmt.Errorf("Unexpected ColorMode: %v", c.ColorMode))
 	}
 }

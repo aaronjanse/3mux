@@ -117,6 +117,7 @@ func (v *VTerm) Reshape(w, h int) {
 	v.h = h
 }
 
+// clear draws whitespace over all printable chars on the screen
 func (v *VTerm) clear() {
 	for j := 0; j < v.h; j++ {
 		var row []Char
@@ -142,6 +143,7 @@ func (v *VTerm) clear() {
 	}
 }
 
+// drawWithoutClearing draws the screen under the assumption that the drawing area is already clean
 func (v *VTerm) drawWithoutClearing() {
 	for j := 0; j < v.h; j++ {
 		var row []Char
