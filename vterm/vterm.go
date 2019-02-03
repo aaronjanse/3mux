@@ -118,7 +118,7 @@ func (v *VTerm) Reshape(w, h int) {
 }
 
 func (v *VTerm) clear() {
-	for j := 0; j <= v.h; j++ {
+	for j := 0; j < v.h; j++ {
 		var row []Char
 		if j < len(v.screen) {
 			row = v.screen[j]
@@ -126,7 +126,7 @@ func (v *VTerm) clear() {
 			row = []Char{}
 		}
 
-		for i := 0; i <= v.w; i++ {
+		for i := 0; i < v.w; i++ {
 			if i < len(row) {
 				char := row[i]
 				char.Cursor.X = i
@@ -143,7 +143,7 @@ func (v *VTerm) clear() {
 }
 
 func (v *VTerm) drawWithoutClearing() {
-	for j := 0; j <= v.h; j++ {
+	for j := 0; j < v.h; j++ {
 		var row []Char
 		if j < len(v.screen) {
 			row = v.screen[j]
@@ -151,7 +151,7 @@ func (v *VTerm) drawWithoutClearing() {
 			row = []Char{}
 		}
 
-		for i := 0; i <= v.w; i++ {
+		for i := 0; i < v.w; i++ {
 			if i < len(row) {
 				char := row[i]
 				char.Cursor.X = i
@@ -175,7 +175,7 @@ func (v *VTerm) RedrawWindow() {
 			row = []Char{}
 		}
 
-		for i := 0; i <= v.w; i++ {
+		for i := 0; i < v.w; i++ {
 			if i < len(row) {
 				char := row[i]
 				char.Cursor.X = i

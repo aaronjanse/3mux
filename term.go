@@ -19,6 +19,16 @@ func (t *Term) setRenderRect(x, y, w, h int) {
 	t.vterm.Reshape(w, h)
 	t.vterm.RedrawWindow()
 
+	// // clear the relevant area of the screen
+	// for j := 0; j < h; j++ {
+	// 	for i := 0; i < w; i++ {
+	// 		globalCharAggregate <- vterm.Char{
+	// 			Rune:   rune(strconv.Itoa(x + y)[0]),
+	// 			Cursor: cursor.Cursor{X: x + i, Y: y + j},
+	// 		}
+	// 	}
+	// }
+
 	// Handle pty size.
 	ch := make(chan os.Signal, 1)
 	signal.Notify(ch, syscall.SIGWINCH)
@@ -71,7 +81,7 @@ func drawSelectionBorder(r Rect) {
 			globalCharAggregate <- vterm.Char{
 				Rune: '│',
 				Cursor: cursor.Cursor{
-					X: r.x + r.w + 1,
+					X: r.x + r.w,
 					Y: r.y + i,
 					Fg: cursor.Color{
 						ColorMode: cursor.ColorBit3Normal,
@@ -104,7 +114,7 @@ func drawSelectionBorder(r Rect) {
 				Rune: '─',
 				Cursor: cursor.Cursor{
 					X: r.x + i,
-					Y: r.y + r.h + 1,
+					Y: r.y + r.h,
 					Fg: cursor.Color{
 						ColorMode: cursor.ColorBit3Normal,
 						Code:      6,
@@ -134,7 +144,7 @@ func drawSelectionBorder(r Rect) {
 		globalCharAggregate <- vterm.Char{
 			Rune: '┐',
 			Cursor: cursor.Cursor{
-				X: r.x + r.w + 1,
+				X: r.x + r.w,
 				Y: r.y - 1,
 				Fg: cursor.Color{
 					ColorMode: cursor.ColorBit3Normal,
@@ -149,7 +159,7 @@ func drawSelectionBorder(r Rect) {
 			Rune: '└',
 			Cursor: cursor.Cursor{
 				X: r.x - 1,
-				Y: r.y + r.h + 1,
+				Y: r.y + r.h,
 				Fg: cursor.Color{
 					ColorMode: cursor.ColorBit3Normal,
 					Code:      6,
@@ -162,8 +172,8 @@ func drawSelectionBorder(r Rect) {
 		globalCharAggregate <- vterm.Char{
 			Rune: '┘',
 			Cursor: cursor.Cursor{
-				X: r.x + r.w + 1,
-				Y: r.y + r.h + 1,
+				X: r.x + r.w,
+				Y: r.y + r.h,
 				Fg: cursor.Color{
 					ColorMode: cursor.ColorBit3Normal,
 					Code:      6,

@@ -84,10 +84,10 @@ func newTerm(selected bool) *Term {
 	go (func() {
 		for {
 			char := <-vtermOut
-			if char.Cursor.X > t.renderRect.w {
+			if char.Cursor.X > t.renderRect.w-1 {
 				continue
 			}
-			if char.Cursor.Y > t.renderRect.h {
+			if char.Cursor.Y > t.renderRect.h-1 {
 				continue
 			}
 			char.Cursor.X += t.renderRect.x

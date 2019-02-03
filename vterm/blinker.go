@@ -18,7 +18,10 @@ func (v *VTerm) StartBlinker() {
 
 func (v *VTerm) updateBlinker() {
 	if len(v.screen) > v.Cursor.Y && len(v.screen[v.Cursor.Y]) > v.Cursor.X {
-		v.out <- v.screen[v.Cursor.Y][v.Cursor.X]
+		char := v.screen[v.Cursor.Y][v.Cursor.X]
+		char.Cursor.X = v.Cursor.X
+		char.Cursor.Y = v.Cursor.Y
+		v.out <- char
 	} else {
 		v.out <- Char{
 			Rune: ' ',

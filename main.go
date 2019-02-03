@@ -25,18 +25,33 @@ func main() {
 			t := getSelection().getContainer().(*Term)
 			t.handleStdin(string(raw))
 		}
+
+		// debug(root.serialize())
 	})
 
 	root.kill()
 }
 
 func debug(s string) {
-	for i, r := range []rune(s) {
+	for i := 0; i < termW; i++ {
+		r := ' '
+		if i < len(s) {
+			r = rune(s[i])
+		}
+
 		globalCharAggregate <- vterm.Char{
 			Rune: r,
 			Cursor: cursor.Cursor{
 				X: i,
 				Y: termH - 1,
+				Bg: cursor.Color{
+					ColorMode: cursor.ColorBit3Bright,
+					Code:      2,
+				},
+				Fg: cursor.Color{
+					ColorMode: cursor.ColorBit3Normal,
+					Code:      0,
+				},
 			},
 		}
 	}

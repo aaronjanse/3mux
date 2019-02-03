@@ -28,10 +28,14 @@ func render() {
 				return
 			}
 
+			fmt.Print("\033[?25l")
+
 			escCode := cursor.DeltaMarkup(globalCursor, char.Cursor)
 			fmt.Print(escCode)
 
-			fmt.Print(string(char.Rune))
+			if !(char.Cursor.Y > termH && char.Rune == '\n') {
+				fmt.Print(string(char.Rune))
+			}
 
 			globalCursor = char.Cursor
 
@@ -46,6 +50,8 @@ func render() {
 			desiredCursor.Y = t.vterm.Cursor.Y + t.renderRect.y
 
 			fmt.Print(cursor.DeltaMarkup(globalCursor, desiredCursor))
+
+			fmt.Print("\033[?25h")
 
 			globalCursor = desiredCursor
 		case s := <-globalRawAggregate:

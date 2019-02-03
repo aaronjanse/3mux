@@ -54,9 +54,9 @@ func (s *Split) refreshRenderRect() {
 		childNode := s.elements[idx]
 
 		if s.verticallyStacked {
-			childNode.contents.setRenderRect(x, y+lastPos+1, w, childArea-1)
+			childNode.contents.setRenderRect(x, y+lastPos+1, w, childArea)
 		} else {
-			childNode.contents.setRenderRect(x+lastPos+1, y, childArea-1, h)
+			childNode.contents.setRenderRect(x+lastPos+1, y, childArea, h)
 		}
 	}
 }

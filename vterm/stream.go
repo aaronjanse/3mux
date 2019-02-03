@@ -316,7 +316,7 @@ func (v *VTerm) handleCSISequence() {
 				if len(seq) > 1 {
 					v.scrollingRegion.bottom = seq[1] - 1
 				} else {
-					v.scrollingRegion.bottom = v.h - 1
+					v.scrollingRegion.bottom = v.h + 1
 				}
 				v.Cursor.X = 0
 				v.Cursor.Y = 0
