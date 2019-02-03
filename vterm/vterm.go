@@ -6,10 +6,6 @@ A Char is a character printed using a given cursor (which is stored alongside th
 package vterm
 
 import (
-	"fmt"
-	"os"
-	"strconv"
-
 	"github.com/aaronduino/i3-tmux/capabilities"
 	"github.com/aaronduino/i3-tmux/cursor"
 )
@@ -111,7 +107,7 @@ func (v *VTerm) Reshape(w, h int) {
 
 		v.scrollback = append(v.scrollback, v.screen[:linesToMove]...)
 		// v.debug(strconv.Itoa(linesToMove))
-		fmt.Fprintln(os.Stdout, strconv.Itoa(len(v.screen)-linesToMove))
+		// fmt.Fprintln(os.Stdout, strconv.Itoa(len(v.screen)-linesToMove))
 		if linesToMove < len(v.screen) {
 			v.screen = v.screen[linesToMove:]
 		}
@@ -151,8 +147,8 @@ func (v *VTerm) clear() {
 	}
 }
 
-// drawWithoutClearing draws the screen under the assumption that the drawing area is already clean
-func (v *VTerm) drawWithoutClearing() {
+// DrawWithoutClearing draws the screen under the assumption that the drawing area is already clean
+func (v *VTerm) DrawWithoutClearing() {
 	for j := 0; j < v.h; j++ {
 		var row []Char
 		if j < len(v.screen) {

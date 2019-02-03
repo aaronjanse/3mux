@@ -264,24 +264,54 @@ func (v *VTerm) handleCSISequence() {
 				case 0: // clear from Cursor to end of screen
 					for i := v.Cursor.X; i < len(v.screen[v.Cursor.Y]); i++ {
 						v.screen[v.Cursor.Y][i].Rune = 0
+						char := v.screen[v.Cursor.Y][i]
+						char.Rune = ' '
+						char.Cursor = cursor.Cursor{X: i, Y: v.Cursor.Y}
+						v.out <- char
 					}
 					if v.Cursor.Y+1 < len(v.screen) {
 						for j := v.Cursor.Y; j < len(v.screen); j++ {
 							for i := 0; i < len(v.screen[j]); i++ {
 								v.screen[j][i].Rune = 0
+								char := v.screen[j][i]
+								char.Rune = ' '
+								char.Cursor = cursor.Cursor{X: i, Y: j}
+								v.out <- char
 							}
 						}
 					}
+					// v.RedrawWindow()
 				case 1: // clear from Cursor to beginning of screen
 					for j := 0; j < v.Cursor.Y; j++ {
 						for i := 0; i < len(v.screen[j]); j++ {
 							v.screen[j][i].Rune = 0
+							char := v.screen[j][i]
+							char.Rune = ' '
+							char.Cursor = cursor.Cursor{X: i, Y: j}
+							v.out <- char
 						}
 					}
 					for i := 0; i < v.Cursor.X; i++ {
 						v.screen[v.Cursor.Y][i].Rune = 0
+						char := v.screen[v.Cursor.Y][i]
+						char.Rune = ' '
+						char.Cursor = cursor.Cursor{X: i, Y: v.Cursor.Y}
+						v.out <- char
 					}
 				case 2: // clear entire screen (and move Cursor to top left?)
+					for i := range v.screen {
+						for j := range v.screen[i] {
+							v.screen[i][j].Rune = ' '
+							char := v.screen[i][j]
+							char.Rune = ' '
+							char.Cursor = cursor.Cursor{X: j, Y: i}
+							v.out <- char
+						}
+					}
+					v.Cursor.X = 0
+					v.Cursor.Y = 0
+					v.RedrawWindow()
+				case 3: // clear entire screen and delete all lines saved in scrollback buffer
 					for i := range v.screen {
 						for j := range v.screen[i] {
 							v.screen[i][j].Rune = ' '
@@ -289,10 +319,9 @@ func (v *VTerm) handleCSISequence() {
 					}
 					v.Cursor.X = 0
 					v.Cursor.Y = 0
-				case 3: // clear entire screen and delete all lines saved in scrollback buffer
-					// TODO
+					v.scrollback = [][]Char{}
+					v.RedrawWindow()
 				}
-				v.RedrawWindow()
 			case 'K': // Erase in Line
 				seq := parseSemicolonNumSeq(parameterCode, 0)
 				switch seq[0] {

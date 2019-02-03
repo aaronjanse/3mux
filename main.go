@@ -31,6 +31,9 @@ func main() {
 		if operationCode, ok := config.bindings[name]; ok {
 			executeOperationCode(operationCode)
 			root.simplify()
+
+			fmt.Print("\033[m\033[2J")
+			root.refreshRenderRect()
 		} else {
 			t := getSelection().getContainer().(*Term)
 			t.handleStdin(string(raw))

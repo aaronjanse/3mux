@@ -12,22 +12,25 @@ import (
 )
 
 func (t *Term) setRenderRect(x, y, w, h int) {
+	// for j := 0; j < t.renderRect.h; j++ {
+	// 	globalCharAggregate <- vterm.Char{
+	// 		Rune:   ' ',
+	// 		Cursor: cursor.Cursor{X: t.renderRect.x + t.renderRect.w, Y: t.renderRect.y + j},
+	// 	}
+	// }
+
+	// for i := 0; i < t.renderRect.w; i++ {
+	// 	globalCharAggregate <- vterm.Char{
+	// 		Rune:   ' ',
+	// 		Cursor: cursor.Cursor{X: t.renderRect.x + i, Y: t.renderRect.y + t.renderRect.h},
+	// 	}
+	// }
+
 	t.renderRect = Rect{x, y, w, h}
 
 	t.softRefresh()
 
 	t.vterm.Reshape(w, h)
-	t.vterm.RedrawWindow()
-
-	// // clear the relevant area of the screen
-	// for j := 0; j < h; j++ {
-	// 	for i := 0; i < w; i++ {
-	// 		globalCharAggregate <- vterm.Char{
-	// 			Rune:   rune(strconv.Itoa(x + y)[0]),
-	// 			Cursor: cursor.Cursor{X: x + i, Y: y + j},
-	// 		}
-	// 	}
-	// }
 
 	// Handle pty size.
 	ch := make(chan os.Signal, 1)
@@ -44,6 +47,19 @@ func (t *Term) setRenderRect(x, y, w, h int) {
 		}
 	}()
 	ch <- syscall.SIGWINCH // Initial resize.
+
+	t.vterm.DrawWithoutClearing()
+
+	// // clear the relevant area of the screen
+	// for j := 0; j < h; j++ {
+	// 	for i := 0; i < w; i++ {
+	// 		globalCharAggregate <- vterm.Char{
+	// 			Rune:   ' ',
+	// 			Cursor: cursor.Cursor{X: x + i, Y: y + j},
+	// 		}
+	// 	}
+	// }
+	// t.vterm.DrawWithoutClearing()
 }
 
 func (t *Term) softRefresh() {

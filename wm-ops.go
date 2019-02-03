@@ -56,7 +56,7 @@ func moveWindow(d Direction) {
 
 		parent.selectionIdx--
 
-		parent.refreshRenderRect()
+		// parent.refreshRenderRect()
 	} else if (!vert && d == Right) || (vert && d == Down) {
 		idx := parent.selectionIdx
 
@@ -70,7 +70,7 @@ func moveWindow(d Direction) {
 
 		parent.selectionIdx++
 
-		parent.refreshRenderRect()
+		// parent.refreshRenderRect()
 	} else {
 		movingVert := d == Up || d == Down
 
@@ -88,7 +88,7 @@ func moveWindow(d Direction) {
 					s.selectionIdx++
 				}
 
-				s.refreshRenderRect()
+				// s.refreshRenderRect()
 				break
 			}
 			p = p[:len(p)-1]
@@ -124,7 +124,9 @@ func moveWindow(d Direction) {
 			root.insertContainer(tmp, insertIdx)
 			root.selectionIdx = insertIdx
 
-			root.refreshRenderRect()
+			// fmt.Print("\033[2J")
+
+			// root.refreshRenderRect()
 		}
 	}
 }
@@ -318,8 +320,6 @@ func newWindow() {
 
 	// update selection to new child
 	parent.selectionIdx = len(parent.elements) - 1
-
-	parent.refreshRenderRect()
 }
 
 func (p Path) getParent() (*Split, Path) {

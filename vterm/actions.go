@@ -24,6 +24,6 @@ func (v *VTerm) scrollDown(numLines int) {
 	if lazyScroll {
 		v.oper <- ScrollDown{numLines}
 	} else {
-		v.drawWithoutClearing()
+		v.DrawWithoutClearing()
 	}
 }
