@@ -117,6 +117,54 @@ func (v *VTerm) Reshape(w, h int) {
 	v.h = h
 }
 
+func (v *VTerm) clear() {
+	for j := 0; j <= v.h; j++ {
+		var row []Char
+		if j < len(v.screen) {
+			row = v.screen[j]
+		} else {
+			row = []Char{}
+		}
+
+		for i := 0; i <= v.w; i++ {
+			if i < len(row) {
+				char := row[i]
+				char.Cursor.X = i
+				char.Cursor.Y = j
+				if char.Rune != 0 && char.Rune != ' ' {
+					v.out <- Char{
+						Rune:   ' ',
+						Cursor: cursor.Cursor{X: i, Y: j},
+					}
+				}
+			}
+		}
+	}
+}
+
+func (v *VTerm) drawWithoutClearing() {
+	for j := 0; j <= v.h; j++ {
+		var row []Char
+		if j < len(v.screen) {
+			row = v.screen[j]
+		} else {
+			row = []Char{}
+		}
+
+		for i := 0; i <= v.w; i++ {
+			if i < len(row) {
+				char := row[i]
+				char.Cursor.X = i
+				char.Cursor.Y = j
+				if char.Rune != 0 && char.Rune != ' ' {
+					v.out <- char
+					continue
+				}
+			}
+		}
+	}
+}
+
 // RedrawWindow draws the entire visible window from scratch, sending the Char's to the scheduler via the out channel
 func (v *VTerm) RedrawWindow() {
 	for j := 0; j <= v.h; j++ {
