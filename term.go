@@ -48,7 +48,7 @@ func (t *Term) setRenderRect(x, y, w, h int) {
 	}()
 	ch <- syscall.SIGWINCH // Initial resize.
 
-	t.vterm.DrawWithoutClearing()
+	t.vterm.RedrawWindow()
 
 	// // clear the relevant area of the screen
 	// for j := 0; j < h; j++ {

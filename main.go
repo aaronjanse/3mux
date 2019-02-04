@@ -32,7 +32,7 @@ func main() {
 			executeOperationCode(operationCode)
 			root.simplify()
 
-			fmt.Print("\033[m\033[2J")
+			// fmt.Print("\033[m\033[3J")
 			root.refreshRenderRect()
 		} else {
 			t := getSelection().getContainer().(*Term)

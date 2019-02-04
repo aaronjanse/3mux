@@ -5,9 +5,9 @@ package vterm
 func (v *VTerm) scrollDown(numLines int) {
 	lazyScroll := hostCaps.ScrollingRegionTopBottom && hostCaps.ScrollingRegionLeftRight
 
-	if !lazyScroll {
-		v.clear()
-	}
+	// if !lazyScroll {
+	// 	v.clear()
+	// }
 
 	if !v.usingAltScreen {
 		v.scrollback = append(v.scrollback, v.screen[v.scrollingRegion.top:v.scrollingRegion.top+numLines]...)
@@ -24,6 +24,7 @@ func (v *VTerm) scrollDown(numLines int) {
 	if lazyScroll {
 		v.oper <- ScrollDown{numLines}
 	} else {
-		v.DrawWithoutClearing()
+		// v.DrawWithoutClearing()
+		v.RedrawWindow()
 	}
 }
