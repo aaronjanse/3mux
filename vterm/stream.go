@@ -13,7 +13,7 @@ import (
 // This includes translating ANSI Cursor coordinates and maintaining a scrolling buffer
 func (v *VTerm) ProcessStream() {
 	for {
-		next, ok := <-v.Stream
+		next, ok := <-v.in
 		if !ok {
 			return
 		}
@@ -26,14 +26,14 @@ func (v *VTerm) ProcessStream() {
 			leadingHex := next >> 4
 			switch leadingHex {
 			case 12: // 1100
-				value = append(value, byte(<-v.Stream))
+				value = append(value, byte(<-v.in))
 			case 14: // 1110
-				value = append(value, byte(<-v.Stream))
-				value = append(value, byte(<-v.Stream))
+				value = append(value, byte(<-v.in))
+				value = append(value, byte(<-v.in))
 			case 15: // 1111
-				value = append(value, byte(<-v.Stream))
-				value = append(value, byte(<-v.Stream))
-				value = append(value, byte(<-v.Stream))
+				value = append(value, byte(<-v.in))
+				value = append(value, byte(<-v.in))
+				value = append(value, byte(<-v.in))
 			}
 
 			next, _ = utf8.DecodeRune(value)
@@ -122,7 +122,7 @@ func (v *VTerm) ProcessStream() {
 }
 
 func (v *VTerm) handleEscapeCode() {
-	next, ok := <-v.Stream
+	next, ok := <-v.in
 	if !ok {
 		log.Fatal("not ok")
 		return
@@ -132,7 +132,7 @@ func (v *VTerm) handleEscapeCode() {
 	case '[':
 		v.handleCSISequence()
 	case '(': // Character set
-		<-v.Stream
+		<-v.in
 		// TODO
 	default:
 		v.debug("ESC Code: " + string(next))
@@ -146,7 +146,7 @@ func (v *VTerm) handleCSISequence() {
 
 	parameterCode := ""
 	for {
-		next, ok := <-v.Stream
+		next, ok := <-v.in
 		if !ok {
 			return
 		}

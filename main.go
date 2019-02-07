@@ -36,7 +36,7 @@ func main() {
 			root.refreshRenderRect()
 		} else {
 			t := getSelection().getContainer().(*Pane)
-			t.handleStdin(string(raw))
+			t.shell.handleStdin(string(raw))
 		}
 
 		if config.statusBar {

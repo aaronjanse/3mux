@@ -40,8 +40,8 @@ type VTerm struct {
 
 	Cursor cursor.Cursor
 
-	Stream chan rune
-	out    chan<- Char
+	in  <-chan rune
+	out chan<- Char
 
 	storedCursorX, storedCursorY int
 
@@ -51,7 +51,7 @@ type VTerm struct {
 }
 
 // NewVTerm returns a VTerm ready to be used by its exported methods
-func NewVTerm(out chan<- Char) *VTerm {
+func NewVTerm(in <-chan rune, out chan<- Char) *VTerm {
 	w := 10
 	h := 10
 
@@ -74,11 +74,16 @@ func NewVTerm(out chan<- Char) *VTerm {
 		scrollback:      [][]Char{},
 		usingAltScreen:  false,
 		Cursor:          cursor.Cursor{X: 0, Y: 0},
-		Stream:          make(chan rune, 32),
+		in:              in,
 		out:             out,
 		Blinker:         &Blinker{X: 0, Y: 0, Visible: true},
 		scrollingRegion: ScrollingRegion{top: 0, bottom: h - 1},
 	}
+}
+
+// Kill safely shuts down all vterm processes for the instance
+func (v *VTerm) Kill() {
+	v.StopBlinker()
 }
 
 // Reshape safely updates a VTerm's width & height

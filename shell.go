@@ -2,43 +2,33 @@ package main
 
 import (
 	"log"
-	"math/rand"
+	"os"
 	"os/exec"
+	"os/signal"
+	"syscall"
 
-	"github.com/aaronduino/i3-tmux/vterm"
 	"github.com/kr/pty"
 )
 
-func newTerm(selected bool) *Pane {
-	// Create arbitrary command.
-	c := exec.Command("zsh")
+type Shell struct {
+	stdout chan<- rune
+	ptmx   *os.File
+	cmd    *exec.Cmd
+}
 
-	// Start the command with a pty.
-	ptmx, err := pty.Start(c)
+func newShell(stdout chan<- rune) Shell {
+	cmd := exec.Command("zsh")
+
+	ptmx, err := pty.Start(cmd)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	vtermOut := make(chan vterm.Char, 32)
-
-	vt := vterm.NewVTerm(vtermOut)
-
-	t := &Pane{
-		id:       rand.Intn(10),
-		selected: selected,
-		ptmx:     ptmx,
-		cmd:      c,
-
-		vterm:    vt,
-		vtermOut: vtermOut,
-	}
-
+	// feed ptmx output to stdout channel
 	go (func() {
 		defer func() {
-			if r := recover(); r != nil {
-				if r != "send on closed channel" {
-					panic(r)
-				}
+			if r := recover(); r != nil && r != "send on closed channel" {
+				panic(r)
 			}
 		}()
 
@@ -46,57 +36,59 @@ func newTerm(selected bool) *Pane {
 			b := make([]byte, 1)
 			_, err := ptmx.Read(b)
 			if err != nil {
-				return
+				if err.Error() == "read /dev/ptmx: input/output error" {
+					break
+				} else {
+					panic(err)
+				}
 			}
-			r := rune(b[0])
-			if r == '\t' { // FIXME
-				t.vterm.Stream <- ' '
-				t.vterm.Stream <- ' '
-			} else {
-				t.vterm.Stream <- r
-			}
+			stdout <- rune(b[0])
 		}
 	})()
 
-	go (func() {
-		for {
-			char := <-vtermOut
-			if char.Cursor.X > t.renderRect.w-1 {
-				continue
-			}
-			if char.Cursor.Y > t.renderRect.h-1 {
-				continue
-			}
-			char.Cursor.X += t.renderRect.x
-			char.Cursor.Y += t.renderRect.y
-			globalCharAggregate <- char
-		}
-	})()
-
-	go vt.ProcessStream()
-
-	return t
+	return Shell{
+		stdout: stdout,
+		ptmx:   ptmx,
+		cmd:    cmd,
+	}
 }
 
-func (t *Pane) kill() {
-	t.vterm.StopBlinker()
+// Kill safely shuts down the shell, closing stdout
+func (s *Shell) Kill() {
+	close(s.stdout)
 
-	close(t.vterm.Stream)
-
-	err := t.ptmx.Close()
+	err := s.ptmx.Close()
 	if err != nil {
 		log.Fatal("failed to close ptmx", err)
 	}
 
-	err = t.cmd.Process.Kill()
+	err = s.cmd.Process.Kill()
 	if err != nil {
 		log.Fatal("failed to kill term process", err)
 	}
 }
 
-func (t *Pane) handleStdin(text string) {
-	_, err := t.ptmx.Write([]byte(text))
+func (s *Shell) handleStdin(data string) {
+	_, err := s.ptmx.Write([]byte(data))
 	if err != nil {
 		log.Fatal(err)
 	}
+}
+
+func (s *Shell) resize(w, h int) {
+	// Handle pty size.
+	ch := make(chan os.Signal, 1)
+	signal.Notify(ch, syscall.SIGWINCH)
+	go func() {
+		for range ch {
+			err := pty.Setsize(s.ptmx, &pty.Winsize{
+				Rows: uint16(h), Cols: uint16(w),
+				X: 16 * uint16(w), Y: 16 * uint16(h),
+			})
+			if err != nil {
+				log.Fatal(err)
+			}
+		}
+	}()
+	ch <- syscall.SIGWINCH // Initial resize.
 }

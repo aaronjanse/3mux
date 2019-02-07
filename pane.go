@@ -2,15 +2,10 @@ package main
 
 import (
 	"fmt"
-	"log"
-	"os"
-	"os/exec"
-	"os/signal"
-	"syscall"
+	"math/rand"
 
 	"github.com/aaronduino/i3-tmux/cursor"
 	"github.com/aaronduino/i3-tmux/vterm"
-	"github.com/kr/pty"
 )
 
 // A Pane is a tiling unit representing a terminal
@@ -21,12 +16,52 @@ type Pane struct {
 
 	renderRect Rect
 
-	ptmx *os.File
-	cmd  *exec.Cmd
+	shell Shell
 
 	vterm *vterm.VTerm
 
 	vtermOut <-chan vterm.Char
+}
+
+func newTerm(selected bool) *Pane {
+	stdout := make(chan rune, 32)
+	shell := newShell(stdout)
+
+	vtermOut := make(chan vterm.Char, 32)
+
+	vt := vterm.NewVTerm(stdout, vtermOut)
+	go vt.ProcessStream()
+
+	t := &Pane{
+		id:       rand.Intn(10),
+		selected: selected,
+
+		shell:    shell,
+		vterm:    vt,
+		vtermOut: vtermOut,
+	}
+
+	go (func() {
+		for {
+			char := <-vtermOut
+			if char.Cursor.X > t.renderRect.w-1 {
+				continue
+			}
+			if char.Cursor.Y > t.renderRect.h-1 {
+				continue
+			}
+			char.Cursor.X += t.renderRect.x
+			char.Cursor.Y += t.renderRect.y
+			globalCharAggregate <- char
+		}
+	})()
+
+	return t
+}
+
+func (t *Pane) kill() {
+	t.vterm.Kill()
+	t.shell.Kill()
 }
 
 func (t *Pane) serialize() string {
@@ -39,22 +74,7 @@ func (t *Pane) setRenderRect(x, y, w, h int) {
 	t.softRefresh()
 
 	t.vterm.Reshape(w, h)
-
-	// Handle pty size.
-	ch := make(chan os.Signal, 1)
-	signal.Notify(ch, syscall.SIGWINCH)
-	go func() {
-		for range ch {
-			err := pty.Setsize(t.ptmx, &pty.Winsize{
-				Rows: uint16(h), Cols: uint16(w),
-				X: 16 * uint16(w), Y: 16 * uint16(h),
-			})
-			if err != nil {
-				log.Fatal(err)
-			}
-		}
-	}()
-	ch <- syscall.SIGWINCH // Initial resize.
+	t.shell.resize(w, h)
 
 	t.vterm.RedrawWindow()
 }
