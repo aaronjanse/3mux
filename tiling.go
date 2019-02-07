@@ -13,12 +13,4 @@ type Container interface {
 	kill()
 }
 
-var root = Split{
-	verticallyStacked: false,
-	selectionIdx:      0,
-	elements: []Node{
-		Node{
-			size:     1,
-			contents: newTerm(true),
-		},
-	}}
+var root Split

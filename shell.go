@@ -10,6 +10,7 @@ import (
 	"github.com/kr/pty"
 )
 
+// Shell manages spawning, killing, and sending data to/from a shell subprocess (e.g. bash, sh, zsh)
 type Shell struct {
 	stdout chan<- rune
 	ptmx   *os.File
@@ -27,8 +28,10 @@ func newShell(stdout chan<- rune) Shell {
 	// feed ptmx output to stdout channel
 	go (func() {
 		defer func() {
-			if r := recover(); r != nil && r != "send on closed channel" {
-				panic(r)
+			if r := recover(); r != nil {
+				if r.(error).Error() != "send on closed channel" {
+					panic(r)
+				}
 			}
 		}()
 

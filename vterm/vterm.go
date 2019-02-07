@@ -7,6 +7,7 @@ package vterm
 
 import (
 	"github.com/aaronduino/i3-tmux/cursor"
+	gc "github.com/rthornton128/goncurses"
 )
 
 // ScrollingRegion holds the state for an ANSI scrolling region
@@ -40,6 +41,8 @@ type VTerm struct {
 
 	Cursor cursor.Cursor
 
+	win *gc.Window
+
 	in  <-chan rune
 	out chan<- Char
 
@@ -51,7 +54,7 @@ type VTerm struct {
 }
 
 // NewVTerm returns a VTerm ready to be used by its exported methods
-func NewVTerm(in <-chan rune, out chan<- Char) *VTerm {
+func NewVTerm(win *gc.Window, in <-chan rune, out chan<- Char) *VTerm {
 	w := 10
 	h := 10
 
@@ -76,6 +79,7 @@ func NewVTerm(in <-chan rune, out chan<- Char) *VTerm {
 		Cursor:          cursor.Cursor{X: 0, Y: 0},
 		in:              in,
 		out:             out,
+		win:             win,
 		Blinker:         &Blinker{X: 0, Y: 0, Visible: true},
 		scrollingRegion: ScrollingRegion{top: 0, bottom: h - 1},
 	}
@@ -115,6 +119,8 @@ func (v *VTerm) Reshape(w, h int) {
 
 	v.w = w
 	v.h = h
+
+	v.RedrawWindow()
 }
 
 // clear draws whitespace over all printable chars on the screen

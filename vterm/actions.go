@@ -2,7 +2,7 @@ package vterm
 
 /* actions.go implements functions for common operations upon the vterm screen */
 
-func (v *VTerm) scrollDown(numLines int) {
+func (v *VTerm) scrollUp(numLines int) {
 	if !v.usingAltScreen {
 		v.scrollback = append(v.scrollback, v.screen[v.scrollingRegion.top:v.scrollingRegion.top+numLines]...)
 	}

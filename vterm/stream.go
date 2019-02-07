@@ -50,7 +50,7 @@ func (v *VTerm) ProcessStream() {
 			v.updateCursor()
 		case '\n':
 			if v.Cursor.Y == v.scrollingRegion.bottom {
-				v.scrollDown(1)
+				v.scrollUp(1)
 
 				// // disable scrollback if using alt screen
 				// if !v.usingAltScreen && len(v.screen) > v.scrollingRegion.top {
@@ -352,7 +352,7 @@ func (v *VTerm) handleCSISequence() {
 			case 'S': // Scroll Up; new lines added to bottom
 				seq := parseSemicolonNumSeq(parameterCode, 1)
 				numLines := seq[0]
-				v.scrollDown(numLines)
+				v.scrollUp(numLines)
 			case 'T': // Scroll Down; new lines added to top
 				seq := parseSemicolonNumSeq(parameterCode, 1)
 				numLines := seq[0]

@@ -2,15 +2,46 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"strings"
 
-	"github.com/aaronduino/i3-tmux/cursor"
 	"github.com/aaronduino/i3-tmux/keypress"
+
+	gc "github.com/rthornton128/goncurses"
+
+	"github.com/aaronduino/i3-tmux/cursor"
 	"github.com/aaronduino/i3-tmux/vterm"
 )
 
 func main() {
 	go render()
+
+	stdscr, err := gc.Init()
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer gc.End()
+
+	gc.Echo(false)  // disable printing of typed characters
+	gc.CBreak(true) // disable buffering
+
+	termH, termW := stdscr.MaxYX()
+	win, err := gc.NewWindow(termH, termW, 0, 0)
+	if err != nil {
+		panic(err)
+	}
+	win.Keypad(true) // enable recognition of special keys
+
+	root = Split{
+		verticallyStacked: false,
+		selectionIdx:      0,
+		elements: []Node{
+			Node{
+				size:     1,
+				contents: newTerm(true),
+			},
+		}}
+	defer root.kill()
 
 	t := getSelection().getContainer().(*Pane)
 	t.vterm.StartBlinker()
@@ -23,28 +54,28 @@ func main() {
 	}
 	root.setRenderRect(0, 0, termW, h)
 
-	if config.statusBar {
-		debug(root.serialize())
-	}
+	// if config.statusBar {
+	// 	debug(root.serialize())
+	// }
 
-	keypress.Listen(func(name string, raw []byte) {
+	keypress.Listen(win, func(name string, raw []byte) {
+		// fmt.Println(name, raw)
+		fmt.Print("[")
 		if operationCode, ok := config.bindings[name]; ok {
 			executeOperationCode(operationCode)
 			root.simplify()
 
-			// fmt.Print("\033[m\033[3J")
-			root.refreshRenderRect()
+			// root.refreshRenderRect()
 		} else {
 			t := getSelection().getContainer().(*Pane)
 			t.shell.handleStdin(string(raw))
 		}
+		fmt.Print("]")
 
-		if config.statusBar {
-			debug(root.serialize())
-		}
+		// if config.statusBar {
+		// 	debug(root.serialize())
+		// }
 	})
-
-	root.kill()
 }
 
 func executeOperationCode(s string) {
