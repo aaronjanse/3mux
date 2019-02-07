@@ -49,7 +49,6 @@ func getTermSize() (int, int, error) {
 var termW, termH int
 
 var globalCharAggregate chan vterm.Char
-var globalRawAggregate chan string
 
 var globalCursor cursor.Cursor
 
@@ -63,7 +62,6 @@ func init() {
 	}
 
 	globalCharAggregate = make(chan vterm.Char)
-	globalRawAggregate = make(chan string)
 	globalCursor = cursor.Cursor{}
 
 	framebuffer = [][]vterm.Char{}
@@ -71,29 +69,25 @@ func init() {
 
 func render() {
 	for {
-		select {
-		case char, ok := <-globalCharAggregate:
-			if !ok {
-				fmt.Println("Exiting scheduler")
-				return
-			}
-
-			drawChar(char)
-
-			desiredCursor := globalCursor
-
-			t := getSelection().getContainer().(*Pane)
-			desiredCursor.X = t.vterm.Cursor.X + t.renderRect.x
-			desiredCursor.Y = t.vterm.Cursor.Y + t.renderRect.y
-
-			fmt.Print(cursor.DeltaMarkup(globalCursor, desiredCursor))
-
-			fmt.Print("\033[?25h") // show cursor
-
-			globalCursor = desiredCursor
-		case s := <-globalRawAggregate:
-			fmt.Print(s)
+		char, ok := <-globalCharAggregate
+		if !ok {
+			fmt.Println("Exiting scheduler")
+			return
 		}
+
+		drawChar(char)
+
+		desiredCursor := globalCursor
+
+		t := getSelection().getContainer().(*Pane)
+		desiredCursor.X = t.vterm.Cursor.X + t.renderRect.x
+		desiredCursor.Y = t.vterm.Cursor.Y + t.renderRect.y
+
+		fmt.Print(cursor.DeltaMarkup(globalCursor, desiredCursor))
+
+		fmt.Print("\033[?25h") // show cursor
+
+		globalCursor = desiredCursor
 	}
 }
 

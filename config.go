@@ -7,7 +7,7 @@ type Config struct {
 }
 
 var config = Config{
-	statusBar: true,
+	statusBar: false,
 	bindings: map[string]string{
 		"Alt+N": "newWindow",
 

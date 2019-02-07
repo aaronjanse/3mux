@@ -6,15 +6,8 @@ A Char is a character printed using a given cursor (which is stored alongside th
 package vterm
 
 import (
-	"github.com/aaronduino/i3-tmux/capabilities"
 	"github.com/aaronduino/i3-tmux/cursor"
 )
-
-var hostCaps capabilities.Caps
-
-func init() {
-	hostCaps = capabilities.Capabilities
-}
 
 // ScrollingRegion holds the state for an ANSI scrolling region
 type ScrollingRegion struct {
@@ -49,7 +42,6 @@ type VTerm struct {
 
 	Stream chan rune
 	out    chan<- Char
-	oper   chan<- Operation
 
 	storedCursorX, storedCursorY int
 
@@ -59,7 +51,7 @@ type VTerm struct {
 }
 
 // NewVTerm returns a VTerm ready to be used by its exported methods
-func NewVTerm(out chan<- Char, oper chan<- Operation) *VTerm {
+func NewVTerm(out chan<- Char) *VTerm {
 	w := 10
 	h := 10
 
@@ -84,7 +76,6 @@ func NewVTerm(out chan<- Char, oper chan<- Operation) *VTerm {
 		Cursor:          cursor.Cursor{X: 0, Y: 0},
 		Stream:          make(chan rune, 32),
 		out:             out,
-		oper:            oper,
 		Blinker:         &Blinker{X: 0, Y: 0, Visible: true},
 		scrollingRegion: ScrollingRegion{top: 0, bottom: h - 1},
 	}

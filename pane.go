@@ -26,9 +26,7 @@ type Pane struct {
 
 	vterm *vterm.VTerm
 
-	vtermIn         chan<- rune
-	vtermOut        <-chan vterm.Char
-	vtermOperations <-chan vterm.Operation
+	vtermOut <-chan vterm.Char
 }
 
 func (t *Pane) serialize() string {

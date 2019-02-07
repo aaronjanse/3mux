@@ -20,9 +20,8 @@ func newTerm(selected bool) *Pane {
 	}
 
 	vtermOut := make(chan vterm.Char, 32)
-	vtermOperations := make(chan vterm.Operation, 32)
 
-	vt := vterm.NewVTerm(vtermOut, vtermOperations)
+	vt := vterm.NewVTerm(vtermOut)
 
 	t := &Pane{
 		id:       rand.Intn(10),
@@ -30,9 +29,8 @@ func newTerm(selected bool) *Pane {
 		ptmx:     ptmx,
 		cmd:      c,
 
-		vterm:           vt,
-		vtermOut:        vtermOut,
-		vtermOperations: vtermOperations,
+		vterm:    vt,
+		vtermOut: vtermOut,
 	}
 
 	go (func() {
@@ -75,14 +73,6 @@ func newTerm(selected bool) *Pane {
 		}
 	})()
 
-	go (func() {
-		for {
-			oper := <-vtermOperations
-			text := oper.Serialize(t.renderRect.x, t.renderRect.y, t.renderRect.w, t.renderRect.h, globalCursor)
-			globalRawAggregate <- text
-		}
-	})()
-
 	go vt.ProcessStream()
 
 	return t
@@ -91,7 +81,7 @@ func newTerm(selected bool) *Pane {
 func (t *Pane) kill() {
 	t.vterm.StopBlinker()
 
-	close(t.vtermIn)
+	close(t.vterm.Stream)
 
 	err := t.ptmx.Close()
 	if err != nil {

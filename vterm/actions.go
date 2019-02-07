@@ -3,12 +3,6 @@ package vterm
 /* actions.go implements functions for common operations upon the vterm screen */
 
 func (v *VTerm) scrollDown(numLines int) {
-	lazyScroll := hostCaps.ScrollingRegionTopBottom && hostCaps.ScrollingRegionLeftRight
-
-	// if !lazyScroll {
-	// 	v.clear()
-	// }
-
 	if !v.usingAltScreen {
 		v.scrollback = append(v.scrollback, v.screen[v.scrollingRegion.top:v.scrollingRegion.top+numLines]...)
 	}
@@ -21,10 +15,5 @@ func (v *VTerm) scrollDown(numLines int) {
 		newLines...),
 		v.screen[v.scrollingRegion.bottom+1:]...)
 
-	if lazyScroll {
-		v.oper <- ScrollDown{numLines}
-	} else {
-		// v.DrawWithoutClearing()
-		v.RedrawWindow()
-	}
+	v.RedrawWindow()
 }
