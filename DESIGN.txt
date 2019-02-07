@@ -1,0 +1,43 @@
+                       /---Tiling
+                       |      ^
+                    :Split:   |
+/--ncurses-->stdout    |      |
+|                      v      |
+| +------------------Pane--+  |
+| |  (tiling ops)          |  |
+| |                        |  |
+\--&win     vterm   shell<----*--CfgHandler<--stdin
+  | &        |        |    |
+  +-|--------|--------|----+
+    |        |        |
+    |        v  /-----/
+  +-|-----VTerm-|---------+
+  | | resize()  |         |
+  | |           v         |
+  | |/------stream---\    |
+  | ||       |       |    |
+  | vv       v       v    |
+  | win<--helper-->cursor |
+  +-----------------------+
+
+Main:
+ - manages ncurses as a whole
+ - startup/shutdown
+ - manages host term events
+ - manages Tiling and CfgHandler
+CfgHandler:
+ - takes keypresses as input
+ - directs keypresses to either the Tiling WM or a specific Pane
+Tiling:
+ - store, manage, and transform Tiles
+Split:
+ - implements Tile
+ - manages multiple sub-Tile's
+Pane:
+ - implements Tile
+ - has a shell, win, and vterm
+ - gives vterm a win pointer
+ - passes input to shell and shell output to vterm
+VTerm:
+ - handles all the visual content within a pane
+ - renders pane via win pointer
