@@ -5,10 +5,6 @@ import (
 	"unicode"
 )
 
-var arrowKeys = map[int]string{
-	65: "Up", 66: "Down", 67: "Right", 68: "Left",
-}
-
 func handleEscapeCode() {
 	data := []byte{27}
 

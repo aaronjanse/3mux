@@ -79,10 +79,13 @@ func (t *Pane) serialize() string {
 func (t *Pane) setRenderRect(x, y, w, h int) {
 	t.renderRect = Rect{x, y, w, h}
 
-	// t.softRefresh()
+	t.softRefresh()
 
-	// t.vterm.Reshape(w, h)
-	// t.shell.resize(w, h)
+	t.vterm.Reshape(w, h)
+	t.shell.resize(w, h)
+
+	t.win.MoveWindow(y, x)
+	t.win.Resize(h, w)
 }
 
 func (t *Pane) softRefresh() {
