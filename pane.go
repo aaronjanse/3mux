@@ -11,7 +11,7 @@ import (
 	"github.com/kr/pty"
 )
 
-func (t *Term) setRenderRect(x, y, w, h int) {
+func (t *Pane) setRenderRect(x, y, w, h int) {
 	// for j := 0; j < t.renderRect.h; j++ {
 	// 	globalCharAggregate <- vterm.Char{
 	// 		Rune:   ' ',
@@ -62,7 +62,7 @@ func (t *Term) setRenderRect(x, y, w, h int) {
 	// t.vterm.DrawWithoutClearing()
 }
 
-func (t *Term) softRefresh() {
+func (t *Pane) softRefresh() {
 	if t.selected {
 		drawSelectionBorder(t.renderRect)
 	}

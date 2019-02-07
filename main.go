@@ -12,7 +12,7 @@ import (
 func main() {
 	go render()
 
-	t := getSelection().getContainer().(*Term)
+	t := getSelection().getContainer().(*Pane)
 	t.vterm.StartBlinker()
 
 	var h int
@@ -35,7 +35,7 @@ func main() {
 			// fmt.Print("\033[m\033[3J")
 			root.refreshRenderRect()
 		} else {
-			t := getSelection().getContainer().(*Term)
+			t := getSelection().getContainer().(*Pane)
 			t.handleStdin(string(raw))
 		}
 

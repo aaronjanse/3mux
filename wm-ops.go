@@ -26,7 +26,7 @@ func getSelection() Path {
 
 	for {
 		switch val := selection.(type) {
-		case *Term:
+		case *Pane:
 			return path
 		case *Split:
 			path = append(path, val.selectionIdx)
@@ -134,9 +134,9 @@ func moveWindow(d Direction) {
 func killWindow() {
 	parent, parentPath := getSelection().getParent()
 	t := parentPath.popContainer(parent.selectionIdx)
-	t.(*Term).kill()
+	t.(*Pane).kill()
 
-	getSelection().getContainer().(*Term).vterm.StartBlinker()
+	getSelection().getContainer().(*Pane).vterm.StartBlinker()
 }
 
 func (s *Split) kill() {
@@ -164,7 +164,7 @@ func (p Path) popContainer(idx int) Container {
 
 	if len(s.elements) == 1 && len(p) >= 1 {
 		switch val := (*s).elements[0].contents.(type) {
-		case *Term:
+		case *Pane:
 			parent, _ := p.getParent()
 			parent.elements[p[len(p)-1]].contents = val
 		case *Split:
@@ -205,7 +205,7 @@ func (s *Split) simplify() {
 				} else {
 					newElements = append(newElements, n)
 				}
-			case *Term:
+			case *Pane:
 				newElements = append(newElements, n)
 			}
 		}
@@ -241,7 +241,7 @@ func moveSelection(d Direction) {
 	path := getSelection()
 
 	// deselect the old Term
-	oldTerm := path.getContainer().(*Term)
+	oldTerm := path.getContainer().(*Pane)
 	oldTerm.selected = false
 	oldTerm.softRefresh()
 	oldTerm.vterm.StopBlinker()
@@ -285,7 +285,7 @@ func moveSelection(d Direction) {
 	}
 
 	// deselect the old Term
-	nowTerm := getSelection().getContainer().(*Term)
+	nowTerm := getSelection().getContainer().(*Pane)
 	nowTerm.selected = true
 	nowTerm.softRefresh()
 	nowTerm.vterm.StartBlinker()
@@ -295,7 +295,7 @@ func newWindow() {
 	path := getSelection()
 
 	// deselect the old Term
-	oldTerm := path.getContainer().(*Term)
+	oldTerm := path.getContainer().(*Pane)
 	oldTerm.selected = false
 	oldTerm.vterm.StopBlinker()
 	// the parent is going to be redrawn so we don't need to redraw the old term right now

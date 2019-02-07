@@ -24,7 +24,7 @@ type Split struct {
 	renderRect Rect
 }
 
-func (t *Term) serialize() string {
+func (t *Pane) serialize() string {
 	return fmt.Sprintf("Term")
 }
 

@@ -82,7 +82,7 @@ func render() {
 
 			desiredCursor := globalCursor
 
-			t := getSelection().getContainer().(*Term)
+			t := getSelection().getContainer().(*Pane)
 			desiredCursor.X = t.vterm.Cursor.X + t.renderRect.x
 			desiredCursor.Y = t.vterm.Cursor.Y + t.renderRect.y
 

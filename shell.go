@@ -10,8 +10,8 @@ import (
 	"github.com/kr/pty"
 )
 
-// A Term is the fundamental leaf unit of screen space
-type Term struct {
+// A Pane is the fundamental leaf unit of screen space
+type Pane struct {
 	id int
 
 	selected bool
@@ -28,7 +28,7 @@ type Term struct {
 	vtermOperations <-chan vterm.Operation
 }
 
-func newTerm(selected bool) *Term {
+func newTerm(selected bool) *Pane {
 	// Create arbitrary command.
 	c := exec.Command("zsh")
 
@@ -44,7 +44,7 @@ func newTerm(selected bool) *Term {
 
 	vt := vterm.NewVTerm(vtermIn, vtermOut, vtermOperations)
 
-	t := &Term{
+	t := &Pane{
 		id:       rand.Intn(10),
 		selected: selected,
 		ptmx:     ptmx,
@@ -109,7 +109,7 @@ func newTerm(selected bool) *Term {
 	return t
 }
 
-func (t *Term) kill() {
+func (t *Pane) kill() {
 	t.vterm.StopBlinker()
 
 	close(t.vtermIn)
@@ -125,7 +125,7 @@ func (t *Term) kill() {
 	}
 }
 
-func (t *Term) handleStdin(text string) {
+func (t *Pane) handleStdin(text string) {
 	_, err := t.ptmx.Write([]byte(text))
 	if err != nil {
 		log.Fatal(err)
