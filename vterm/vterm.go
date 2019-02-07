@@ -47,9 +47,9 @@ type VTerm struct {
 
 	Cursor cursor.Cursor
 
-	in   <-chan rune
-	out  chan<- Char
-	oper chan<- Operation
+	Stream chan rune
+	out    chan<- Char
+	oper   chan<- Operation
 
 	storedCursorX, storedCursorY int
 
@@ -59,7 +59,7 @@ type VTerm struct {
 }
 
 // NewVTerm returns a VTerm ready to be used by its exported methods
-func NewVTerm(in <-chan rune, out chan<- Char, oper chan<- Operation) *VTerm {
+func NewVTerm(out chan<- Char, oper chan<- Operation) *VTerm {
 	w := 10
 	h := 10
 
@@ -82,7 +82,7 @@ func NewVTerm(in <-chan rune, out chan<- Char, oper chan<- Operation) *VTerm {
 		scrollback:      [][]Char{},
 		usingAltScreen:  false,
 		Cursor:          cursor.Cursor{X: 0, Y: 0},
-		in:              in,
+		Stream:          make(chan rune, 32),
 		out:             out,
 		oper:            oper,
 		Blinker:         &Blinker{X: 0, Y: 0, Visible: true},

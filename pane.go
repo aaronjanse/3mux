@@ -1,8 +1,10 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
+	"os/exec"
 	"os/signal"
 	"syscall"
 
@@ -11,21 +13,29 @@ import (
 	"github.com/kr/pty"
 )
 
+// A Pane is a tiling unit representing a terminal
+type Pane struct {
+	id int
+
+	selected bool
+
+	renderRect Rect
+
+	ptmx *os.File
+	cmd  *exec.Cmd
+
+	vterm *vterm.VTerm
+
+	vtermIn         chan<- rune
+	vtermOut        <-chan vterm.Char
+	vtermOperations <-chan vterm.Operation
+}
+
+func (t *Pane) serialize() string {
+	return fmt.Sprintf("Term")
+}
+
 func (t *Pane) setRenderRect(x, y, w, h int) {
-	// for j := 0; j < t.renderRect.h; j++ {
-	// 	globalCharAggregate <- vterm.Char{
-	// 		Rune:   ' ',
-	// 		Cursor: cursor.Cursor{X: t.renderRect.x + t.renderRect.w, Y: t.renderRect.y + j},
-	// 	}
-	// }
-
-	// for i := 0; i < t.renderRect.w; i++ {
-	// 	globalCharAggregate <- vterm.Char{
-	// 		Rune:   ' ',
-	// 		Cursor: cursor.Cursor{X: t.renderRect.x + i, Y: t.renderRect.y + t.renderRect.h},
-	// 	}
-	// }
-
 	t.renderRect = Rect{x, y, w, h}
 
 	t.softRefresh()
@@ -49,17 +59,6 @@ func (t *Pane) setRenderRect(x, y, w, h int) {
 	ch <- syscall.SIGWINCH // Initial resize.
 
 	t.vterm.RedrawWindow()
-
-	// // clear the relevant area of the screen
-	// for j := 0; j < h; j++ {
-	// 	for i := 0; i < w; i++ {
-	// 		globalCharAggregate <- vterm.Char{
-	// 			Rune:   ' ',
-	// 			Cursor: cursor.Cursor{X: x + i, Y: y + j},
-	// 		}
-	// 	}
-	// }
-	// t.vterm.DrawWithoutClearing()
 }
 
 func (t *Pane) softRefresh() {

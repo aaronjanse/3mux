@@ -3,30 +3,11 @@ package main
 import (
 	"log"
 	"math/rand"
-	"os"
 	"os/exec"
 
 	"github.com/aaronduino/i3-tmux/vterm"
 	"github.com/kr/pty"
 )
-
-// A Pane is the fundamental leaf unit of screen space
-type Pane struct {
-	id int
-
-	selected bool
-
-	renderRect Rect
-
-	ptmx *os.File
-	cmd  *exec.Cmd
-
-	vterm *vterm.VTerm
-
-	vtermIn         chan<- rune
-	vtermOut        <-chan vterm.Char
-	vtermOperations <-chan vterm.Operation
-}
 
 func newTerm(selected bool) *Pane {
 	// Create arbitrary command.
@@ -38,11 +19,10 @@ func newTerm(selected bool) *Pane {
 		log.Fatal(err)
 	}
 
-	vtermIn := make(chan rune, 32)
 	vtermOut := make(chan vterm.Char, 32)
 	vtermOperations := make(chan vterm.Operation, 32)
 
-	vt := vterm.NewVTerm(vtermIn, vtermOut, vtermOperations)
+	vt := vterm.NewVTerm(vtermOut, vtermOperations)
 
 	t := &Pane{
 		id:       rand.Intn(10),
@@ -51,7 +31,6 @@ func newTerm(selected bool) *Pane {
 		cmd:      c,
 
 		vterm:           vt,
-		vtermIn:         vtermIn,
 		vtermOut:        vtermOut,
 		vtermOperations: vtermOperations,
 	}
@@ -73,10 +52,10 @@ func newTerm(selected bool) *Pane {
 			}
 			r := rune(b[0])
 			if r == '\t' { // FIXME
-				t.vtermIn <- ' '
-				t.vtermIn <- ' '
+				t.vterm.Stream <- ' '
+				t.vterm.Stream <- ' '
 			} else {
-				t.vtermIn <- r
+				t.vterm.Stream <- r
 			}
 		}
 	})()

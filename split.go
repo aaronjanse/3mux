@@ -1,9 +1,39 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/aaronduino/i3-tmux/cursor"
 	"github.com/aaronduino/i3-tmux/vterm"
 )
+
+// A Split splits a region of the screen into a areas reserved for multiple child nodes
+type Split struct {
+	elements          []Node
+	selectionIdx      int
+	verticallyStacked bool
+
+	renderRect Rect
+}
+
+func (s *Split) serialize() string {
+	var out string
+	if s.verticallyStacked {
+		out = "VSplit"
+	} else {
+		out = "HSplit"
+	}
+
+	out += fmt.Sprintf("[%d]", s.selectionIdx)
+
+	out += "("
+	for _, e := range s.elements {
+		out += e.contents.serialize() + ", "
+	}
+	out += ")"
+
+	return out
+}
 
 // setRenderRect updates the Split's renderRect cache after which it calls refreshRenderRect
 // this for when a split is reshaped
