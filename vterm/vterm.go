@@ -46,9 +46,9 @@ type VTerm struct {
 	in  <-chan rune
 	out chan<- Char
 
-	storedCursorX, storedCursorY int
+	cursorX, cursorY int
 
-	Blinker *Blinker
+	storedCursorX, storedCursorY int
 
 	scrollingRegion ScrollingRegion
 }
@@ -64,7 +64,7 @@ func NewVTerm(win *gc.Window, in <-chan rune, out chan<- Char) *VTerm {
 		for i := 0; i < w; i++ {
 			row = append(row, Char{
 				Rune:   ' ',
-				Cursor: cursor.Cursor{X: i, Y: j},
+				Cursor: cursor.Cursor{},
 			})
 		}
 		screen = append(screen, row)
@@ -76,42 +76,52 @@ func NewVTerm(win *gc.Window, in <-chan rune, out chan<- Char) *VTerm {
 		screen:          screen,
 		scrollback:      [][]Char{},
 		usingAltScreen:  false,
-		Cursor:          cursor.Cursor{X: 0, Y: 0},
+		Cursor:          cursor.Cursor{},
 		in:              in,
 		out:             out,
 		win:             win,
-		Blinker:         &Blinker{X: 0, Y: 0, Visible: true},
 		scrollingRegion: ScrollingRegion{top: 0, bottom: h - 1},
 	}
 }
 
 // Kill safely shuts down all vterm processes for the instance
 func (v *VTerm) Kill() {
-	v.StopBlinker()
 }
 
 // Reshape safely updates a VTerm's width & height
 func (v *VTerm) Reshape(w, h int) {
-	if h > len(v.screen) { // move lines from scrollback
-		linesToAdd := h - len(v.screen)
-		scrollbackLinesToAdd := linesToAdd
-		if scrollbackLinesToAdd > len(v.scrollback) {
-			scrollbackLinesToAdd = len(v.scrollback)
+	for y := 0; y <= h; y++ {
+		if y >= len(v.screen) {
+			v.screen = append(v.screen, []Char{})
 		}
 
-		v.screen = append(v.scrollback[len(v.scrollback)-scrollbackLinesToAdd:], v.screen...)
-		v.screen = append(v.screen, make([][]Char, linesToAdd-scrollbackLinesToAdd)...)
-		v.scrollback = v.scrollback[:len(v.scrollback)-scrollbackLinesToAdd]
-	} else if h < len(v.screen)-1 { // move lines to scrollback
-		linesToMove := len(v.screen) - h
-
-		v.scrollback = append(v.scrollback, v.screen[:linesToMove]...)
-		// v.debug(strconv.Itoa(linesToMove))
-		// fmt.Fprintln(os.Stdout, strconv.Itoa(len(v.screen)-linesToMove))
-		if linesToMove < len(v.screen) {
-			v.screen = v.screen[linesToMove:]
+		for x := 0; x <= w; x++ {
+			if x >= len(v.screen[y]) {
+				v.screen[y] = append(v.screen[y], Char{Rune: ' '})
+			}
 		}
 	}
+
+	// if h > len(v.screen) { // move lines from scrollback
+	// 	linesToAdd := h - len(v.screen)
+	// 	scrollbackLinesToAdd := linesToAdd
+	// 	if scrollbackLinesToAdd > len(v.scrollback) {
+	// 		scrollbackLinesToAdd = len(v.scrollback)
+	// 	}
+
+	// 	v.screen = append(v.scrollback[len(v.scrollback)-scrollbackLinesToAdd:], v.screen...)
+	// 	v.screen = append(v.screen, make([][]Char, linesToAdd-scrollbackLinesToAdd)...)
+	// 	v.scrollback = v.scrollback[:len(v.scrollback)-scrollbackLinesToAdd]
+	// } else if h < len(v.screen)-1 { // move lines to scrollback
+	// 	linesToMove := len(v.screen) - h
+
+	// 	v.scrollback = append(v.scrollback, v.screen[:linesToMove]...)
+	// 	// v.debug(strconv.Itoa(linesToMove))
+	// 	// fmt.Fprintln(os.Stdout, strconv.Itoa(len(v.screen)-linesToMove))
+	// 	if linesToMove < len(v.screen) {
+	// 		v.screen = v.screen[linesToMove:]
+	// 	}
+	// }
 
 	if v.scrollingRegion.top == 0 && v.scrollingRegion.bottom == v.h-1 {
 		v.scrollingRegion.bottom = h - 1
@@ -120,87 +130,83 @@ func (v *VTerm) Reshape(w, h int) {
 	v.w = w
 	v.h = h
 
-	v.RedrawWindow()
+	v.redrawWindow()
 }
 
-// clear draws whitespace over all printable chars on the screen
-func (v *VTerm) clear() {
-	for j := 0; j < v.h; j++ {
-		var row []Char
-		if j < len(v.screen) {
-			row = v.screen[j]
-		} else {
-			row = []Char{}
-		}
+// // clear draws whitespace over all printable chars on the screen
+// func (v *VTerm) clear() {
+// 	for j := 0; j < v.h; j++ {
+// 		var row []Char
+// 		if j < len(v.screen) {
+// 			row = v.screen[j]
+// 		} else {
+// 			row = []Char{}
+// 		}
 
-		for i := 0; i < v.w; i++ {
-			if i < len(row) {
-				char := row[i]
-				char.Cursor.X = i
-				char.Cursor.Y = j
-				if char.Rune != 0 && char.Rune != ' ' {
-					v.out <- Char{
-						Rune:   ' ',
-						Cursor: cursor.Cursor{X: i, Y: j},
-					}
-				}
-			}
-		}
-	}
-}
+// 		for i := 0; i < v.w; i++ {
+// 			if i < len(row) {
+// 				char := row[i]
+// 				char.Cursor.X = i
+// 				char.Cursor.Y = j
+// 				if char.Rune != 0 && char.Rune != ' ' {
+// 					v.out <- Char{
+// 						Rune:   ' ',
+// 						Cursor: cursor.Cursor{X: i, Y: j},
+// 					}
+// 				}
+// 			}
+// 		}
+// 	}
+// }
 
-// DrawWithoutClearing draws the screen under the assumption that the drawing area is already clean
-func (v *VTerm) DrawWithoutClearing() {
-	for j := 0; j < v.h; j++ {
-		var row []Char
-		if j < len(v.screen) {
-			row = v.screen[j]
-		} else {
-			row = []Char{}
-		}
+// // DrawWithoutClearing draws the screen under the assumption that the drawing area is already clean
+// func (v *VTerm) DrawWithoutClearing() {
+// 	for j := 0; j < v.h; j++ {
+// 		var row []Char
+// 		if j < len(v.screen) {
+// 			row = v.screen[j]
+// 		} else {
+// 			row = []Char{}
+// 		}
 
-		for i := 0; i < v.w; i++ {
-			if i < len(row) {
-				char := row[i]
-				char.Cursor.X = i
-				char.Cursor.Y = j
-				if char.Rune != 0 && char.Rune != ' ' {
-					v.out <- char
-					continue
-				}
-			}
-		}
-	}
-}
+// 		for i := 0; i < v.w; i++ {
+// 			if i < len(row) {
+// 				char := row[i]
+// 				char.Cursor.X = i
+// 				char.Cursor.Y = j
+// 				if char.Rune != 0 && char.Rune != ' ' {
+// 					v.out <- char
+// 					continue
+// 				}
+// 			}
+// 		}
+// 	}
+// }
 
-// RedrawWindow draws the entire visible window from scratch, sending the Char's to the scheduler via the out channel
-func (v *VTerm) RedrawWindow() {
-	for j := 0; j <= v.h; j++ {
-		var row []Char
-		if j < len(v.screen) {
-			row = v.screen[j]
-		} else {
-			row = []Char{}
-		}
+// // RedrawWindow draws the entire visible window from scratch, sending the Char's to the scheduler via the out channel
+// func (v *VTerm) RedrawWindow() {
+// 	for j := 0; j <= v.h; j++ {
+// 		var row []Char
+// 		if j < len(v.screen) {
+// 			row = v.screen[j]
+// 		} else {
+// 			row = []Char{}
+// 		}
 
-		for i := 0; i < v.w; i++ {
-			if i < len(row) {
-				char := row[i]
-				char.Cursor.X = i
-				char.Cursor.Y = j
-				if char.Rune != 0 {
-					v.out <- char
-					continue
-				}
-			}
-			v.out <- Char{
-				Rune:   ' ',
-				Cursor: cursor.Cursor{X: i, Y: j},
-			}
-		}
-	}
-}
-
-func (v *VTerm) updateCursor() {
-	v.updateBlinker()
-}
+// 		for i := 0; i < v.w; i++ {
+// 			if i < len(row) {
+// 				char := row[i]
+// 				char.Cursor.X = i
+// 				char.Cursor.Y = j
+// 				if char.Rune != 0 {
+// 					v.out <- char
+// 					continue
+// 				}
+// 			}
+// 			v.out <- Char{
+// 				Rune:   ' ',
+// 				Cursor: cursor.Cursor{X: i, Y: j},
+// 			}
+// 		}
+// 	}
+// }

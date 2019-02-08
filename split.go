@@ -2,9 +2,6 @@ package main
 
 import (
 	"fmt"
-
-	"github.com/aaronduino/i3-tmux/cursor"
-	"github.com/aaronduino/i3-tmux/vterm"
 )
 
 // A Split splits a region of the screen into a areas reserved for multiple child nodes
@@ -61,7 +58,7 @@ func (s *Split) refreshRenderRect() {
 	w := s.renderRect.w
 	h := s.renderRect.h
 
-	s.redrawLines()
+	// s.redrawLines()
 
 	var area int
 	if s.verticallyStacked {
@@ -94,41 +91,41 @@ func (s *Split) refreshRenderRect() {
 	}
 }
 
-func (s *Split) redrawLines() {
-	x := s.renderRect.x
-	y := s.renderRect.y
-	w := s.renderRect.w
-	h := s.renderRect.h
+// func (s *Split) redrawLines() {
+// 	x := s.renderRect.x
+// 	y := s.renderRect.y
+// 	w := s.renderRect.w
+// 	h := s.renderRect.h
 
-	var area int
-	if s.verticallyStacked {
-		area = h
-	} else {
-		area = w
-	}
-	dividers := getDividerPositions(area, s.elements)
-	for idx, pos := range dividers {
-		if idx == len(dividers)-1 {
-			break
-		}
+// 	var area int
+// 	if s.verticallyStacked {
+// 		area = h
+// 	} else {
+// 		area = w
+// 	}
+// 	dividers := getDividerPositions(area, s.elements)
+// 	for idx, pos := range dividers {
+// 		if idx == len(dividers)-1 {
+// 			break
+// 		}
 
-		if s.verticallyStacked {
-			for i := 0; i < w; i++ {
-				globalCharAggregate <- vterm.Char{
-					Rune:   '─',
-					Cursor: cursor.Cursor{X: x + i, Y: y + pos},
-				}
-			}
-		} else {
-			for j := 0; j < h; j++ {
-				globalCharAggregate <- vterm.Char{
-					Rune:   '│',
-					Cursor: cursor.Cursor{X: x + pos, Y: y + j},
-				}
-			}
-		}
-	}
-}
+// 		// if s.verticallyStacked {
+// 		// 	for i := 0; i < w; i++ {
+// 		// 		globalCharAggregate <- vterm.Char{
+// 		// 			Rune:   '─',
+// 		// 			Cursor: cursor.Cursor{X: x + i, Y: y + pos},
+// 		// 		}
+// 		// 	}
+// 		// } else {
+// 		// 	for j := 0; j < h; j++ {
+// 		// 		globalCharAggregate <- vterm.Char{
+// 		// 			Rune:   '│',
+// 		// 			Cursor: cursor.Cursor{X: x + pos, Y: y + j},
+// 		// 		}
+// 		// 	}
+// 		// }
+// 	}
+// }
 
 func getDividerPositions(area int, contents []Node) []int {
 	var dividerPositions []int

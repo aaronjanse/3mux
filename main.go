@@ -8,14 +8,16 @@ import (
 	"github.com/aaronduino/i3-tmux/keypress"
 
 	gc "github.com/rthornton128/goncurses"
-
-	"github.com/aaronduino/i3-tmux/cursor"
-	"github.com/aaronduino/i3-tmux/vterm"
 )
 
-func main() {
-	go render()
+// Rect is a rectangle with an origin x, origin y, width, and height
+type Rect struct {
+	x, y, w, h int
+}
 
+var termW, termH int
+
+func main() {
 	stdscr, err := gc.Init()
 	if err != nil {
 		log.Fatal(err)
@@ -25,7 +27,7 @@ func main() {
 	gc.Echo(false)  // disable printing of typed characters
 	gc.CBreak(true) // disable buffering
 
-	termH, termW := stdscr.MaxYX()
+	termH, termW = stdscr.MaxYX()
 	win, err := gc.NewWindow(termH, termW, 0, 0)
 	if err != nil {
 		panic(err)
@@ -43,9 +45,6 @@ func main() {
 		}}
 	defer root.kill()
 
-	t := getSelection().getContainer().(*Pane)
-	t.vterm.StartBlinker()
-
 	var h int
 	if config.statusBar {
 		h = termH - 1
@@ -60,7 +59,7 @@ func main() {
 
 	keypress.Listen(win, func(name string, raw []byte) {
 		// fmt.Println(name, raw)
-		fmt.Print("[")
+		// fmt.Print("[")
 		if operationCode, ok := config.bindings[name]; ok {
 			executeOperationCode(operationCode)
 			root.simplify()
@@ -70,7 +69,8 @@ func main() {
 			t := getSelection().getContainer().(*Pane)
 			t.shell.handleStdin(string(raw))
 		}
-		fmt.Print("]")
+		// gc.Update()
+		// fmt.Print("]")
 
 		// if config.statusBar {
 		// 	debug(root.serialize())
@@ -125,27 +125,27 @@ func getDirectionFromString(s string) Direction {
 	}
 }
 
-func debug(s string) {
-	for i := 0; i < termW; i++ {
-		r := ' '
-		if i < len(s) {
-			r = rune(s[i])
-		}
+// func debug(s string) {
+// 	for i := 0; i < termW; i++ {
+// 		r := ' '
+// 		if i < len(s) {
+// 			r = rune(s[i])
+// 		}
 
-		globalCharAggregate <- vterm.Char{
-			Rune: r,
-			Cursor: cursor.Cursor{
-				X: i,
-				Y: termH - 1,
-				Bg: cursor.Color{
-					ColorMode: cursor.ColorBit3Bright,
-					Code:      2,
-				},
-				Fg: cursor.Color{
-					ColorMode: cursor.ColorBit3Normal,
-					Code:      0,
-				},
-			},
-		}
-	}
-}
+// 		globalCharAggregate <- vterm.Char{
+// 			Rune: r,
+// 			Cursor: cursor.Cursor{
+// 				X: i,
+// 				Y: termH - 1,
+// 				Bg: cursor.Color{
+// 					ColorMode: cursor.ColorBit3Bright,
+// 					Code:      2,
+// 				},
+// 				Fg: cursor.Color{
+// 					ColorMode: cursor.ColorBit3Normal,
+// 					Code:      0,
+// 				},
+// 			},
+// 		}
+// 	}
+// }

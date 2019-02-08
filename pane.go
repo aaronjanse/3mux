@@ -26,13 +26,13 @@ func newTerm(selected bool) *Pane {
 	shell := newShell(stdout)
 
 	vtermOut := make(chan vterm.Char, 32)
-	fmt.Println("aaa")
 
 	var win *gc.Window
 	win, err := gc.NewWindow(10, 10, 0, 0)
 	if err != nil {
 		panic(err)
 	}
+	win.ScrollOk(true)
 
 	vt := vterm.NewVTerm(win, stdout, vtermOut)
 	go vt.ProcessStream()
@@ -46,22 +46,20 @@ func newTerm(selected bool) *Pane {
 		win:   win,
 	}
 
-	go (func() {
-		for {
-			char := <-vtermOut
-			if char.Cursor.X > t.renderRect.w-1 {
-				continue
-			}
-			if char.Cursor.Y > t.renderRect.h-1 {
-				continue
-			}
-			char.Cursor.X += t.renderRect.x
-			char.Cursor.Y += t.renderRect.y
-			globalCharAggregate <- char
-		}
-	})()
-
-	fmt.Print("xxx")
+	// go (func() {
+	// 	for {
+	// 		char := <-vtermOut
+	// 		if char.Cursor.X > t.renderRect.w-1 {
+	// 			continue
+	// 		}
+	// 		if char.Cursor.Y > t.renderRect.h-1 {
+	// 			continue
+	// 		}
+	// 		char.Cursor.X += t.renderRect.x
+	// 		char.Cursor.Y += t.renderRect.y
+	// 		globalCharAggregate <- char
+	// 	}
+	// })()
 
 	return t
 }
@@ -79,17 +77,18 @@ func (t *Pane) serialize() string {
 func (t *Pane) setRenderRect(x, y, w, h int) {
 	t.renderRect = Rect{x, y, w, h}
 
-	t.softRefresh()
+	// t.softRefresh()
+
+	t.win.MoveWindow(y, x)
+	t.win.Resize(h+1, w)
+	t.win.Refresh()
 
 	t.vterm.Reshape(w, h)
 	t.shell.resize(w, h)
-
-	t.win.MoveWindow(y, x)
-	t.win.Resize(h, w)
 }
 
 func (t *Pane) softRefresh() {
 	if t.selected {
-		drawSelectionBorder(t.renderRect)
+		// drawSelectionBorder(t.renderRect)
 	}
 }
