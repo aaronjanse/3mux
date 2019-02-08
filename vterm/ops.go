@@ -1,5 +1,10 @@
 package vterm
 
+import (
+	"github.com/aaronduino/i3-tmux/cursor"
+	gc "github.com/rthornton128/goncurses"
+)
+
 // scrollUp shifts screen contents up and adds blank lines to the bottom of the screen.
 // Lines pushed out of view are put in the scrollback.
 func (v *VTerm) scrollUp(n int) {
@@ -98,6 +103,7 @@ func (v *VTerm) putChar(ch rune) {
 	// TODO: set ncurses style attributes to match those of the cursor
 
 	// TODO: print to the window based on scrolling position
+	v.updateCursesStyle(v.Cursor)
 	v.win.Print(string(ch))
 	v.win.Refresh()
 
@@ -106,11 +112,59 @@ func (v *VTerm) putChar(ch rune) {
 	}
 }
 
+func (v *VTerm) updateCursesStyle(c cursor.Cursor) {
+	cursorAttrs := []bool{
+		v.Cursor.Bold,
+		v.Cursor.Faint,
+		v.Cursor.Underline,
+	}
+	cursesAttrs := []gc.Char{
+		gc.A_BOLD,
+		gc.A_DIM,
+		gc.A_UNDERLINE,
+	}
+	for i := 0; i < len(cursorAttrs); i++ {
+		if cursorAttrs[i] {
+			v.win.AttrOn(cursesAttrs[i])
+		} else {
+			v.win.AttrOff(cursesAttrs[i])
+		}
+	}
+
+	// gc.InitPair(1, gc.C_MAGENTA, -1)
+	// gc.InitPair(2, gc.C_GREEN, -1)
+	// gc.InitPair(3, gc.C_BLUE, -1)
+
+	switch v.Cursor.Fg.ColorMode {
+	case cursor.ColorNone:
+		v.win.ColorOn(1)
+	case cursor.ColorBit3Normal:
+		v.win.ColorOn(int16(v.Cursor.Fg.Code) + 2)
+	case cursor.ColorBit3Bright:
+		v.win.ColorOn(int16(v.Cursor.Fg.Code) + 8 + 2)
+	case cursor.ColorBit8:
+		v.win.ColorOn(int16(v.Cursor.Fg.Code) + 2)
+	case cursor.ColorBit24:
+		code := v.Cursor.Fg.Code
+		// r := int16((code >> 16) & 0xff)
+		// g := int16((code >> 8) & 0xff)
+		// b := int16(code & 0xff)
+		// id := ((r + g + b) % 600) + 260
+		// gc.InitColor(id, r, g, b)
+		// gc.InitPair(id, id, -1)
+		v.win.ColorOn(int16(code))
+	}
+
+	// v.win.Color(2)
+
+}
+
 // redrawWindow redraws the screen into ncurses from scratch.
 // This should be reserved for operations not yet formalized into a generic, efficient function.
 func (v *VTerm) redrawWindow() {
 	for y := 0; y < v.h; y++ {
 		for x := 0; x < v.w; x++ {
+			v.updateCursesStyle(v.screen[y][x].Cursor)
 			v.win.MovePrint(y, x, string(v.screen[y][x].Rune))
 		}
 	}

@@ -27,12 +27,33 @@ func main() {
 	gc.Echo(false)  // disable printing of typed characters
 	gc.CBreak(true) // disable buffering
 
+	if err := gc.StartColor(); err != nil {
+		log.Fatal(err)
+	}
+	if err := gc.UseDefaultColors(); err != nil {
+		log.Fatal(err)
+	}
+
+	gc.InitPair(1, -1, -1)
+	for i := 0; i <= 255; i++ {
+		gc.InitPair(int16(i)+2, int16(i), -1)
+	}
+
+	// gc.InitPair(0, gc.C_BLUE, gc.C_GREEN)
+
 	termH, termW = stdscr.MaxYX()
 	win, err := gc.NewWindow(termH, termW, 0, 0)
 	if err != nil {
 		panic(err)
 	}
 	win.Keypad(true) // enable recognition of special keys
+
+	// win.ColorOn(3)
+	// win.Print("Hello")
+
+	// win.GetChar()
+
+	// return
 
 	root = Split{
 		verticallyStacked: false,

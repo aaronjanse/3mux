@@ -24,8 +24,6 @@ func Listen(w *gc.Window, c func(name string, raw []byte)) {
 		switch key := win.GetChar(); key {
 		case 23: // Ctrl+W
 			return
-		case gc.KEY_LEFT:
-			win.Println("left")
 		case 27:
 			handleEscapeCode()
 		default:
