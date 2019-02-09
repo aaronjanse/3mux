@@ -5,6 +5,12 @@ import (
 	gc "github.com/rthornton128/goncurses"
 )
 
+// RefreshCursor refreshes the ncurses cursor position
+func (v *VTerm) RefreshCursor() {
+	v.win.Move(v.cursorY, v.cursorX)
+	v.win.Refresh()
+}
+
 // scrollUp shifts screen contents up and adds blank lines to the bottom of the screen.
 // Lines pushed out of view are put in the scrollback.
 func (v *VTerm) scrollUp(n int) {

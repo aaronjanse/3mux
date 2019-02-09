@@ -285,6 +285,7 @@ func moveSelection(d Direction) {
 	nowTerm := getSelection().getContainer().(*Pane)
 	nowTerm.selected = true
 	nowTerm.softRefresh()
+	nowTerm.vterm.RefreshCursor()
 }
 
 func newWindow() {
