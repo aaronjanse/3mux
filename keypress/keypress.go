@@ -24,6 +24,14 @@ func Listen(w *gc.Window, c func(name string, raw []byte)) {
 		switch key := win.GetChar(); key {
 		case 23: // Ctrl+W
 			return
+		case gc.KEY_UP:
+			callback("Up", []byte{27, 79, 65})
+		case gc.KEY_DOWN:
+			callback("Up", []byte{27, 79, 66})
+		case gc.KEY_RIGHT:
+			callback("Up", []byte{27, 79, 67})
+		case gc.KEY_LEFT:
+			callback("Up", []byte{27, 79, 68})
 		case 27:
 			handleEscapeCode()
 		default:

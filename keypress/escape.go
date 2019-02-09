@@ -12,6 +12,8 @@ func handleEscapeCode() {
 	data = append(data, byte(k))
 	switch k {
 	case 91:
+	case 79:
+		handleArrowKey()
 	default:
 		letter := rune(k)
 		uppercase := strings.ToUpper(string(letter))
@@ -71,4 +73,21 @@ func handleEscapeCode() {
 	}
 
 	callback(out, data)
+}
+
+func handleArrowKey() {
+	k := next()
+	data := []byte{27, 79, byte(k)}
+	switch k {
+	case 65:
+		callback("Up", data)
+	case 66:
+		callback("Down", data)
+	case 67:
+		callback("Right", data)
+	case 68:
+		callback("Left", data)
+	default:
+		callback("", data)
+	}
 }
