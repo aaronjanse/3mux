@@ -165,9 +165,9 @@ func (v *VTerm) updateCursesStyle(c cursor.Cursor) {
 
 }
 
-// redrawWindow redraws the screen into ncurses from scratch.
+// RedrawWindow redraws the screen into ncurses from scratch.
 // This should be reserved for operations not yet formalized into a generic, efficient function.
-func (v *VTerm) redrawWindow() {
+func (v *VTerm) RedrawWindow() {
 	for y := 0; y < v.h; y++ {
 		for x := 0; x < v.w; x++ {
 			v.updateCursesStyle(v.screen[y][x].Cursor)

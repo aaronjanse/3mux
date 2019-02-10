@@ -17,8 +17,11 @@ type Rect struct {
 
 var termW, termH int
 
+var stdscr *gc.Window
+
 func main() {
-	stdscr, err := gc.Init()
+	var err error
+	stdscr, err = gc.Init()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -85,7 +88,10 @@ func main() {
 			executeOperationCode(operationCode)
 			root.simplify()
 
-			// root.refreshRenderRect()
+			root.refreshRenderRect()
+
+			t := getSelection().getContainer().(*Pane)
+			t.vterm.RefreshCursor()
 		} else {
 			t := getSelection().getContainer().(*Pane)
 			t.shell.handleStdin(string(raw))

@@ -230,7 +230,7 @@ func (v *VTerm) handleCSISequence() {
 					v.screen[v.scrollingRegion.bottom+1:]...)
 
 				v.shiftCursorY(1)
-				v.redrawWindow()
+				v.RedrawWindow()
 			case 'm': // Select Graphic Rendition
 				v.handleSDR(parameterCode)
 			case 's': // Save Cursor Position

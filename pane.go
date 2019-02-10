@@ -67,6 +67,8 @@ func newTerm(selected bool) *Pane {
 func (t *Pane) kill() {
 	t.vterm.Kill()
 	t.shell.Kill()
+	t.win.Erase()
+	t.win.Refresh()
 	t.win.Delete()
 }
 
@@ -75,20 +77,26 @@ func (t *Pane) serialize() string {
 }
 
 func (t *Pane) setRenderRect(x, y, w, h int) {
+	r := t.renderRect
+	if x == r.x && y == r.y && w == r.w && h == r.h {
+		return
+	}
+
 	t.renderRect = Rect{x, y, w, h}
 
-	// t.softRefresh()
-
+	t.win.Resize(h, w)
 	t.win.MoveWindow(y, x)
-	t.win.Resize(h+1, w)
-	t.win.Refresh()
 
 	t.vterm.Reshape(w, h)
+
 	t.shell.resize(w, h)
+
+	t.softRefresh()
 }
 
 func (t *Pane) softRefresh() {
 	if t.selected {
-		// drawSelectionBorder(t.renderRect)
+		drawSelectionBorder(t.renderRect)
+		// t.win.Box(gc.ACS_VLINE, gc.ACS_HLINE)
 	}
 }

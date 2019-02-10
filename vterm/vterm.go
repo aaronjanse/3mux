@@ -130,7 +130,7 @@ func (v *VTerm) Reshape(w, h int) {
 	v.w = w
 	v.h = h
 
-	v.redrawWindow()
+	v.RedrawWindow()
 }
 
 // // clear draws whitespace over all printable chars on the screen

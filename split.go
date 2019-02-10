@@ -92,8 +92,8 @@ func (s *Split) refreshRenderRect() {
 }
 
 // func (s *Split) redrawLines() {
-// 	x := s.renderRect.x
-// 	y := s.renderRect.y
+// 	// x := s.renderRect.x
+// 	// y := s.renderRect.y
 // 	w := s.renderRect.w
 // 	h := s.renderRect.h
 
@@ -104,9 +104,15 @@ func (s *Split) refreshRenderRect() {
 // 		area = w
 // 	}
 // 	dividers := getDividerPositions(area, s.elements)
-// 	for idx, pos := range dividers {
+// 	for idx, _ := range dividers {
 // 		if idx == len(dividers)-1 {
 // 			break
+// 		}
+
+// 		if s.verticallyStacked {
+// 			s.elements[idx].contents
+// 		} else {
+
 // 		}
 
 // 		// if s.verticallyStacked {
