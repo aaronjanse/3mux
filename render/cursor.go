@@ -38,17 +38,21 @@ func deltaMarkup(fromCur, toCur Cursor) string {
 	xDiff := toCur.X - fromCur.X
 	yDiff := toCur.Y - fromCur.Y
 
-	if yDiff == 0 {
-		if xDiff > 0 {
-			out += fmt.Sprintf("\033[%dC", xDiff) // move forwards
-		} else {
-			out += fmt.Sprintf("\033[%dD", -xDiff) // move backwards
-		}
-	} else {
-		out += fmt.Sprintf("\033[%d;%dH", toCur.Y, toCur.X)
-	}
+	// if yDiff == 0 {
+	// 	if xDiff > 0 {
+	// 		out += fmt.Sprintf("\033[%dC", xDiff) // move forwards
+	// 	} else {
+	// 		out += fmt.Sprintf("\033[%dD", -xDiff) // move backwards
+	// 	}
+	// } else {
+	// 	out += fmt.Sprintf("\033[%d;%dH", toCur.Y, toCur.X)
+	// }
 
-	out += fmt.Sprintf("\033[%d;%dH", toCur.Y+1, toCur.X+1)
+	if xDiff == 0 && yDiff == 1 {
+		out += "\n"
+	} else if xDiff != 0 || yDiff != 0 {
+		out += fmt.Sprintf("\033[%d;%dH", toCur.Y+1, toCur.X+1)
+	}
 
 	to := toCur.Style
 	from := fromCur.Style

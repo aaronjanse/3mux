@@ -342,3 +342,21 @@ func (p Path) getContainer() Container {
 
 	return cur
 }
+
+func getPanes() []*Pane {
+	return getPanesOfSplit(&root)
+}
+
+func getPanesOfSplit(s *Split) []*Pane {
+	panes := []*Pane{}
+	for _, e := range s.elements {
+		switch c := e.contents.(type) {
+		case *Split:
+			panes = append(panes, getPanesOfSplit(c)...)
+		case *Pane:
+			panes = append(panes, c)
+		}
+	}
+
+	return panes
+}

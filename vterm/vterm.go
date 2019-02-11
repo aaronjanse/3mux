@@ -26,10 +26,13 @@ type VTerm struct {
 	// visible screen; char cursor coords are ignored
 	screen [][]render.Char
 
-	scrollback [][]render.Char // disabled when using alt screen; char cursor coords are ignored
+	scrollback    [][]render.Char // disabled when using alt screen; char cursor coords are ignored. Zero index is closest to the visible screen
+	scrollbackPos int             // scrollbackPos is the number of lines of scrollback visible
 
 	usingAltScreen bool
 	screenBackup   [][]render.Char
+
+	NeedsRedraw bool
 
 	Cursor render.Cursor
 
@@ -75,6 +78,7 @@ func NewVTerm(renderer *render.Renderer, parentSetCursor func(x, y int), in <-ch
 		renderer:        renderer,
 		parentSetCursor: parentSetCursor,
 		scrollingRegion: ScrollingRegion{top: 0, bottom: h - 1},
+		NeedsRedraw:     false,
 	}
 }
 

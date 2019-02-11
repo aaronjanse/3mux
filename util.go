@@ -123,7 +123,7 @@ func drawSelectionBorder(r Rect) {
 	}
 
 	// stdscr.Refresh()
-	renderer.Refresh()
+	// renderer.Refresh()
 }
 
 // getTermSize returns the wusth

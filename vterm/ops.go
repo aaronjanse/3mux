@@ -4,6 +4,27 @@ import (
 	"github.com/aaronduino/i3-tmux/render"
 )
 
+// ScrollbackUp shifts the screen contents up, with scrollback
+func (v *VTerm) ScrollbackUp() {
+	if v.scrollbackPos > 0 {
+		v.scrollbackPos--
+	}
+
+	v.RedrawWindow()
+}
+
+// ScrollbackDown shifts the screen contents down, with scrollback
+func (v *VTerm) ScrollbackDown() {
+	if len(v.scrollback) == 0 {
+		return
+	}
+
+	if v.scrollbackPos < len(v.scrollback) {
+		v.scrollbackPos++
+		v.RedrawWindow()
+	}
+}
+
 // RefreshCursor refreshes the ncurses cursor position
 func (v *VTerm) RefreshCursor() {
 	v.parentSetCursor(v.Cursor.X, v.Cursor.Y)
@@ -12,9 +33,9 @@ func (v *VTerm) RefreshCursor() {
 // scrollUp shifts screen contents up and adds blank lines to the bottom of the screen.
 // Lines pushed out of view are put in the scrollback.
 func (v *VTerm) scrollUp(n int) {
-	// if !v.usingAltScreen {
-	// 	v.scrollback = append(v.scrollback, v.screen[v.scrollingRegion.top:v.scrollingRegion.top+n]...)
-	// }
+	if !v.usingAltScreen {
+		v.scrollback = append(v.screen[v.scrollingRegion.top:v.scrollingRegion.top+n], v.scrollback...)
+	}
 
 	blankLine := []render.Char{}
 	for i := 0; i < v.w; i++ {
@@ -32,7 +53,8 @@ func (v *VTerm) scrollUp(n int) {
 		newLines...),
 		v.screen[v.scrollingRegion.bottom+1:]...)
 
-	v.RedrawWindow() // FIXME
+	v.NeedsRedraw = true
+	// v.RedrawWindow() // FIXME
 }
 
 // scrollDown shifts the screen content down and adds blank lines to the top.
@@ -126,7 +148,7 @@ func (v *VTerm) putChar(ch rune) {
 // RedrawWindow redraws the screen into ncurses from scratch.
 // This should be reserved for operations not yet formalized into a generic, efficient function.
 func (v *VTerm) RedrawWindow() {
-	for y := 0; y < v.h; y++ {
+	for y := 0; y < v.h-v.scrollbackPos; y++ {
 		for x := 0; x < v.w; x++ {
 			if y >= len(v.screen) || x >= len(v.screen[y]) {
 				continue
@@ -134,10 +156,32 @@ func (v *VTerm) RedrawWindow() {
 			v.out <- render.PositionedChar{
 				Rune: v.screen[y][x].Rune,
 				Cursor: render.Cursor{
-					X: x, Y: y, Style: v.screen[y][x].Style,
+					X: x, Y: y + v.scrollbackPos, Style: v.screen[y][x].Style,
 				},
 			}
 		}
 	}
-	// v.renderer.Refresh()
+
+	if v.scrollbackPos > 0 {
+		for y := 0; y < v.scrollbackPos; y++ {
+			for x := 0; x < v.w; x++ {
+				idx := v.scrollbackPos - y - 1
+				if x < len(v.scrollback[idx]) {
+					v.out <- render.PositionedChar{
+						Rune: v.scrollback[idx][x].Rune,
+						Cursor: render.Cursor{
+							X: x, Y: y, Style: v.scrollback[idx][x].Style,
+						},
+					}
+				} else {
+					v.out <- render.PositionedChar{
+						Rune: ' ',
+						Cursor: render.Cursor{
+							X: x, Y: y, Style: render.Style{},
+						},
+					}
+				}
+			}
+		}
+	}
 }

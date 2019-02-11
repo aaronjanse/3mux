@@ -1,7 +1,11 @@
 package main
 
 import (
+	"flag"
 	"fmt"
+	"log"
+	"os"
+	"runtime/pprof"
 	"strings"
 	"time"
 
@@ -19,7 +23,19 @@ var termW, termH int
 
 var renderer *render.Renderer
 
+var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
+
 func main() {
+	flag.Parse()
+	if *cpuprofile != "" {
+		f, err := os.Create(*cpuprofile)
+		if err != nil {
+			log.Fatal(err)
+		}
+		pprof.StartCPUProfile(f)
+		defer pprof.StopCPUProfile()
+	}
+
 	termW, termH, _ = getTermSize()
 
 	renderer = render.NewRenderer()
@@ -49,37 +65,43 @@ func main() {
 	// 	debug(root.serialize())
 	// }
 
-	ticker := time.NewTicker(time.Second / 30)
+	ticker := time.NewTicker(time.Second / 10)
 	defer ticker.Stop()
 	go func() {
 		for range ticker.C {
+			for _, pane := range getPanes() {
+				if pane.vterm.NeedsRedraw {
+					pane.vterm.RedrawWindow()
+				}
+			}
 			renderer.Refresh()
 		}
 	}()
 
 	keypress.Listen(func(name string, raw []byte) {
 		// fmt.Println(name, raw)
-		// fmt.Print("[")
-		if operationCode, ok := config.bindings[name]; ok {
-			executeOperationCode(operationCode)
-			root.simplify()
 
-			root.refreshRenderRect()
+		switch name {
+		case "Scroll Up":
+			t := getSelection().getContainer().(*Pane)
+			t.vterm.ScrollbackDown()
+		case "Scroll Down":
+			t := getSelection().getContainer().(*Pane)
+			t.vterm.ScrollbackUp()
+		default:
+			if operationCode, ok := config.bindings[name]; ok {
+				executeOperationCode(operationCode)
+				root.simplify()
 
-			t := getSelection().getContainer().(*Pane)
-			t.vterm.RefreshCursor()
-		} else {
-			t := getSelection().getContainer().(*Pane)
-			t.shell.handleStdin(string(raw))
+				root.refreshRenderRect()
+
+				t := getSelection().getContainer().(*Pane)
+				t.vterm.RefreshCursor()
+			} else {
+				t := getSelection().getContainer().(*Pane)
+				t.shell.handleStdin(string(raw))
+			}
 		}
-
-		// renderer.Refresh()
-		// gc.Update()
-		// fmt.Print("]")
-
-		// if config.statusBar {
-		// 	debug(root.serialize())
-		// }
 	})
 }
 

@@ -53,7 +53,11 @@ func Listen(callback func(name string, raw []byte)) {
 			}
 
 			if data[1] == 79 { // Alone
-				handle(arrowNames[data[2]])
+				if ev.N == 15 {
+					handle("Scroll " + arrowNames[data[2]])
+				} else {
+					handle(arrowNames[data[2]])
+				}
 			} else if data[1] == 91 { // Combo
 				if data[2] == 54 && data[3] == 126 { // PageDown Key
 					return

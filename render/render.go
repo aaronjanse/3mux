@@ -14,6 +14,7 @@ type Renderer struct {
 
 	drawingCursor Cursor
 	cursorMutex   *sync.Mutex
+	writingMutex  *sync.Mutex
 
 	// RenderQueue is how requests to change the framebuffer are made
 	RenderQueue chan PositionedChar
@@ -37,7 +38,8 @@ func NewRenderer() *Renderer {
 		currentScreen: [][]Char{},
 		pendingScreen: [][]Char{},
 		cursorMutex:   &sync.Mutex{},
-		RenderQueue:   make(chan PositionedChar, 32),
+		writingMutex:  &sync.Mutex{},
+		RenderQueue:   make(chan PositionedChar, 3200),
 	}
 }
 
@@ -84,15 +86,19 @@ func (r *Renderer) ListenToQueue() {
 			ch.Rune = ' '
 		}
 
+		r.writingMutex.Lock()
 		r.pendingScreen[ch.Y][ch.X] = Char{
 			Rune:  ch.Rune,
 			Style: ch.Cursor.Style,
 		}
+		r.writingMutex.Unlock()
 	}
 }
 
 // Refresh updates the screen to match the framebuffer
 func (r *Renderer) Refresh() {
+	pendingCopy := r.pendingScreen
+
 	r.cursorMutex.Lock()
 
 	originalCursor := r.drawingCursor
@@ -100,9 +106,12 @@ func (r *Renderer) Refresh() {
 	fmt.Print("\033[?25l") // hide cursor
 	for y := 0; y < r.h; y++ {
 		for x := 0; x < r.w; x++ {
+			r.writingMutex.Lock()
 			current := r.currentScreen[y][x]
-			pending := r.pendingScreen[y][x]
+			pending := pendingCopy[y][x]
 			if current != pending {
+				r.currentScreen[y][x] = pendingCopy[y][x]
+
 				newCursor := Cursor{
 					X: x, Y: y, Style: pending.Style,
 				}
@@ -111,8 +120,8 @@ func (r *Renderer) Refresh() {
 				fmt.Print(string(pending.Rune))
 				newCursor.X++
 				r.drawingCursor = newCursor
-				r.currentScreen[y][x] = r.pendingScreen[y][x]
 			}
+			r.writingMutex.Unlock()
 		}
 	}
 
@@ -126,6 +135,8 @@ func (r *Renderer) Refresh() {
 
 // SetCursor sets the position of the physical cursor
 func (r *Renderer) SetCursor(x, y int) {
+	return
+
 	r.cursorMutex.Lock()
 
 	newCursor := Cursor{

@@ -46,16 +46,18 @@ func newTerm(selected bool) *Pane {
 
 	go (func() {
 		for {
-			char := <-vtermOut
-			if char.Cursor.X > t.renderRect.w-1 {
-				continue
+			select {
+			case char := <-vtermOut:
+				if char.Cursor.X > t.renderRect.w-1 {
+					continue
+				}
+				if char.Cursor.Y > t.renderRect.h-1 {
+					continue
+				}
+				char.Cursor.X += t.renderRect.x
+				char.Cursor.Y += t.renderRect.y
+				renderer.RenderQueue <- char
 			}
-			if char.Cursor.Y > t.renderRect.h-1 {
-				continue
-			}
-			char.Cursor.X += t.renderRect.x
-			char.Cursor.Y += t.renderRect.y
-			renderer.RenderQueue <- char
 		}
 	})()
 
@@ -81,7 +83,7 @@ func (t *Pane) setRenderRect(x, y, w, h int) {
 
 	t.vterm.Reshape(w, h)
 	t.vterm.RedrawWindow()
-	renderer.Refresh()
+	// renderer.Refresh()
 
 	t.shell.resize(w, h)
 
