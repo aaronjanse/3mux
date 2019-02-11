@@ -1,4 +1,4 @@
-package cursor
+package render
 
 import "fmt"
 

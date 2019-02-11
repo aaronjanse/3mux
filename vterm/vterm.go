@@ -6,21 +6,13 @@ A Char is a character printed using a given cursor (which is stored alongside th
 package vterm
 
 import (
-	"github.com/aaronduino/i3-tmux/cursor"
-	gc "github.com/rthornton128/goncurses"
+	"github.com/aaronduino/i3-tmux/render"
 )
 
 // ScrollingRegion holds the state for an ANSI scrolling region
 type ScrollingRegion struct {
 	top    int
 	bottom int
-}
-
-// Char represents one character in the terminal's grid
-type Char struct {
-	Rune rune
-
-	Cursor cursor.Cursor
 }
 
 /*
@@ -32,21 +24,22 @@ type VTerm struct {
 	w, h int
 
 	// visible screen; char cursor coords are ignored
-	screen [][]Char
+	screen [][]render.Char
 
-	scrollback [][]Char // disabled when using alt screen; char cursor coords are ignored
+	scrollback [][]render.Char // disabled when using alt screen; char cursor coords are ignored
 
 	usingAltScreen bool
-	screenBackup   [][]Char
+	screenBackup   [][]render.Char
 
-	Cursor cursor.Cursor
+	Cursor render.Cursor
 
-	win *gc.Window
+	renderer *render.Renderer
+
+	// parentSetCursor sets physical host's cursor taking the pane location into account
+	parentSetCursor func(x, y int)
 
 	in  <-chan rune
-	out chan<- Char
-
-	cursorX, cursorY int
+	out chan<- render.PositionedChar
 
 	storedCursorX, storedCursorY int
 
@@ -54,17 +47,17 @@ type VTerm struct {
 }
 
 // NewVTerm returns a VTerm ready to be used by its exported methods
-func NewVTerm(win *gc.Window, in <-chan rune, out chan<- Char) *VTerm {
+func NewVTerm(renderer *render.Renderer, parentSetCursor func(x, y int), in <-chan rune, out chan<- render.PositionedChar) *VTerm {
 	w := 10
 	h := 10
 
-	screen := [][]Char{}
+	screen := [][]render.Char{}
 	for j := 0; j < h; j++ {
-		row := []Char{}
+		row := []render.Char{}
 		for i := 0; i < w; i++ {
-			row = append(row, Char{
-				Rune:   ' ',
-				Cursor: cursor.Cursor{},
+			row = append(row, render.Char{
+				Rune:  ' ',
+				Style: render.Style{},
 			})
 		}
 		screen = append(screen, row)
@@ -74,12 +67,13 @@ func NewVTerm(win *gc.Window, in <-chan rune, out chan<- Char) *VTerm {
 		w:               w,
 		h:               h,
 		screen:          screen,
-		scrollback:      [][]Char{},
+		scrollback:      [][]render.Char{},
 		usingAltScreen:  false,
-		Cursor:          cursor.Cursor{},
+		Cursor:          render.Cursor{},
 		in:              in,
 		out:             out,
-		win:             win,
+		renderer:        renderer,
+		parentSetCursor: parentSetCursor,
 		scrollingRegion: ScrollingRegion{top: 0, bottom: h - 1},
 	}
 }
@@ -92,12 +86,12 @@ func (v *VTerm) Kill() {
 func (v *VTerm) Reshape(w, h int) {
 	for y := 0; y <= h; y++ {
 		if y >= len(v.screen) {
-			v.screen = append(v.screen, []Char{})
+			v.screen = append(v.screen, []render.Char{})
 		}
 
 		for x := 0; x <= w; x++ {
 			if x >= len(v.screen[y]) {
-				v.screen[y] = append(v.screen[y], Char{Rune: ' '})
+				v.screen[y] = append(v.screen[y], render.Char{Rune: ' ', Style: render.Style{}})
 			}
 		}
 	}
@@ -132,81 +126,3 @@ func (v *VTerm) Reshape(w, h int) {
 
 	v.RedrawWindow()
 }
-
-// // clear draws whitespace over all printable chars on the screen
-// func (v *VTerm) clear() {
-// 	for j := 0; j < v.h; j++ {
-// 		var row []Char
-// 		if j < len(v.screen) {
-// 			row = v.screen[j]
-// 		} else {
-// 			row = []Char{}
-// 		}
-
-// 		for i := 0; i < v.w; i++ {
-// 			if i < len(row) {
-// 				char := row[i]
-// 				char.Cursor.X = i
-// 				char.Cursor.Y = j
-// 				if char.Rune != 0 && char.Rune != ' ' {
-// 					v.out <- Char{
-// 						Rune:   ' ',
-// 						Cursor: cursor.Cursor{X: i, Y: j},
-// 					}
-// 				}
-// 			}
-// 		}
-// 	}
-// }
-
-// // DrawWithoutClearing draws the screen under the assumption that the drawing area is already clean
-// func (v *VTerm) DrawWithoutClearing() {
-// 	for j := 0; j < v.h; j++ {
-// 		var row []Char
-// 		if j < len(v.screen) {
-// 			row = v.screen[j]
-// 		} else {
-// 			row = []Char{}
-// 		}
-
-// 		for i := 0; i < v.w; i++ {
-// 			if i < len(row) {
-// 				char := row[i]
-// 				char.Cursor.X = i
-// 				char.Cursor.Y = j
-// 				if char.Rune != 0 && char.Rune != ' ' {
-// 					v.out <- char
-// 					continue
-// 				}
-// 			}
-// 		}
-// 	}
-// }
-
-// // RedrawWindow draws the entire visible window from scratch, sending the Char's to the scheduler via the out channel
-// func (v *VTerm) RedrawWindow() {
-// 	for j := 0; j <= v.h; j++ {
-// 		var row []Char
-// 		if j < len(v.screen) {
-// 			row = v.screen[j]
-// 		} else {
-// 			row = []Char{}
-// 		}
-
-// 		for i := 0; i < v.w; i++ {
-// 			if i < len(row) {
-// 				char := row[i]
-// 				char.Cursor.X = i
-// 				char.Cursor.Y = j
-// 				if char.Rune != 0 {
-// 					v.out <- char
-// 					continue
-// 				}
-// 			}
-// 			v.out <- Char{
-// 				Rune:   ' ',
-// 				Cursor: cursor.Cursor{X: i, Y: j},
-// 			}
-// 		}
-// 	}
-// }

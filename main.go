@@ -2,12 +2,12 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"strings"
+	"time"
+
+	"github.com/aaronduino/i3-tmux/render"
 
 	"github.com/aaronduino/i3-tmux/keypress"
-
-	gc "github.com/rthornton128/goncurses"
 )
 
 // Rect is a rectangle with an origin x, origin y, width, and height
@@ -17,46 +17,14 @@ type Rect struct {
 
 var termW, termH int
 
-var stdscr *gc.Window
+var renderer *render.Renderer
 
 func main() {
-	var err error
-	stdscr, err = gc.Init()
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer gc.End()
+	termW, termH, _ = getTermSize()
 
-	gc.Echo(false)  // disable printing of typed characters
-	gc.CBreak(true) // disable buffering
-
-	if err := gc.StartColor(); err != nil {
-		log.Fatal(err)
-	}
-	if err := gc.UseDefaultColors(); err != nil {
-		log.Fatal(err)
-	}
-
-	gc.InitPair(1, -1, -1)
-	for i := 0; i <= 255; i++ {
-		gc.InitPair(int16(i)+2, int16(i), -1)
-	}
-
-	// gc.InitPair(0, gc.C_BLUE, gc.C_GREEN)
-
-	termH, termW = stdscr.MaxYX()
-	win, err := gc.NewWindow(termH, termW, 0, 0)
-	if err != nil {
-		panic(err)
-	}
-	win.Keypad(true) // enable recognition of special keys
-
-	// win.ColorOn(3)
-	// win.Print("Hello")
-
-	// win.GetChar()
-
-	// return
+	renderer = render.NewRenderer()
+	renderer.Resize(termW, termH)
+	go renderer.ListenToQueue()
 
 	root = Split{
 		verticallyStacked: false,
@@ -81,7 +49,15 @@ func main() {
 	// 	debug(root.serialize())
 	// }
 
-	keypress.Listen(win, func(name string, raw []byte) {
+	ticker := time.NewTicker(time.Second / 30)
+	defer ticker.Stop()
+	go func() {
+		for range ticker.C {
+			renderer.Refresh()
+		}
+	}()
+
+	keypress.Listen(func(name string, raw []byte) {
 		// fmt.Println(name, raw)
 		// fmt.Print("[")
 		if operationCode, ok := config.bindings[name]; ok {
@@ -96,6 +72,8 @@ func main() {
 			t := getSelection().getContainer().(*Pane)
 			t.shell.handleStdin(string(raw))
 		}
+
+		// renderer.Refresh()
 		// gc.Update()
 		// fmt.Print("]")
 

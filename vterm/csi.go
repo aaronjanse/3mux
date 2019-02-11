@@ -2,6 +2,8 @@ package vterm
 
 import (
 	"unicode"
+
+	"github.com/aaronduino/i3-tmux/render"
 )
 
 func (v *VTerm) handleCSISequence() {
@@ -211,22 +213,22 @@ func (v *VTerm) handleCSISequence() {
 				seq := parseSemicolonNumSeq(parameterCode, 1)
 				v.setCursorX(0)
 
-				if v.cursorY < v.scrollingRegion.top || v.cursorY > v.scrollingRegion.bottom {
+				if v.Cursor.Y < v.scrollingRegion.top || v.Cursor.Y > v.scrollingRegion.bottom {
 					return
 				}
 
 				numLines := seq[0]
-				newLines := make([][]Char, numLines)
+				newLines := make([][]render.Char, numLines)
 
-				above := [][]Char{}
-				if v.cursorY > 0 {
-					above = v.screen[:v.cursorY]
+				above := [][]render.Char{}
+				if v.Cursor.Y > 0 {
+					above = v.screen[:v.Cursor.Y]
 				}
 
 				v.screen = append(append(append(
 					above,
 					newLines...),
-					v.screen[v.cursorY:v.scrollingRegion.bottom-numLines+1]...),
+					v.screen[v.Cursor.Y:v.scrollingRegion.bottom-numLines+1]...),
 					v.screen[v.scrollingRegion.bottom+1:]...)
 
 				v.shiftCursorY(1)
@@ -234,8 +236,8 @@ func (v *VTerm) handleCSISequence() {
 			case 'm': // Select Graphic Rendition
 				v.handleSDR(parameterCode)
 			case 's': // Save Cursor Position
-				v.storedCursorX = v.cursorX
-				v.storedCursorY = v.cursorY
+				v.storedCursorX = v.Cursor.X
+				v.storedCursorY = v.Cursor.Y
 			case 'u': // Restore Cursor Positon
 				v.setCursorPos(v.storedCursorX, v.storedCursorY)
 			default:

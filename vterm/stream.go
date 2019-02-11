@@ -40,11 +40,11 @@ func (v *VTerm) ProcessStream() {
 		case '\x1b':
 			v.handleEscapeCode()
 		case 8:
-			if v.cursorX > 0 {
+			if v.Cursor.X > 0 {
 				v.shiftCursorX(-1)
 			}
 		case '\n':
-			if v.cursorY == v.scrollingRegion.bottom {
+			if v.Cursor.Y == v.scrollingRegion.bottom {
 				v.scrollUp(1)
 			} else {
 				v.shiftCursorY(1)
@@ -53,10 +53,10 @@ func (v *VTerm) ProcessStream() {
 			v.setCursorX(0)
 		default:
 			if unicode.IsPrint(next) {
-				if v.cursorX < 0 {
+				if v.Cursor.X < 0 {
 					v.setCursorX(0)
 				}
-				if v.cursorY < 0 {
+				if v.Cursor.Y < 0 {
 					v.setCursorY(0)
 				}
 
