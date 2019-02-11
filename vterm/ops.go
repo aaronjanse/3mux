@@ -128,6 +128,9 @@ func (v *VTerm) putChar(ch rune) {
 func (v *VTerm) RedrawWindow() {
 	for y := 0; y < v.h; y++ {
 		for x := 0; x < v.w; x++ {
+			if y >= len(v.screen) || x >= len(v.screen[y]) {
+				continue
+			}
 			v.out <- render.PositionedChar{
 				Rune: v.screen[y][x].Rune,
 				Cursor: render.Cursor{
