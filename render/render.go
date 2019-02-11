@@ -80,6 +80,10 @@ func (r *Renderer) ListenToQueue() {
 			return
 		}
 
+		if ch.Rune == 0 {
+			ch.Rune = ' '
+		}
+
 		r.pendingScreen[ch.Y][ch.X] = Char{
 			Rune:  ch.Rune,
 			Style: ch.Cursor.Style,
@@ -130,6 +134,21 @@ func (r *Renderer) SetCursor(x, y int) {
 	delta := deltaMarkup(r.drawingCursor, newCursor)
 	fmt.Print(delta)
 	r.drawingCursor = newCursor
+
+	r.cursorMutex.Unlock()
+}
+
+// Debug prints the given text to the status bar
+func (r *Renderer) Debug(s string) {
+	r.cursorMutex.Lock()
+
+	newCursor := Cursor{
+		X: 0, Y: r.h - 1, Style: Style{},
+	}
+	fmt.Print(deltaMarkup(r.drawingCursor, newCursor))
+	fmt.Print(s)
+	newCursor.X += len(s)
+	fmt.Print(deltaMarkup(newCursor, r.drawingCursor))
 
 	r.cursorMutex.Unlock()
 }

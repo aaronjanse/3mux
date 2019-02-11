@@ -19,16 +19,16 @@ type Style struct {
 }
 
 // Reset sets all rendering attributes of a cursor to their default values
-func (c *Cursor) Reset() {
-	c.Bold = false
-	c.Faint = false
-	c.Italic = false
-	c.Underline = false
-	c.Conceal = false
-	c.CrossedOut = false
+func (s *Style) Reset() {
+	s.Bold = false
+	s.Faint = false
+	s.Italic = false
+	s.Underline = false
+	s.Conceal = false
+	s.CrossedOut = false
 
-	c.Fg.ColorMode = ColorNone
-	c.Bg.ColorMode = ColorNone
+	s.Fg.ColorMode = ColorNone
+	s.Bg.ColorMode = ColorNone
 }
 
 // deltaMarkup returns markup to transform from one cursor to another
@@ -59,6 +59,11 @@ func deltaMarkup(fromCur, toCur Cursor) string {
 
 	if to.Fg.ColorMode != from.Fg.ColorMode || to.Fg.Code != from.Fg.Code {
 		out += to.Fg.ToANSI(false)
+	}
+
+	// FIXME: why do I need this?
+	if !to.Underline && !from.Underline {
+		out += "\033[24m"
 	}
 
 	/* removing effects */
