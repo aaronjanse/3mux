@@ -34,7 +34,10 @@ func (v *VTerm) RefreshCursor() {
 // Lines pushed out of view are put in the scrollback.
 func (v *VTerm) scrollUp(n int) {
 	if !v.usingAltScreen {
-		v.scrollback = append(v.screen[v.scrollingRegion.top:v.scrollingRegion.top+n], v.scrollback...)
+		rows := v.screen[v.scrollingRegion.top : v.scrollingRegion.top+n]
+		for i := len(rows) - 1; i >= 0; i-- {
+			v.scrollback = append([][]render.Char{rows[i]}, v.scrollback...)
+		}
 	}
 
 	blankLine := []render.Char{}
@@ -54,7 +57,9 @@ func (v *VTerm) scrollUp(n int) {
 		v.screen[v.scrollingRegion.bottom+1:]...)
 
 	v.NeedsRedraw = true
+
 	// v.RedrawWindow() // FIXME
+	// v.renderer.Refresh()
 }
 
 // scrollDown shifts the screen content down and adds blank lines to the top.
@@ -77,7 +82,10 @@ func (v *VTerm) scrollDown(n int) {
 		v.screen[v.scrollingRegion.top:v.scrollingRegion.bottom-n]...),
 		v.screen[v.scrollingRegion.bottom+1:]...)
 
-	v.RedrawWindow()
+	// v.RedrawWindow()
+
+	v.NeedsRedraw = true
+
 	// v.win.Scroll(n)
 }
 
@@ -86,8 +94,6 @@ func (v *VTerm) setCursorPos(x, y int) {
 
 	v.Cursor.X = x
 	v.Cursor.Y = y
-
-	v.RefreshCursor()
 }
 
 func (v *VTerm) setCursorX(x int) {
@@ -142,7 +148,7 @@ func (v *VTerm) putChar(ch rune) {
 		v.Cursor.X++
 	}
 
-	v.RefreshCursor()
+	// v.RefreshCursor()
 }
 
 // RedrawWindow redraws the screen into ncurses from scratch.

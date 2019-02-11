@@ -65,7 +65,7 @@ func main() {
 	// 	debug(root.serialize())
 	// }
 
-	ticker := time.NewTicker(time.Second / 10)
+	ticker := time.NewTicker(time.Second / 30)
 	defer ticker.Stop()
 	go func() {
 		for range ticker.C {
@@ -75,6 +75,9 @@ func main() {
 				}
 			}
 			renderer.Refresh()
+
+			t := getSelection().getContainer().(*Pane)
+			t.vterm.RefreshCursor()
 		}
 	}()
 
@@ -94,12 +97,11 @@ func main() {
 				root.simplify()
 
 				root.refreshRenderRect()
-
-				t := getSelection().getContainer().(*Pane)
-				t.vterm.RefreshCursor()
 			} else {
 				t := getSelection().getContainer().(*Pane)
+
 				t.shell.handleStdin(string(raw))
+				t.vterm.RefreshCursor()
 			}
 		}
 	})

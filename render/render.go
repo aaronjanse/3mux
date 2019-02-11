@@ -86,27 +86,27 @@ func (r *Renderer) ListenToQueue() {
 			ch.Rune = ' '
 		}
 
-		r.writingMutex.Lock()
+		// r.writingMutex.Lock()
 		r.pendingScreen[ch.Y][ch.X] = Char{
 			Rune:  ch.Rune,
 			Style: ch.Cursor.Style,
 		}
-		r.writingMutex.Unlock()
+		// r.writingMutex.Unlock()
 	}
 }
 
 // Refresh updates the screen to match the framebuffer
 func (r *Renderer) Refresh() {
+	// r.writingMutex.Lock()
 	pendingCopy := r.pendingScreen
+	// r.writingMutex.Unlock()
 
 	r.cursorMutex.Lock()
-
 	originalCursor := r.drawingCursor
 
 	fmt.Print("\033[?25l") // hide cursor
 	for y := 0; y < r.h; y++ {
 		for x := 0; x < r.w; x++ {
-			r.writingMutex.Lock()
 			current := r.currentScreen[y][x]
 			pending := pendingCopy[y][x]
 			if current != pending {
@@ -121,7 +121,6 @@ func (r *Renderer) Refresh() {
 				newCursor.X++
 				r.drawingCursor = newCursor
 			}
-			r.writingMutex.Unlock()
 		}
 	}
 
@@ -135,8 +134,6 @@ func (r *Renderer) Refresh() {
 
 // SetCursor sets the position of the physical cursor
 func (r *Renderer) SetCursor(x, y int) {
-	return
-
 	r.cursorMutex.Lock()
 
 	newCursor := Cursor{
