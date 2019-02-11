@@ -51,6 +51,9 @@ func (v *VTerm) ProcessStream() {
 			}
 		case '\r':
 			v.setCursorX(0)
+		case '\t':
+			tabWidth := 4
+			v.Cursor.X += tabWidth - (v.Cursor.X % tabWidth)
 		default:
 			if unicode.IsPrint(next) {
 				if v.Cursor.X < 0 {
