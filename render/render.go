@@ -2,6 +2,7 @@ package render
 
 import (
 	"fmt"
+	"strings"
 	"sync"
 )
 
@@ -39,7 +40,7 @@ func NewRenderer() *Renderer {
 		pendingScreen: [][]Char{},
 		cursorMutex:   &sync.Mutex{},
 		writingMutex:  &sync.Mutex{},
-		RenderQueue:   make(chan PositionedChar, 3200),
+		RenderQueue:   make(chan PositionedChar, 10000000),
 	}
 }
 
@@ -73,6 +74,17 @@ func (r *Renderer) Resize(w, h int) {
 	r.h = h
 }
 
+func (r *Renderer) handleCh(ch PositionedChar) {
+	if ch.Rune == 0 {
+		ch.Rune = ' '
+	}
+
+	r.pendingScreen[ch.Y][ch.X] = Char{
+		Rune:  ch.Rune,
+		Style: ch.Cursor.Style,
+	}
+}
+
 // ListenToQueue is a blocking function that processes data sent to the RenderQueue
 func (r *Renderer) ListenToQueue() {
 	for {
@@ -82,81 +94,91 @@ func (r *Renderer) ListenToQueue() {
 			return
 		}
 
-		if ch.Rune == 0 {
-			ch.Rune = ' '
-		}
+		r.handleCh(ch)
 
-		// r.writingMutex.Lock()
-		r.pendingScreen[ch.Y][ch.X] = Char{
-			Rune:  ch.Rune,
-			Style: ch.Cursor.Style,
+	drainingLoop:
+		for {
+			select {
+			case ch, ok := <-r.RenderQueue:
+				if !ok {
+					fmt.Println("Exiting scheduler")
+					return
+				}
+				r.handleCh(ch)
+			default:
+				// r.cursorMutex.Lock()
+				originalCursor := r.drawingCursor
+
+				fmt.Print("\033[?25l") // hide cursor
+
+				var diff strings.Builder
+				for y := 0; y < r.h; y++ {
+					for x := 0; x < r.w; x++ {
+						current := r.currentScreen[y][x]
+						pending := r.pendingScreen[y][x]
+						if current != pending {
+							r.currentScreen[y][x] = r.pendingScreen[y][x]
+
+							newCursor := Cursor{
+								X: x, Y: y, Style: pending.Style,
+							}
+							delta := deltaMarkup(r.drawingCursor, newCursor)
+							diff.WriteString(delta)
+							diff.WriteString(string(pending.Rune))
+							newCursor.X++
+							r.drawingCursor = newCursor
+						}
+					}
+				}
+
+				fmt.Print(diff.String())
+
+				delta := deltaMarkup(originalCursor, r.drawingCursor)
+				fmt.Print(delta)
+				r.drawingCursor = originalCursor
+				fmt.Print("\033[?25h") // show cursor
+
+				// r.cursorMutex.Unlock()
+
+				break drainingLoop
+			}
 		}
-		// r.writingMutex.Unlock()
 	}
 }
 
 // Refresh updates the screen to match the framebuffer
 func (r *Renderer) Refresh() {
 	// r.writingMutex.Lock()
-	pendingCopy := r.pendingScreen
+	// pendingCopy := r.pendingScreen
 	// r.writingMutex.Unlock()
 
-	r.cursorMutex.Lock()
-	originalCursor := r.drawingCursor
-
-	fmt.Print("\033[?25l") // hide cursor
-	for y := 0; y < r.h; y++ {
-		for x := 0; x < r.w; x++ {
-			current := r.currentScreen[y][x]
-			pending := pendingCopy[y][x]
-			if current != pending {
-				r.currentScreen[y][x] = pendingCopy[y][x]
-
-				newCursor := Cursor{
-					X: x, Y: y, Style: pending.Style,
-				}
-				delta := deltaMarkup(r.drawingCursor, newCursor)
-				fmt.Print(delta)
-				fmt.Print(string(pending.Rune))
-				newCursor.X++
-				r.drawingCursor = newCursor
-			}
-		}
-	}
-
-	delta := deltaMarkup(originalCursor, r.drawingCursor)
-	fmt.Print(delta)
-	r.drawingCursor = originalCursor
-	fmt.Print("\033[?25h") // show cursor
-
-	r.cursorMutex.Unlock()
 }
 
 // SetCursor sets the position of the physical cursor
 func (r *Renderer) SetCursor(x, y int) {
-	r.cursorMutex.Lock()
+	// r.cursorMutex.Lock()
 
-	newCursor := Cursor{
-		X: x, Y: y, Style: r.drawingCursor.Style,
-	}
-	delta := deltaMarkup(r.drawingCursor, newCursor)
-	fmt.Print(delta)
-	r.drawingCursor = newCursor
+	// newCursor := Cursor{
+	// 	X: x, Y: y, Style: r.drawingCursor.Style,
+	// }
+	// delta := deltaMarkup(r.drawingCursor, newCursor)
+	// fmt.Print(delta)
+	// r.drawingCursor = newCursor
 
-	r.cursorMutex.Unlock()
+	// r.cursorMutex.Unlock()
 }
 
 // Debug prints the given text to the status bar
 func (r *Renderer) Debug(s string) {
-	r.cursorMutex.Lock()
+	// r.cursorMutex.Lock()
 
-	newCursor := Cursor{
-		X: 0, Y: r.h - 1, Style: Style{},
-	}
-	fmt.Print(deltaMarkup(r.drawingCursor, newCursor))
-	fmt.Print(s)
-	newCursor.X += len(s)
-	fmt.Print(deltaMarkup(newCursor, r.drawingCursor))
+	// newCursor := Cursor{
+	// 	X: 0, Y: r.h - 1, Style: Style{},
+	// }
+	// fmt.Print(deltaMarkup(r.drawingCursor, newCursor))
+	// fmt.Print(s)
+	// newCursor.X += len(s)
+	// fmt.Print(deltaMarkup(newCursor, r.drawingCursor))
 
-	r.cursorMutex.Unlock()
+	// r.cursorMutex.Unlock()
 }

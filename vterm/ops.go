@@ -56,7 +56,7 @@ func (v *VTerm) scrollUp(n int) {
 		newLines...),
 		v.screen[v.scrollingRegion.bottom+1:]...)
 
-	v.NeedsRedraw = true
+	v.RedrawWindow()
 
 	// v.RedrawWindow() // FIXME
 	// v.renderer.Refresh()
@@ -82,9 +82,7 @@ func (v *VTerm) scrollDown(n int) {
 		v.screen[v.scrollingRegion.top:v.scrollingRegion.bottom-n]...),
 		v.screen[v.scrollingRegion.bottom+1:]...)
 
-	// v.RedrawWindow()
-
-	v.NeedsRedraw = true
+	v.RedrawWindow()
 
 	// v.win.Scroll(n)
 }
@@ -148,7 +146,7 @@ func (v *VTerm) putChar(ch rune) {
 		v.Cursor.X++
 	}
 
-	// v.RefreshCursor()
+	v.RefreshCursor()
 }
 
 // RedrawWindow redraws the screen into ncurses from scratch.
@@ -159,12 +157,16 @@ func (v *VTerm) RedrawWindow() {
 			if y >= len(v.screen) || x >= len(v.screen[y]) {
 				continue
 			}
+			// if v.screen[y][x] != v.screenOld[y][x] {
+			// 	v.screenOld[y][x] = v.screen[y][x]
+
 			v.out <- render.PositionedChar{
 				Rune: v.screen[y][x].Rune,
 				Cursor: render.Cursor{
 					X: x, Y: y + v.scrollbackPos, Style: v.screen[y][x].Style,
 				},
 			}
+			// }
 		}
 	}
 

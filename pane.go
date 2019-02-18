@@ -46,18 +46,16 @@ func newTerm(selected bool) *Pane {
 
 	go (func() {
 		for {
-			select {
-			case char := <-vtermOut:
-				if char.Cursor.X > t.renderRect.w-1 {
-					continue
-				}
-				if char.Cursor.Y > t.renderRect.h-1 {
-					continue
-				}
-				char.Cursor.X += t.renderRect.x
-				char.Cursor.Y += t.renderRect.y
-				renderer.RenderQueue <- char
+			char := <-vtermOut
+			if char.Cursor.X > t.renderRect.w-1 {
+				continue
 			}
+			if char.Cursor.Y > t.renderRect.h-1 {
+				continue
+			}
+			char.Cursor.X += t.renderRect.x
+			char.Cursor.Y += t.renderRect.y
+			renderer.RenderQueue <- char
 		}
 	})()
 

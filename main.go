@@ -67,19 +67,19 @@ func main() {
 
 	ticker := time.NewTicker(time.Second / 30)
 	defer ticker.Stop()
-	go func() {
+	go (func() {
 		for range ticker.C {
-			for _, pane := range getPanes() {
-				if pane.vterm.NeedsRedraw {
-					pane.vterm.RedrawWindow()
-				}
-			}
-			renderer.Refresh()
+			// for _, pane := range getPanes() {
+			// 	if pane.vterm.NeedsRedraw {
+			// 		pane.vterm.RedrawWindow()
+			// 	}
+			// }
+			// renderer.Refresh()
 
 			t := getSelection().getContainer().(*Pane)
 			t.vterm.RefreshCursor()
 		}
-	}()
+	})()
 
 	keypress.Listen(func(name string, raw []byte) {
 		// fmt.Println(name, raw)

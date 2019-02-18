@@ -26,6 +26,8 @@ type VTerm struct {
 	// visible screen; char cursor coords are ignored
 	screen [][]render.Char
 
+	screenOld [][]render.Char
+
 	scrollback    [][]render.Char // disabled when using alt screen; char cursor coords are ignored. Zero index is closest to the visible screen
 	scrollbackPos int             // scrollbackPos is the number of lines of scrollback visible
 
@@ -70,6 +72,7 @@ func NewVTerm(renderer *render.Renderer, parentSetCursor func(x, y int), in <-ch
 		w:               w,
 		h:               h,
 		screen:          screen,
+		screenOld:       screen,
 		scrollback:      [][]render.Char{},
 		usingAltScreen:  false,
 		Cursor:          render.Cursor{},
@@ -96,6 +99,18 @@ func (v *VTerm) Reshape(w, h int) {
 		for x := 0; x <= w; x++ {
 			if x >= len(v.screen[y]) {
 				v.screen[y] = append(v.screen[y], render.Char{Rune: ' ', Style: render.Style{}})
+			}
+		}
+	}
+
+	for y := 0; y <= h; y++ {
+		if y >= len(v.screenOld) {
+			v.screenOld = append(v.screenOld, []render.Char{})
+		}
+
+		for x := 0; x <= w; x++ {
+			if x >= len(v.screenOld[y]) {
+				v.screenOld[y] = append(v.screenOld[y], render.Char{Rune: ' ', Style: render.Style{}})
 			}
 		}
 	}
