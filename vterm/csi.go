@@ -9,7 +9,7 @@ import (
 func (v *VTerm) handleCSISequence() {
 	privateSequence := false
 
-	// <-time.NewTimer(time.Second / 2).C
+	// <-time.NewTimer(time.Millisecond * 10).C
 
 	parameterCode := ""
 	for {
@@ -185,28 +185,41 @@ func (v *VTerm) handleCSISequence() {
 				seq := parseSemicolonNumSeq(parameterCode, 1)
 				v.scrollDown(seq[0])
 			case 'L': // Insert Lines
+				/*
+					 -->
+					9	8
+					10
+					11
+					12	11
+					13	12
+					14	13
+					15	14
+					16	15
+				*/
 				seq := parseSemicolonNumSeq(parameterCode, 1)
 				v.setCursorX(0)
 
-				if v.Cursor.Y < v.scrollingRegion.top || v.Cursor.Y > v.scrollingRegion.bottom {
-					return
+				// if v.Cursor.Y < v.scrollingRegion.top || v.Cursor.Y > v.scrollingRegion.bottom {
+				// 	return
+				// }
+
+				n := seq[0]
+				newLines := make([][]render.Char, n)
+				for i := range newLines {
+					newLines[i] = make([]render.Char, v.w)
 				}
 
-				numLines := seq[0]
-				newLines := make([][]render.Char, numLines)
-
-				above := [][]render.Char{}
-				if v.Cursor.Y > 0 {
-					above = v.screen[:v.Cursor.Y]
-				}
-
-				v.screen = append(append(append(
-					above,
-					newLines...),
-					v.screen[v.Cursor.Y:v.scrollingRegion.bottom-numLines+1]...),
+				v.screen = append(append(
+					newLines,
+					v.screen[v.Cursor.Y:v.scrollingRegion.bottom-n+1]...),
 					v.screen[v.scrollingRegion.bottom+1:]...)
 
-				v.shiftCursorY(1)
+				// for x := range v.screen[0] {
+				// 	v.screen[0][x].Rune = 0
+				// }
+
+				// v.shiftCursorY(1)
+				// v.setCursorY(2)
 				v.RedrawWindow()
 			case 'm': // Select Graphic Rendition
 				v.handleSDR(parameterCode)
