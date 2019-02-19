@@ -1,10 +1,10 @@
+# tmux2
+
+Most of the features implemented by this already exist in `tmux`.
+
+The difference is that `tmux2` comes with sane default with a few nice touches.
+
 ## Features
-
-Implemented:
-- i3-like controls
-
-Future:
-- text search
-- scrolling
-- better text selection
-- support for less fancy terminals
+- [x] scrollback with your mouse or scroll wheel
+- [x] i3-like window manager with i3-like controls
+- [ ] resize windows by dragging mouse

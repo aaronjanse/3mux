@@ -59,6 +59,20 @@ func Listen(callback func(name string, raw []byte)) {
 					handle(arrowNames[data[2]])
 				}
 			} else if data[1] == 91 { // Combo
+
+				if data[2] == 51 { // mouse
+					// for _, b := range data[3:] {
+					// 	fmt.Print(string(b))
+					// }
+					switch string(data[3]) {
+					case "2":
+						handle("Mouse Down")
+					case "5":
+						handle("Mouse Up")
+					}
+					continue
+				}
+
 				if data[2] == 54 && data[3] == 126 { // PageDown Key
 					return
 				}
@@ -97,9 +111,9 @@ func Listen(callback func(name string, raw []byte)) {
 			}
 		}
 
-		// // debugging code
-		// fmt.Println(ev)
-		// fmt.Println(data)
-		// fmt.Println()
+		// debugging code
+		fmt.Println(ev)
+		fmt.Println(data)
+		fmt.Println()
 	}
 }

@@ -100,6 +100,14 @@ func main() {
 	// 	}
 	// })()
 
+	/* enable mouse reporting */
+
+	fmt.Print("\033[?1000h")
+	defer fmt.Print("\033[?1000l")
+
+	fmt.Print("\033[?1015h")
+	defer fmt.Print("\033[?1015l")
+
 	keypress.Listen(func(name string, raw []byte) {
 		// fmt.Println(name, raw)
 
