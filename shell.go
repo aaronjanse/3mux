@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"os/exec"
@@ -52,12 +51,12 @@ func newShell(stdout chan<- rune) Shell {
 				if string(b) == "@" {
 					// log.Fatal("sent shutdown signal")
 					nowTime := time.Now().UnixNano()
-					fmt.Fprint(os.Stderr, (nowTime-startTime)/1000000)
+					log.Printf("%v ms - time tp shell output\n", (nowTime-startTime)/1000000)
 					shutdown <- true
 					return
 				}
 				// fmt.Println()
-				stdout <- rune(b)
+				// stdout <- rune(b)
 			}
 		}
 	})()

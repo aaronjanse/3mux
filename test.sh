@@ -1,5 +1,5 @@
 # echo '@alsdhajskdkhashdhkjas'
-cat /tmp/corpa.go
+bat /tmp/corpa.go
 echo -n 'sakjhdads'
 echo -n "|"
 echo "asjkdhjashjkdkhas"
