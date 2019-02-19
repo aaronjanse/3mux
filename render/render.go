@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 	"sync"
+	"time"
 )
 
 // Renderer is our simplified implemention of ncurses
@@ -40,7 +41,7 @@ func NewRenderer() *Renderer {
 		pendingScreen: [][]Char{},
 		cursorMutex:   &sync.Mutex{},
 		writingMutex:  &sync.Mutex{},
-		RenderQueue:   make(chan PositionedChar, 10000000),
+		RenderQueue:   make(chan PositionedChar, 10000),
 	}
 }
 
@@ -74,7 +75,9 @@ func (r *Renderer) Resize(w, h int) {
 	r.h = h
 }
 
-func (r *Renderer) handleCh(ch PositionedChar) {
+// HandleCh places a PositionedChar in the pending screen buffer
+func (r *Renderer) HandleCh(ch PositionedChar) {
+	r.writingMutex.Lock()
 	if ch.Rune == 0 {
 		ch.Rune = ' '
 	}
@@ -83,67 +86,72 @@ func (r *Renderer) handleCh(ch PositionedChar) {
 		Rune:  ch.Rune,
 		Style: ch.Cursor.Style,
 	}
+	r.writingMutex.Unlock()
 }
 
 // ListenToQueue is a blocking function that processes data sent to the RenderQueue
 func (r *Renderer) ListenToQueue() {
 	for {
-		ch, ok := <-r.RenderQueue
-		if !ok {
-			fmt.Println("Exiting scheduler")
-			return
-		}
+		// 	ch, ok := <-r.RenderQueue
+		// 	if !ok {
+		// 		fmt.Println("Exiting scheduler")
+		// 		return
+		// 	}
 
-		r.handleCh(ch)
+		// 	r.handleCh(ch)
 
-	drainingLoop:
-		for {
-			select {
-			case ch, ok := <-r.RenderQueue:
-				if !ok {
-					fmt.Println("Exiting scheduler")
-					return
-				}
-				r.handleCh(ch)
-			default:
-				// r.cursorMutex.Lock()
-				originalCursor := r.drawingCursor
+		// drainingLoop:
+		// 	for {
+		// 		select {
+		// 		case ch, ok := <-r.RenderQueue:
+		// 			if !ok {
+		// 				fmt.Println("Exiting scheduler")
+		// 				return
+		// 			}
+		// 			r.handleCh(ch)
+		// 		default:
+		// r.cursorMutex.Lock()
+		originalCursor := r.drawingCursor
 
-				fmt.Print("\033[?25l") // hide cursor
+		fmt.Print("\033[?25l") // hide cursor
 
-				var diff strings.Builder
-				for y := 0; y < r.h; y++ {
-					for x := 0; x < r.w; x++ {
-						current := r.currentScreen[y][x]
-						pending := r.pendingScreen[y][x]
-						if current != pending {
-							r.currentScreen[y][x] = r.pendingScreen[y][x]
+		var diff strings.Builder
+		for y := 0; y < r.h; y++ {
+			for x := 0; x < r.w; x++ {
+				r.writingMutex.Lock()
+				current := r.currentScreen[y][x]
+				pending := r.pendingScreen[y][x]
+				if current != pending {
+					r.currentScreen[y][x] = pending
 
-							newCursor := Cursor{
-								X: x, Y: y, Style: pending.Style,
-							}
-							delta := deltaMarkup(r.drawingCursor, newCursor)
-							diff.WriteString(delta)
-							diff.WriteString(string(pending.Rune))
-							newCursor.X++
-							r.drawingCursor = newCursor
-						}
+					newCursor := Cursor{
+						X: x, Y: y, Style: pending.Style,
 					}
+					delta := deltaMarkup(r.drawingCursor, newCursor)
+					diff.WriteString(delta)
+					diff.WriteString(string(pending.Rune))
+					newCursor.X++
+					r.drawingCursor = newCursor
 				}
-
-				fmt.Print(diff.String())
-
-				delta := deltaMarkup(originalCursor, r.drawingCursor)
-				fmt.Print(delta)
-				r.drawingCursor = originalCursor
-				fmt.Print("\033[?25h") // show cursor
-
-				// r.cursorMutex.Unlock()
-
-				break drainingLoop
+				r.writingMutex.Unlock()
 			}
 		}
+
+		fmt.Print(diff.String())
+
+		delta := deltaMarkup(originalCursor, r.drawingCursor)
+		fmt.Print(delta)
+		r.drawingCursor = originalCursor
+		fmt.Print("\033[?25h") // show cursor
+
+		time.Sleep(time.Millisecond * 10)
+
+		// r.cursorMutex.Unlock()
+
+		// break drainingLoop
 	}
+	// 	}
+	// }
 }
 
 // Refresh updates the screen to match the framebuffer

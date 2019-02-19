@@ -1,11 +1,13 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"os/exec"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/kr/pty"
 )
@@ -18,6 +20,7 @@ type Shell struct {
 }
 
 func newShell(stdout chan<- rune) Shell {
+	// cmd := exec.Command("bash", "/home/ajanse/Playground/i3-tmux/test.sh")
 	cmd := exec.Command("zsh")
 
 	ptmx, err := pty.Start(cmd)
@@ -35,9 +38,16 @@ func newShell(stdout chan<- rune) Shell {
 			}
 		}()
 
+		defer func() {
+			nowTime := time.Now().UnixNano()
+			fmt.Fprint(os.Stderr, (nowTime-startTime)/1000000)
+			// needsShutdown <- true
+			// panic("bye")
+		}()
+
 		for {
-			b := make([]byte, 1)
-			_, err := ptmx.Read(b)
+			bs := make([]byte, 1000)
+			_, err := ptmx.Read(bs)
 			if err != nil {
 				if err.Error() == "read /dev/ptmx: input/output error" {
 					break
@@ -45,7 +55,12 @@ func newShell(stdout chan<- rune) Shell {
 					panic(err)
 				}
 			}
-			stdout <- rune(b[0])
+			for _, b := range bs {
+				if b == '\x60' {
+					return
+				}
+				stdout <- rune(b)
+			}
 		}
 	})()
 

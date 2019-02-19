@@ -9,9 +9,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/aaronduino/i3-tmux/render"
-
 	"github.com/aaronduino/i3-tmux/keypress"
+	"github.com/aaronduino/i3-tmux/render"
 )
 
 // Rect is a rectangle with an origin x, origin y, width, and height
@@ -23,9 +22,13 @@ var termW, termH int
 
 var renderer *render.Renderer
 
+var startTime int64
+
 var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
 
 func main() {
+	// needsShutdown := make(chan bool, 2)
+
 	flag.Parse()
 	if *cpuprofile != "" {
 		f, err := os.Create(*cpuprofile)
@@ -35,6 +38,8 @@ func main() {
 		pprof.StartCPUProfile(f)
 		defer pprof.StopCPUProfile()
 	}
+
+	startTime = time.Now().UnixNano()
 
 	termW, termH, _ = getTermSize()
 
@@ -59,27 +64,32 @@ func main() {
 	} else {
 		h = termH
 	}
+
 	root.setRenderRect(0, 0, termW, h)
+
+	// <-needsShutdown
+
+	// fmt.Println("\033[2JHUJhsjgawhdjhgjgahsdjhggasd")
 
 	// if config.statusBar {
 	// 	debug(root.serialize())
 	// }
 
-	ticker := time.NewTicker(time.Second / 30)
-	defer ticker.Stop()
-	go (func() {
-		for range ticker.C {
-			// for _, pane := range getPanes() {
-			// 	if pane.vterm.NeedsRedraw {
-			// 		pane.vterm.RedrawWindow()
-			// 	}
-			// }
-			// renderer.Refresh()
+	// ticker := time.NewTicker(time.Second / 30)
+	// defer ticker.Stop()
+	// go (func() {
+	// 	for range ticker.C {
+	// 		// for _, pane := range getPanes() {
+	// 		// 	if pane.vterm.NeedsRedraw {
+	// 		// 		pane.vterm.RedrawWindow()
+	// 		// 	}
+	// 		// }
+	// 		// renderer.Refresh()
 
-			t := getSelection().getContainer().(*Pane)
-			t.vterm.RefreshCursor()
-		}
-	})()
+	// 		t := getSelection().getContainer().(*Pane)
+	// 		t.vterm.RefreshCursor()
+	// 	}
+	// })()
 
 	keypress.Listen(func(name string, raw []byte) {
 		// fmt.Println(name, raw)
@@ -105,7 +115,10 @@ func main() {
 			}
 		}
 	})
+
 }
+
+// var needsShutdown chan bool
 
 func executeOperationCode(s string) {
 	sections := strings.Split(s, "(")

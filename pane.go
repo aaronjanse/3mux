@@ -21,10 +21,10 @@ type Pane struct {
 }
 
 func newTerm(selected bool) *Pane {
-	stdout := make(chan rune, 32)
+	stdout := make(chan rune, 320)
 	shell := newShell(stdout)
 
-	vtermOut := make(chan render.PositionedChar, 32)
+	vtermOut := make(chan render.PositionedChar, 3200)
 
 	t := &Pane{
 		id:       rand.Intn(10),
@@ -44,7 +44,7 @@ func newTerm(selected bool) *Pane {
 
 	t.vterm = vt
 
-	go (func() {
+	transformChars := func() {
 		for {
 			char := <-vtermOut
 			if char.Cursor.X > t.renderRect.w-1 {
@@ -55,9 +55,12 @@ func newTerm(selected bool) *Pane {
 			}
 			char.Cursor.X += t.renderRect.x
 			char.Cursor.Y += t.renderRect.y
-			renderer.RenderQueue <- char
+			// renderer.RenderQueue <- char
+			renderer.HandleCh(char)
 		}
-	})()
+	}
+
+	go transformChars()
 
 	return t
 }

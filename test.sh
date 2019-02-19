@@ -1,0 +1,2 @@
+bat /tmp/bat.go
+
