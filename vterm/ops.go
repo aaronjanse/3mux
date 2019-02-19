@@ -56,7 +56,9 @@ func (v *VTerm) scrollUp(n int) {
 		newLines...),
 		v.screen[v.scrollingRegion.bottom+1:]...)
 
-	// v.RedrawWindow()
+	if !v.usingSlowRefresh {
+		v.RedrawWindow()
+	}
 
 	// v.RedrawWindow() // FIXME
 	// v.renderer.Refresh()
@@ -77,7 +79,9 @@ func (v *VTerm) scrollDown(n int) {
 		v.screen[v.scrollingRegion.top:v.scrollingRegion.bottom-n]...),
 		v.screen[v.scrollingRegion.bottom+1:]...)
 
-	// v.RedrawWindow()
+	if !v.usingSlowRefresh {
+		v.RedrawWindow()
+	}
 
 	// v.win.Scroll(n)
 }
@@ -170,26 +174,26 @@ func (v *VTerm) RedrawWindow() {
 		}
 	}
 
-	if v.scrollbackPos > 0 {
-		for y := 0; y < v.scrollbackPos; y++ {
-			for x := 0; x < v.w; x++ {
-				idx := v.scrollbackPos - y - 1
-				if x < len(v.scrollback[idx]) {
-					v.out <- render.PositionedChar{
-						Rune: v.scrollback[idx][x].Rune,
-						Cursor: render.Cursor{
-							X: x, Y: y, Style: v.scrollback[idx][x].Style,
-						},
-					}
-				} else {
-					v.out <- render.PositionedChar{
-						Rune: ' ',
-						Cursor: render.Cursor{
-							X: x, Y: y, Style: render.Style{},
-						},
-					}
-				}
-			}
-		}
-	}
+	// if v.scrollbackPos > 0 {
+	// 	for y := 0; y < v.scrollbackPos; y++ {
+	// 		for x := 0; x < v.w; x++ {
+	// 			idx := v.scrollbackPos - y - 1
+	// 			if x < len(v.scrollback[idx]) {
+	// 				v.out <- render.PositionedChar{
+	// 					Rune: v.scrollback[idx][x].Rune,
+	// 					Cursor: render.Cursor{
+	// 						X: x, Y: y, Style: v.scrollback[idx][x].Style,
+	// 					},
+	// 				}
+	// 			} else {
+	// 				v.out <- render.PositionedChar{
+	// 					Rune: ' ',
+	// 					Cursor: render.Cursor{
+	// 						X: x, Y: y, Style: render.Style{},
+	// 					},
+	// 				}
+	// 			}
+	// 		}
+	// 	}
+	// }
 }

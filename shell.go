@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
+	"sync/atomic"
 	"syscall"
 	"time"
 
@@ -13,9 +14,10 @@ import (
 
 // Shell manages spawning, killing, and sending data to/from a shell subprocess (e.g. bash, sh, zsh)
 type Shell struct {
-	stdout chan<- rune
-	ptmx   *os.File
-	cmd    *exec.Cmd
+	stdout      chan<- rune
+	ptmx        *os.File
+	cmd         *exec.Cmd
+	byteCounter uint64
 }
 
 func newShell(stdout chan<- rune) Shell {
@@ -25,6 +27,12 @@ func newShell(stdout chan<- rune) Shell {
 	ptmx, err := pty.Start(cmd)
 	if err != nil {
 		log.Fatal(err)
+	}
+
+	shell := Shell{
+		stdout: stdout,
+		ptmx:   ptmx,
+		cmd:    cmd,
 	}
 
 	// feed ptmx output to stdout channel
@@ -48,6 +56,7 @@ func newShell(stdout chan<- rune) Shell {
 				}
 			}
 			for _, b := range bs {
+				atomic.AddUint64(&shell.byteCounter, 1)
 				if string(b) == "@" {
 					// if b == '@' {
 					// log.Fatal("sent shutdown signal")
@@ -63,11 +72,7 @@ func newShell(stdout chan<- rune) Shell {
 		}
 	})()
 
-	return Shell{
-		stdout: stdout,
-		ptmx:   ptmx,
-		cmd:    cmd,
-	}
+	return shell
 }
 
 // Kill safely shuts down the shell, closing stdout

@@ -13,7 +13,7 @@ func (v *VTerm) handleCSISequence() {
 
 	parameterCode := ""
 	for {
-		next, ok := <-v.in
+		next, ok := v.pullByte()
 		if !ok {
 			return
 		}

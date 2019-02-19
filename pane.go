@@ -39,7 +39,7 @@ func newTerm(selected bool) *Pane {
 		}
 	}
 
-	vt := vterm.NewVTerm(shutdown, startTime, renderer, parentSetCursor, stdout, vtermOut)
+	vt := vterm.NewVTerm(&shell.byteCounter, shutdown, startTime, renderer, parentSetCursor, stdout, vtermOut)
 	go vt.ProcessStream()
 
 	t.vterm = vt

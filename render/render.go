@@ -77,7 +77,7 @@ func (r *Renderer) Resize(w, h int) {
 
 // HandleCh places a PositionedChar in the pending screen buffer
 func (r *Renderer) HandleCh(ch PositionedChar) {
-	// r.writingMutex.Lock()
+	r.writingMutex.Lock()
 	if ch.Rune == 0 {
 		ch.Rune = ' '
 	}
@@ -86,11 +86,12 @@ func (r *Renderer) HandleCh(ch PositionedChar) {
 		Rune:  ch.Rune,
 		Style: ch.Cursor.Style,
 	}
-	// r.writingMutex.Unlock()
+	r.writingMutex.Unlock()
 }
 
 // ListenToQueue is a blocking function that processes data sent to the RenderQueue
 func (r *Renderer) ListenToQueue() {
+	fmt.Print("\033[2J")
 	for {
 		// 	ch, ok := <-r.RenderQueue
 		// 	if !ok {
@@ -144,7 +145,7 @@ func (r *Renderer) ListenToQueue() {
 		r.drawingCursor = originalCursor
 		fmt.Print("\033[?25h") // show cursor
 
-		time.Sleep(time.Millisecond * 250)
+		time.Sleep(time.Millisecond * 25)
 
 		// r.cursorMutex.Unlock()
 

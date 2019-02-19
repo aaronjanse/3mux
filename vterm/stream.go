@@ -2,10 +2,31 @@ package vterm
 
 import (
 	"log"
+	"sync/atomic"
 	"time"
 	"unicode"
 	"unicode/utf8"
 )
+
+// pullByte returns the next byte in the input stream
+func (v *VTerm) pullByte() (rune, bool) {
+	v.internalByteCounter++
+
+	lag := atomic.LoadUint64(v.shellByteCounter) - v.internalByteCounter
+	if lag > uint64(v.w*v.h*4) {
+		v.useSlowRefresh()
+	} else {
+		v.useFastRefresh()
+	}
+
+	r, ok := <-v.in
+	return r, ok
+}
+
+func (v *VTerm) pullByteNoErr() rune {
+	r, _ := v.pullByte()
+	return r
+}
 
 // ProcessStream processes and transforms a process' stdout, turning it into a stream of Char's to be sent to the rendering scheduler
 // This includes translating ANSI Cursor coordinates and maintaining a scrolling buffer
@@ -19,7 +40,7 @@ func (v *VTerm) ProcessStream() {
 	// log.SetOutput(f)
 
 	for {
-		next, ok := <-v.in
+		next, ok := v.pullByte()
 		if !ok {
 			return
 		}
@@ -41,14 +62,14 @@ func (v *VTerm) ProcessStream() {
 			leadingHex := next >> 4
 			switch leadingHex {
 			case 12: // 1100
-				value = append(value, byte(<-v.in))
+				value = append(value, byte(v.pullByteNoErr()))
 			case 14: // 1110
-				value = append(value, byte(<-v.in))
-				value = append(value, byte(<-v.in))
+				value = append(value, byte(v.pullByteNoErr()))
+				value = append(value, byte(v.pullByteNoErr()))
 			case 15: // 1111
-				value = append(value, byte(<-v.in))
-				value = append(value, byte(<-v.in))
-				value = append(value, byte(<-v.in))
+				value = append(value, byte(v.pullByteNoErr()))
+				value = append(value, byte(v.pullByteNoErr()))
+				value = append(value, byte(v.pullByteNoErr()))
 			}
 
 			next, _ = utf8.DecodeRune(value)
@@ -90,7 +111,7 @@ func (v *VTerm) ProcessStream() {
 }
 
 func (v *VTerm) handleEscapeCode() {
-	next, ok := <-v.in
+	next, ok := v.pullByte()
 	if !ok {
 		log.Fatal("not ok")
 		return
@@ -100,7 +121,7 @@ func (v *VTerm) handleEscapeCode() {
 	case '[':
 		v.handleCSISequence()
 	case '(': // Character set
-		<-v.in
+		v.pullByte()
 		// TODO
 	default:
 		// v.debug("ESC Code: " + string(next))

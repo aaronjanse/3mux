@@ -36,8 +36,11 @@ type VTerm struct {
 
 	NeedsRedraw bool
 
-	startTime int64
-	shutdown  chan bool
+	startTime           int64
+	shutdown            chan bool
+	shellByteCounter    *uint64
+	internalByteCounter uint64
+	usingSlowRefresh    bool
 
 	Cursor render.Cursor
 
@@ -57,7 +60,7 @@ type VTerm struct {
 }
 
 // NewVTerm returns a VTerm ready to be used by its exported methods
-func NewVTerm(shutdown chan bool, startTime int64, renderer *render.Renderer, parentSetCursor func(x, y int), in <-chan rune, out chan<- render.PositionedChar) *VTerm {
+func NewVTerm(shellByteCounter *uint64, shutdown chan bool, startTime int64, renderer *render.Renderer, parentSetCursor func(x, y int), in <-chan rune, out chan<- render.PositionedChar) *VTerm {
 	w := 10
 	h := 10
 
@@ -75,22 +78,24 @@ func NewVTerm(shutdown chan bool, startTime int64, renderer *render.Renderer, pa
 
 	return &VTerm{
 		x: 0, y: 0,
-		w:               w,
-		h:               h,
-		blankLine:       []render.Char{},
-		screen:          screen,
-		screenOld:       screen,
-		scrollback:      [][]render.Char{},
-		usingAltScreen:  false,
-		Cursor:          render.Cursor{},
-		in:              in,
-		out:             out,
-		startTime:       startTime,
-		shutdown:        shutdown,
-		renderer:        renderer,
-		parentSetCursor: parentSetCursor,
-		scrollingRegion: ScrollingRegion{top: 0, bottom: h - 1},
-		NeedsRedraw:     false,
+		w:                w,
+		h:                h,
+		blankLine:        []render.Char{},
+		screen:           screen,
+		screenOld:        screen,
+		scrollback:       [][]render.Char{},
+		usingAltScreen:   false,
+		Cursor:           render.Cursor{},
+		in:               in,
+		out:              out,
+		startTime:        startTime,
+		shutdown:         shutdown,
+		shellByteCounter: shellByteCounter,
+		usingSlowRefresh: false,
+		renderer:         renderer,
+		parentSetCursor:  parentSetCursor,
+		scrollingRegion:  ScrollingRegion{top: 0, bottom: h - 1},
+		NeedsRedraw:      false,
 	}
 }
 
