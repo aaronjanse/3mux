@@ -7,7 +7,7 @@ import (
 // ScrollbackUp shifts the screen contents up, with scrollback
 func (v *VTerm) ScrollbackUp() {
 	if v.scrollbackPos > 0 {
-		v.scrollbackPos--
+		v.scrollbackPos -= 5
 	}
 
 	v.RedrawWindow()
@@ -20,7 +20,7 @@ func (v *VTerm) ScrollbackDown() {
 	}
 
 	if v.scrollbackPos < len(v.scrollback) {
-		v.scrollbackPos++
+		v.scrollbackPos += 5
 		v.RedrawWindow()
 	}
 }
@@ -33,12 +33,10 @@ func (v *VTerm) RefreshCursor() {
 // scrollUp shifts screen contents up and adds blank lines to the bottom of the screen.
 // Lines pushed out of view are put in the scrollback.
 func (v *VTerm) scrollUp(n int) {
-	// if !v.usingAltScreen {
-	// 	rows := v.screen[v.scrollingRegion.top : v.scrollingRegion.top+n]
-	// 	for i := len(rows) - 1; i >= 0; i-- {
-	// 		v.scrollback = append([][]render.Char{rows[i]}, v.scrollback...)
-	// 	}
-	// }
+	if !v.usingAltScreen {
+		rows := v.screen[v.scrollingRegion.top : v.scrollingRegion.top+n]
+		v.scrollback = append(v.scrollback, rows...)
+	}
 
 	blankLine := []render.Char{}
 	for i := 0; i < v.w; i++ {
@@ -155,25 +153,27 @@ func (v *VTerm) putChar(ch rune) {
 // RedrawWindow redraws the screen into ncurses from scratch.
 // This should be reserved for operations not yet formalized into a generic, efficient function.
 func (v *VTerm) RedrawWindow() {
-	for y := 0; y < v.h-v.scrollbackPos; y++ {
-		for x := 0; x < v.w; x++ {
-			if y >= len(v.screen) || x >= len(v.screen[y]) {
-				continue
-			}
-			// if v.screen[y][x] != v.screenOld[y][x] {
-			// 	v.screenOld[y][x] = v.screen[y][x]
+	if v.scrollbackPos < v.h {
+		for y := 0; y < v.h-v.scrollbackPos; y++ {
+			for x := 0; x < v.w; x++ {
+				if y >= len(v.screen) || x >= len(v.screen[y]) {
+					continue
+				}
+				// if v.screen[y][x] != v.screenOld[y][x] {
+				// 	v.screenOld[y][x] = v.screen[y][x]
 
-			ch := render.PositionedChar{
-				Rune: v.screen[y][x].Rune,
-				Cursor: render.Cursor{
-					X: v.x + x, Y: v.y + y + v.scrollbackPos, Style: v.screen[y][x].Style,
-				},
-			}
+				ch := render.PositionedChar{
+					Rune: v.screen[y][x].Rune,
+					Cursor: render.Cursor{
+						X: v.x + x, Y: v.y + y + v.scrollbackPos, Style: v.screen[y][x].Style,
+					},
+				}
 
-			v.renderer.HandleCh(ch)
-			// v.out <- ch
-			//
-			// }
+				v.renderer.HandleCh(ch)
+				// v.out <- ch
+				//
+				// }
+			}
 		}
 	}
 
@@ -181,26 +181,33 @@ func (v *VTerm) RedrawWindow() {
 		v.RefreshCursor()
 	}
 
-	// if v.scrollbackPos > 0 {
-	// 	for y := 0; y < v.scrollbackPos; y++ {
-	// 		for x := 0; x < v.w; x++ {
-	// 			idx := v.scrollbackPos - y - 1
-	// 			if x < len(v.scrollback[idx]) {
-	// 				v.out <- render.PositionedChar{
-	// 					Rune: v.scrollback[idx][x].Rune,
-	// 					Cursor: render.Cursor{
-	// 						X: x, Y: y, Style: v.scrollback[idx][x].Style,
-	// 					},
-	// 				}
-	// 			} else {
-	// 				v.out <- render.PositionedChar{
-	// 					Rune: ' ',
-	// 					Cursor: render.Cursor{
-	// 						X: x, Y: y, Style: render.Style{},
-	// 					},
-	// 				}
-	// 			}
-	// 		}
-	// 	}
-	// }
+	if v.scrollbackPos > 0 {
+		numLinesVisible := v.scrollbackPos
+		if v.scrollbackPos > v.h {
+			numLinesVisible = v.h
+		}
+		for y := 0; y < numLinesVisible; y++ {
+			for x := 0; x < v.w; x++ {
+				idx := len(v.scrollback) - v.scrollbackPos + y - 1
+
+				if x < len(v.scrollback[idx]) {
+					ch := render.PositionedChar{
+						Rune: v.scrollback[idx][x].Rune,
+						Cursor: render.Cursor{
+							X: v.x + x, Y: v.y + y, Style: v.scrollback[idx][x].Style,
+						},
+					}
+					v.renderer.HandleCh(ch)
+				} else {
+					ch := render.PositionedChar{
+						Rune: ' ',
+						Cursor: render.Cursor{
+							X: v.x + x, Y: v.y + y, Style: render.Style{},
+						},
+					}
+					v.renderer.HandleCh(ch)
+				}
+			}
+		}
+	}
 }

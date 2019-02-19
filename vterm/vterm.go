@@ -28,7 +28,8 @@ type VTerm struct {
 
 	screenOld [][]render.Char
 
-	scrollback    [][]render.Char // disabled when using alt screen; char cursor coords are ignored. Zero index is closest to the visible screen
+	// scrollback[0] is the line farthest from the screen
+	scrollback    [][]render.Char // disabled when using alt screen; char cursor coords are ignored
 	scrollbackPos int             // scrollbackPos is the number of lines of scrollback visible
 
 	usingAltScreen bool
