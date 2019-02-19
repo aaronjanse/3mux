@@ -49,9 +49,9 @@ func (v *VTerm) ProcessStream() {
 			nowTime := time.Now().UnixNano()
 			log.Printf("%v ms - time to stream finish\n", (nowTime-v.startTime)/1000000)
 			v.RedrawWindow()
-			time.Sleep(time.Second)
-			v.shutdown <- true
-			return
+			// time.Sleep(time.Second)
+			// v.shutdown <- true
+			// return
 		}
 
 		// <-time.NewTimer(time.Second / 32).C

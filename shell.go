@@ -21,8 +21,8 @@ type Shell struct {
 }
 
 func newShell(stdout chan<- rune) Shell {
-	cmd := exec.Command("zsh", "/home/ajanse/Playground/i3-tmux/test.sh")
-	// cmd := exec.Command("zsh")
+	// cmd := exec.Command("zsh", "/home/ajanse/Playground/i3-tmux/test.sh")
+	cmd := exec.Command("zsh")
 
 	ptmx, err := pty.Start(cmd)
 	if err != nil {

@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/aaronduino/i3-tmux/keypress"
 	"github.com/aaronduino/i3-tmux/render"
 )
 
@@ -99,34 +100,34 @@ func main() {
 	// 	}
 	// })()
 
-	// keypress.Listen(func(name string, raw []byte) {
-	// 	// fmt.Println(name, raw)
+	keypress.Listen(func(name string, raw []byte) {
+		// fmt.Println(name, raw)
 
-	// 	switch name {
-	// 	case "Scroll Up":
-	// 		t := getSelection().getContainer().(*Pane)
-	// 		t.vterm.ScrollbackDown()
-	// 	case "Scroll Down":
-	// 		t := getSelection().getContainer().(*Pane)
-	// 		t.vterm.ScrollbackUp()
-	// 	default:
-	// 		if operationCode, ok := config.bindings[name]; ok {
-	// 			executeOperationCode(operationCode)
-	// 			root.simplify()
+		switch name {
+		case "Scroll Up":
+			t := getSelection().getContainer().(*Pane)
+			t.vterm.ScrollbackDown()
+		case "Scroll Down":
+			t := getSelection().getContainer().(*Pane)
+			t.vterm.ScrollbackUp()
+		default:
+			if operationCode, ok := config.bindings[name]; ok {
+				executeOperationCode(operationCode)
+				root.simplify()
 
-	// 			root.refreshRenderRect()
-	// 		} else {
-	// 			t := getSelection().getContainer().(*Pane)
+				root.refreshRenderRect()
+			} else {
+				t := getSelection().getContainer().(*Pane)
 
-	// 			t.shell.handleStdin(string(raw))
-	// 			t.vterm.RefreshCursor()
-	// 		}
-	// 	}
-	// })
+				t.shell.handleStdin(string(raw))
+				t.vterm.RefreshCursor()
+			}
+		}
+	})
 
 	// shutdown <- true
 
-	<-shutdown
+	// <-shutdown
 
 }
 
