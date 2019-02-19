@@ -21,7 +21,7 @@ type Pane struct {
 }
 
 func newTerm(selected bool) *Pane {
-	stdout := make(chan rune, 320)
+	stdout := make(chan rune, 3200000)
 	shell := newShell(stdout)
 
 	vtermOut := make(chan render.PositionedChar, 3200)
@@ -39,7 +39,7 @@ func newTerm(selected bool) *Pane {
 		}
 	}
 
-	vt := vterm.NewVTerm(renderer, parentSetCursor, stdout, vtermOut)
+	vt := vterm.NewVTerm(shutdown, startTime, renderer, parentSetCursor, stdout, vtermOut)
 	go vt.ProcessStream()
 
 	t.vterm = vt

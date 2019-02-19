@@ -1,5 +1,2 @@
-# echo '@alsdhajskdkhashdhkjas'
-bat /tmp/corpa.go
-echo -n 'sakjhdads'
-echo -n "|"
-echo "asjkdhjashjkdkhas"
+cat /home/ajanse/Playground/i3-tmux/corpa.txt
+echo 'asdasd@alsdhajskdkhashdhkjas'

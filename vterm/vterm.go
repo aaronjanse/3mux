@@ -36,6 +36,9 @@ type VTerm struct {
 
 	NeedsRedraw bool
 
+	startTime int64
+	shutdown  chan bool
+
 	Cursor render.Cursor
 
 	renderer *render.Renderer
@@ -52,7 +55,7 @@ type VTerm struct {
 }
 
 // NewVTerm returns a VTerm ready to be used by its exported methods
-func NewVTerm(renderer *render.Renderer, parentSetCursor func(x, y int), in <-chan rune, out chan<- render.PositionedChar) *VTerm {
+func NewVTerm(shutdown chan bool, startTime int64, renderer *render.Renderer, parentSetCursor func(x, y int), in <-chan rune, out chan<- render.PositionedChar) *VTerm {
 	w := 10
 	h := 10
 
@@ -78,6 +81,8 @@ func NewVTerm(renderer *render.Renderer, parentSetCursor func(x, y int), in <-ch
 		Cursor:          render.Cursor{},
 		in:              in,
 		out:             out,
+		startTime:       startTime,
+		shutdown:        shutdown,
 		renderer:        renderer,
 		parentSetCursor: parentSetCursor,
 		scrollingRegion: ScrollingRegion{top: 0, bottom: h - 1},

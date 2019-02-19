@@ -49,14 +49,16 @@ func newShell(stdout chan<- rune) Shell {
 			}
 			for _, b := range bs {
 				if string(b) == "@" {
+					// if b == '@' {
 					// log.Fatal("sent shutdown signal")
 					nowTime := time.Now().UnixNano()
-					log.Printf("%v ms - time tp shell output\n", (nowTime-startTime)/1000000)
-					shutdown <- true
-					return
+					log.Printf("%v ms - time to shell finish\n", (nowTime-startTime)/1000000)
+					// time.Sleep(time.Second)
+					// shutdown <- true
+					// return
 				}
 				// fmt.Println()
-				// stdout <- rune(b)
+				stdout <- rune(b)
 			}
 		}
 	})()

@@ -1,9 +1,11 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"log"
 	"os"
+	"runtime/pprof"
 	"strings"
 	"time"
 
@@ -21,10 +23,7 @@ var renderer *render.Renderer
 
 var startTime int64
 
-func xyz() {
-}
-
-// var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
+var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
 
 func main() {
 	shutdown = make(chan bool, 20)
@@ -37,23 +36,23 @@ func main() {
 
 	log.SetOutput(f)
 
-	// flag.Parse()
-	// if *cpuprofile != "" {
-	// 	f, err := os.Create(*cpuprofile)
-	// 	if err != nil {
-	// 		log.Fatal(err)
-	// 	}
-	// 	pprof.StartCPUProfile(f)
-	// 	defer pprof.StopCPUProfile()
-	// }
-
-	startTime = time.Now().UnixNano()
+	flag.Parse()
+	if *cpuprofile != "" {
+		f, err := os.Create(*cpuprofile)
+		if err != nil {
+			log.Fatal(err)
+		}
+		pprof.StartCPUProfile(f)
+		defer pprof.StopCPUProfile()
+	}
 
 	termW, termH, _ = getTermSize()
 
 	renderer = render.NewRenderer()
 	renderer.Resize(termW, termH)
 	go renderer.ListenToQueue()
+
+	startTime = time.Now().UnixNano()
 
 	root = Split{
 		verticallyStacked: false,
@@ -64,9 +63,6 @@ func main() {
 				contents: newTerm(true),
 			},
 		}}
-
-	xyz()
-	// shutdown <- true
 
 	defer root.kill()
 
