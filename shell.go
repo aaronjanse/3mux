@@ -20,8 +20,8 @@ type Shell struct {
 }
 
 func newShell(stdout chan<- rune) Shell {
-	// cmd := exec.Command("bash", "/home/ajanse/Playground/i3-tmux/test.sh")
-	cmd := exec.Command("zsh")
+	cmd := exec.Command("zsh", "/home/ajanse/Playground/i3-tmux/test.sh")
+	// cmd := exec.Command("zsh")
 
 	ptmx, err := pty.Start(cmd)
 	if err != nil {
@@ -38,13 +38,6 @@ func newShell(stdout chan<- rune) Shell {
 			}
 		}()
 
-		defer func() {
-			nowTime := time.Now().UnixNano()
-			fmt.Fprint(os.Stderr, (nowTime-startTime)/1000000)
-			// needsShutdown <- true
-			// panic("bye")
-		}()
-
 		for {
 			bs := make([]byte, 1000)
 			_, err := ptmx.Read(bs)
@@ -56,9 +49,14 @@ func newShell(stdout chan<- rune) Shell {
 				}
 			}
 			for _, b := range bs {
-				if b == '\x60' {
+				if string(b) == "@" {
+					// log.Fatal("sent shutdown signal")
+					nowTime := time.Now().UnixNano()
+					fmt.Fprint(os.Stderr, (nowTime-startTime)/1000000)
+					shutdown <- true
 					return
 				}
+				// fmt.Println()
 				stdout <- rune(b)
 			}
 		}

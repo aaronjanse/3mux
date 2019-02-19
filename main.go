@@ -1,15 +1,10 @@
 package main
 
 import (
-	"flag"
 	"fmt"
-	"log"
-	"os"
-	"runtime/pprof"
 	"strings"
 	"time"
 
-	"github.com/aaronduino/i3-tmux/keypress"
 	"github.com/aaronduino/i3-tmux/render"
 )
 
@@ -24,20 +19,23 @@ var renderer *render.Renderer
 
 var startTime int64
 
-var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
+func xyz() {
+}
+
+// var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
 
 func main() {
-	// needsShutdown := make(chan bool, 2)
+	shutdown = make(chan bool, 20)
 
-	flag.Parse()
-	if *cpuprofile != "" {
-		f, err := os.Create(*cpuprofile)
-		if err != nil {
-			log.Fatal(err)
-		}
-		pprof.StartCPUProfile(f)
-		defer pprof.StopCPUProfile()
-	}
+	// flag.Parse()
+	// if *cpuprofile != "" {
+	// 	f, err := os.Create(*cpuprofile)
+	// 	if err != nil {
+	// 		log.Fatal(err)
+	// 	}
+	// 	pprof.StartCPUProfile(f)
+	// 	defer pprof.StopCPUProfile()
+	// }
 
 	startTime = time.Now().UnixNano()
 
@@ -56,6 +54,10 @@ func main() {
 				contents: newTerm(true),
 			},
 		}}
+
+	xyz()
+	// shutdown <- true
+
 	defer root.kill()
 
 	var h int
@@ -91,34 +93,38 @@ func main() {
 	// 	}
 	// })()
 
-	keypress.Listen(func(name string, raw []byte) {
-		// fmt.Println(name, raw)
+	// keypress.Listen(func(name string, raw []byte) {
+	// 	// fmt.Println(name, raw)
 
-		switch name {
-		case "Scroll Up":
-			t := getSelection().getContainer().(*Pane)
-			t.vterm.ScrollbackDown()
-		case "Scroll Down":
-			t := getSelection().getContainer().(*Pane)
-			t.vterm.ScrollbackUp()
-		default:
-			if operationCode, ok := config.bindings[name]; ok {
-				executeOperationCode(operationCode)
-				root.simplify()
+	// 	switch name {
+	// 	case "Scroll Up":
+	// 		t := getSelection().getContainer().(*Pane)
+	// 		t.vterm.ScrollbackDown()
+	// 	case "Scroll Down":
+	// 		t := getSelection().getContainer().(*Pane)
+	// 		t.vterm.ScrollbackUp()
+	// 	default:
+	// 		if operationCode, ok := config.bindings[name]; ok {
+	// 			executeOperationCode(operationCode)
+	// 			root.simplify()
 
-				root.refreshRenderRect()
-			} else {
-				t := getSelection().getContainer().(*Pane)
+	// 			root.refreshRenderRect()
+	// 		} else {
+	// 			t := getSelection().getContainer().(*Pane)
 
-				t.shell.handleStdin(string(raw))
-				t.vterm.RefreshCursor()
-			}
-		}
-	})
+	// 			t.shell.handleStdin(string(raw))
+	// 			t.vterm.RefreshCursor()
+	// 		}
+	// 	}
+	// })
+
+	// shutdown <- true
+
+	<-shutdown
 
 }
 
-// var needsShutdown chan bool
+var shutdown chan bool
 
 func executeOperationCode(s string) {
 	sections := strings.Split(s, "(")
