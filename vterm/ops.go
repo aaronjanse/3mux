@@ -180,33 +180,33 @@ func (v *VTerm) RedrawWindow() {
 		v.RefreshCursor()
 	}
 
-	// if v.scrollbackPos > 0 {
-	// 	numLinesVisible := v.scrollbackPos
-	// 	if v.scrollbackPos > v.h {
-	// 		numLinesVisible = v.h
-	// 	}
-	// 	for y := 0; y < numLinesVisible; y++ {
-	// 		for x := 0; x < v.w; x++ {
-	// 			idx := len(v.scrollback) - v.scrollbackPos + y - 1
+	if v.scrollbackPos > 0 {
+		numLinesVisible := v.scrollbackPos
+		if v.scrollbackPos > v.h {
+			numLinesVisible = v.h
+		}
+		for y := 0; y < numLinesVisible; y++ {
+			for x := 0; x < v.w; x++ {
+				idx := len(v.scrollback) - v.scrollbackPos + y - 1
 
-	// 			if x < len(v.scrollback[idx]) {
-	// 				ch := render.PositionedChar{
-	// 					Rune: v.scrollback[idx][x].Rune,
-	// 					Cursor: render.Cursor{
-	// 						X: v.x + x, Y: v.y + y, Style: v.scrollback[idx][x].Style,
-	// 					},
-	// 				}
-	// 				v.renderer.HandleCh(ch)
-	// 			} else {
-	// 				ch := render.PositionedChar{
-	// 					Rune: ' ',
-	// 					Cursor: render.Cursor{
-	// 						X: v.x + x, Y: v.y + y, Style: render.Style{},
-	// 					},
-	// 				}
-	// 				v.renderer.HandleCh(ch)
-	// 			}
-	// 		}
-	// 	}
-	// }
+				if x < len(v.scrollback[idx]) {
+					ch := render.PositionedChar{
+						Rune: v.scrollback[idx][x].Rune,
+						Cursor: render.Cursor{
+							X: v.x + x, Y: v.y + y, Style: v.scrollback[idx][x].Style,
+						},
+					}
+					v.renderer.HandleCh(ch)
+				} else {
+					ch := render.PositionedChar{
+						Rune: ' ',
+						Cursor: render.Cursor{
+							X: v.x + x, Y: v.y + y, Style: render.Style{},
+						},
+					}
+					v.renderer.HandleCh(ch)
+				}
+			}
+		}
+	}
 }

@@ -26,7 +26,7 @@ func drawSelectionBorder(r Rect) {
 	if leftBorder {
 		for i := 0; i <= r.h; i++ {
 			// stdscr.MoveAddChar(r.y+i, r.x-1, gc.ACS_VLINE)
-			renderer.RenderQueue <- render.PositionedChar{
+			ch := render.PositionedChar{
 				Rune: '│',
 				Cursor: render.Cursor{
 					X:     r.x - 1,
@@ -34,12 +34,14 @@ func drawSelectionBorder(r Rect) {
 					Style: style,
 				},
 			}
+
+			renderer.HandleCh(ch)
 		}
 	}
 	if rightBorder {
 		for i := 0; i <= r.h; i++ {
 			// stdscr.MoveAddChar(r.y+i, r.x+r.w, gc.ACS_VLINE)
-			renderer.RenderQueue <- render.PositionedChar{
+			ch := render.PositionedChar{
 				Rune: '│',
 				Cursor: render.Cursor{
 					X:     r.x + r.w,
@@ -47,12 +49,14 @@ func drawSelectionBorder(r Rect) {
 					Style: style,
 				},
 			}
+
+			renderer.HandleCh(ch)
 		}
 	}
 	if topBorder {
 		for i := 0; i <= r.w; i++ {
 			// stdscr.MoveAddChar(r.y-1, r.x+i, gc.ACS_HLINE)
-			renderer.RenderQueue <- render.PositionedChar{
+			ch := render.PositionedChar{
 				Rune: '─',
 				Cursor: render.Cursor{
 					X:     r.x + i,
@@ -60,12 +64,14 @@ func drawSelectionBorder(r Rect) {
 					Style: style,
 				},
 			}
+
+			renderer.HandleCh(ch)
 		}
 	}
 	if bottomBorder {
 		for i := 0; i <= r.w; i++ {
 			// stdscr.MoveAddChar(r.y+r.h, r.x+i, gc.ACS_HLINE)
-			renderer.RenderQueue <- render.PositionedChar{
+			ch := render.PositionedChar{
 				Rune: '─',
 				Cursor: render.Cursor{
 					X:     r.x + i,
@@ -73,13 +79,15 @@ func drawSelectionBorder(r Rect) {
 					Style: style,
 				},
 			}
+
+			renderer.HandleCh(ch)
 		}
 	}
 
 	// draw corners
 	if topBorder && leftBorder {
 		// stdscr.MoveAddChar(r.y-1, r.x-1, gc.ACS_ULCORNER)
-		renderer.RenderQueue <- render.PositionedChar{
+		ch := render.PositionedChar{
 			Rune: '┌',
 			Cursor: render.Cursor{
 				X:     r.x - 1,
@@ -87,10 +95,12 @@ func drawSelectionBorder(r Rect) {
 				Style: style,
 			},
 		}
+
+		renderer.HandleCh(ch)
 	}
 	if topBorder && rightBorder {
 		// stdscr.MoveAddChar(r.y-1, r.x+r.w, gc.ACS_URCORNER)
-		renderer.RenderQueue <- render.PositionedChar{
+		ch := render.PositionedChar{
 			Rune: '┐',
 			Cursor: render.Cursor{
 				X:     r.x + r.w,
@@ -98,10 +108,12 @@ func drawSelectionBorder(r Rect) {
 				Style: style,
 			},
 		}
+
+		renderer.HandleCh(ch)
 	}
 	if bottomBorder && leftBorder {
 		// stdscr.MoveAddChar(r.y+r.h, r.x-1, gc.ACS_LLCORNER)
-		renderer.RenderQueue <- render.PositionedChar{
+		ch := render.PositionedChar{
 			Rune: '└',
 			Cursor: render.Cursor{
 				X:     r.x - 1,
@@ -109,10 +121,12 @@ func drawSelectionBorder(r Rect) {
 				Style: style,
 			},
 		}
+
+		renderer.HandleCh(ch)
 	}
 	if bottomBorder && rightBorder {
 		// stdscr.MoveAddChar(r.y+r.h, r.y+r.w, gc.ACS_LRCORNER)
-		renderer.RenderQueue <- render.PositionedChar{
+		ch := render.PositionedChar{
 			Rune: '┘',
 			Cursor: render.Cursor{
 				X:     r.x + r.w,
@@ -120,6 +134,8 @@ func drawSelectionBorder(r Rect) {
 				Style: style,
 			},
 		}
+
+		renderer.HandleCh(ch)
 	}
 
 	// stdscr.Refresh()
