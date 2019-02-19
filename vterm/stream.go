@@ -27,6 +27,8 @@ func (v *VTerm) ProcessStream() {
 		if next == '@' {
 			nowTime := time.Now().UnixNano()
 			log.Printf("%v ms - time to stream finish\n", (nowTime-v.startTime)/1000000)
+			v.RedrawWindow()
+			time.Sleep(time.Second)
 			v.shutdown <- true
 			return
 		}

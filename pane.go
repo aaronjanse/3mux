@@ -82,7 +82,7 @@ func (t *Pane) setRenderRect(x, y, w, h int) {
 
 	t.renderRect = Rect{x, y, w, h}
 
-	t.vterm.Reshape(w, h)
+	t.vterm.Reshape(x, y, w, h)
 	t.vterm.RedrawWindow()
 	// renderer.Refresh()
 

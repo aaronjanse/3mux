@@ -21,7 +21,7 @@ VTerm acts as a virtual terminal emulator between a shell and the host terminal 
 It both transforms an inbound stream of bytes into Char's and provides the option of dumping all the Char's that need to be rendered to display the currently visible terminal window from scratch.
 */
 type VTerm struct {
-	w, h int
+	x, y, w, h int
 
 	// visible screen; char cursor coords are ignored
 	screen [][]render.Char
@@ -42,6 +42,8 @@ type VTerm struct {
 	Cursor render.Cursor
 
 	renderer *render.Renderer
+
+	blankLine []render.Char
 
 	// parentSetCursor sets physical host's cursor taking the pane location into account
 	parentSetCursor func(x, y int)
@@ -72,8 +74,10 @@ func NewVTerm(shutdown chan bool, startTime int64, renderer *render.Renderer, pa
 	}
 
 	return &VTerm{
+		x: 0, y: 0,
 		w:               w,
 		h:               h,
+		blankLine:       []render.Char{},
 		screen:          screen,
 		screenOld:       screen,
 		scrollback:      [][]render.Char{},
@@ -95,7 +99,17 @@ func (v *VTerm) Kill() {
 }
 
 // Reshape safely updates a VTerm's width & height
-func (v *VTerm) Reshape(w, h int) {
+func (v *VTerm) Reshape(x, y, w, h int) {
+	blankLine := []render.Char{}
+	for i := 0; i < w; i++ {
+		blankLine = append(blankLine, render.Char{Rune: ' ', Style: render.Style{}})
+	}
+
+	v.blankLine = blankLine
+
+	v.x = x
+	v.y = y
+
 	for y := 0; y <= h; y++ {
 		if y >= len(v.screen) {
 			v.screen = append(v.screen, []render.Char{})

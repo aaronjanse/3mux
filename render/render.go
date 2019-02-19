@@ -144,7 +144,7 @@ func (r *Renderer) ListenToQueue() {
 		r.drawingCursor = originalCursor
 		fmt.Print("\033[?25h") // show cursor
 
-		time.Sleep(time.Millisecond * 25)
+		time.Sleep(time.Millisecond * 250)
 
 		// r.cursorMutex.Unlock()
 

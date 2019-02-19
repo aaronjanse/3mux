@@ -33,12 +33,12 @@ func (v *VTerm) RefreshCursor() {
 // scrollUp shifts screen contents up and adds blank lines to the bottom of the screen.
 // Lines pushed out of view are put in the scrollback.
 func (v *VTerm) scrollUp(n int) {
-	if !v.usingAltScreen {
-		rows := v.screen[v.scrollingRegion.top : v.scrollingRegion.top+n]
-		for i := len(rows) - 1; i >= 0; i-- {
-			v.scrollback = append([][]render.Char{rows[i]}, v.scrollback...)
-		}
-	}
+	// if !v.usingAltScreen {
+	// 	rows := v.screen[v.scrollingRegion.top : v.scrollingRegion.top+n]
+	// 	for i := len(rows) - 1; i >= 0; i-- {
+	// 		v.scrollback = append([][]render.Char{rows[i]}, v.scrollback...)
+	// 	}
+	// }
 
 	blankLine := []render.Char{}
 	for i := 0; i < v.w; i++ {
@@ -56,7 +56,7 @@ func (v *VTerm) scrollUp(n int) {
 		newLines...),
 		v.screen[v.scrollingRegion.bottom+1:]...)
 
-	v.RedrawWindow()
+	// v.RedrawWindow()
 
 	// v.RedrawWindow() // FIXME
 	// v.renderer.Refresh()
@@ -65,14 +65,9 @@ func (v *VTerm) scrollUp(n int) {
 // scrollDown shifts the screen content down and adds blank lines to the top.
 // It does neither modifies nor reads scrollback
 func (v *VTerm) scrollDown(n int) {
-	blankLine := []render.Char{}
-	for i := 0; i < v.w; i++ {
-		blankLine = append(blankLine, render.Char{Rune: ' ', Style: render.Style{}})
-	}
-
 	newLines := make([][]render.Char, n)
 	for i := range newLines {
-		newLines[i] = blankLine
+		newLines[i] = v.blankLine
 	}
 
 	// v.screen = append(v.screen[:len(v.screen)-1], []Char{})
@@ -82,7 +77,7 @@ func (v *VTerm) scrollDown(n int) {
 		v.screen[v.scrollingRegion.top:v.scrollingRegion.bottom-n]...),
 		v.screen[v.scrollingRegion.bottom+1:]...)
 
-	v.RedrawWindow()
+	// v.RedrawWindow()
 
 	// v.win.Scroll(n)
 }
@@ -133,7 +128,8 @@ func (v *VTerm) putChar(ch rune) {
 		v.screen[v.Cursor.Y][v.Cursor.X] = char
 	}
 
-	v.out <- positionedChar
+	// v.out <- positionedChar
+	v.renderer.HandleCh(positionedChar)
 
 	// // TODO: set ncurses style attributes to match those of the cursor
 
@@ -160,12 +156,16 @@ func (v *VTerm) RedrawWindow() {
 			// if v.screen[y][x] != v.screenOld[y][x] {
 			// 	v.screenOld[y][x] = v.screen[y][x]
 
-			v.out <- render.PositionedChar{
+			ch := render.PositionedChar{
 				Rune: v.screen[y][x].Rune,
 				Cursor: render.Cursor{
 					X: x, Y: y + v.scrollbackPos, Style: v.screen[y][x].Style,
 				},
 			}
+
+			v.renderer.HandleCh(ch)
+			// v.out <- ch
+			//
 			// }
 		}
 	}
