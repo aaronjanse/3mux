@@ -125,6 +125,9 @@ func (v *VTerm) putChar(ch rune) {
 		Cursor: v.Cursor,
 	}
 
+	positionedChar.Cursor.X += v.x
+	positionedChar.Cursor.Y += v.y
+
 	// fmt.Print(len(v.screen), v.cursorY, "")
 	// fmt.Print(len(v.screen[v.cursorY]), v.cursorX, ",  ")
 
@@ -163,7 +166,7 @@ func (v *VTerm) RedrawWindow() {
 			ch := render.PositionedChar{
 				Rune: v.screen[y][x].Rune,
 				Cursor: render.Cursor{
-					X: x, Y: y + v.scrollbackPos, Style: v.screen[y][x].Style,
+					X: v.x + x, Y: v.y + y + v.scrollbackPos, Style: v.screen[y][x].Style,
 				},
 			}
 
@@ -172,6 +175,10 @@ func (v *VTerm) RedrawWindow() {
 			//
 			// }
 		}
+	}
+
+	if !v.usingSlowRefresh {
+		v.RefreshCursor()
 	}
 
 	// if v.scrollbackPos > 0 {

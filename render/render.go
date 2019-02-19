@@ -18,6 +18,8 @@ type Renderer struct {
 	cursorMutex   *sync.Mutex
 	writingMutex  *sync.Mutex
 
+	restingCursor Cursor
+
 	// RenderQueue is how requests to change the framebuffer are made
 	RenderQueue chan PositionedChar
 }
@@ -112,7 +114,6 @@ func (r *Renderer) ListenToQueue() {
 		// 			r.handleCh(ch)
 		// 		default:
 		// r.cursorMutex.Lock()
-		originalCursor := r.drawingCursor
 
 		fmt.Print("\033[?25l") // hide cursor
 
@@ -122,7 +123,7 @@ func (r *Renderer) ListenToQueue() {
 				r.writingMutex.Lock()
 				current := r.currentScreen[y][x]
 				pending := r.pendingScreen[y][x]
-				if current != pending {
+				if current != pending || true {
 					r.currentScreen[y][x] = pending
 
 					newCursor := Cursor{
@@ -139,15 +140,14 @@ func (r *Renderer) ListenToQueue() {
 		}
 
 		fmt.Print(diff.String())
+		// r.cursorMutex.Unlock()
 
-		delta := deltaMarkup(originalCursor, r.drawingCursor)
+		delta := deltaMarkup(r.drawingCursor, r.restingCursor)
 		fmt.Print(delta)
-		r.drawingCursor = originalCursor
+		r.drawingCursor = r.restingCursor
 		fmt.Print("\033[?25h") // show cursor
 
 		time.Sleep(time.Millisecond * 25)
-
-		// r.cursorMutex.Unlock()
 
 		// break drainingLoop
 	}
@@ -167,9 +167,9 @@ func (r *Renderer) Refresh() {
 func (r *Renderer) SetCursor(x, y int) {
 	// r.cursorMutex.Lock()
 
-	// newCursor := Cursor{
-	// 	X: x, Y: y, Style: r.drawingCursor.Style,
-	// }
+	r.restingCursor = Cursor{
+		X: x, Y: y, Style: r.drawingCursor.Style,
+	}
 	// delta := deltaMarkup(r.drawingCursor, newCursor)
 	// fmt.Print(delta)
 	// r.drawingCursor = newCursor
