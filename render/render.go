@@ -15,7 +15,6 @@ type Renderer struct {
 	pendingScreen [][]Char
 
 	drawingCursor Cursor
-	cursorMutex   *sync.Mutex
 	writingMutex  *sync.Mutex
 
 	restingCursor Cursor
@@ -41,7 +40,6 @@ func NewRenderer() *Renderer {
 	return &Renderer{
 		currentScreen: [][]Char{},
 		pendingScreen: [][]Char{},
-		cursorMutex:   &sync.Mutex{},
 		writingMutex:  &sync.Mutex{},
 		RenderQueue:   make(chan PositionedChar, 100000),
 	}
@@ -93,28 +91,9 @@ func (r *Renderer) HandleCh(ch PositionedChar) {
 
 // ListenToQueue is a blocking function that processes data sent to the RenderQueue
 func (r *Renderer) ListenToQueue() {
-	fmt.Print("\033[2J")
+	fmt.Print("\033[2J") // clear screen
+
 	for {
-		// 	ch, ok := <-r.RenderQueue
-		// 	if !ok {
-		// 		fmt.Println("Exiting scheduler")
-		// 		return
-		// 	}
-
-		// 	r.handleCh(ch)
-
-		// drainingLoop:
-		// 	for {
-		// 		select {
-		// 		case ch, ok := <-r.RenderQueue:
-		// 			if !ok {
-		// 				fmt.Println("Exiting scheduler")
-		// 				return
-		// 			}
-		// 			r.handleCh(ch)
-		// 		default:
-		// r.cursorMutex.Lock()
-
 		fmt.Print("\033[?25l") // hide cursor
 
 		var diff strings.Builder
@@ -140,54 +119,32 @@ func (r *Renderer) ListenToQueue() {
 		}
 
 		fmt.Print(diff.String())
-		// r.cursorMutex.Unlock()
 
 		delta := deltaMarkup(r.drawingCursor, r.restingCursor)
 		fmt.Print(delta)
 		r.drawingCursor = r.restingCursor
+
 		fmt.Print("\033[?25h") // show cursor
 
 		time.Sleep(time.Millisecond * 25)
-
-		// break drainingLoop
 	}
-	// 	}
-	// }
-}
-
-// Refresh updates the screen to match the framebuffer
-func (r *Renderer) Refresh() {
-	// r.writingMutex.Lock()
-	// pendingCopy := r.pendingScreen
-	// r.writingMutex.Unlock()
-
 }
 
 // SetCursor sets the position of the physical cursor
 func (r *Renderer) SetCursor(x, y int) {
-	// r.cursorMutex.Lock()
-
 	r.restingCursor = Cursor{
 		X: x, Y: y, Style: r.drawingCursor.Style,
 	}
-	// delta := deltaMarkup(r.drawingCursor, newCursor)
-	// fmt.Print(delta)
-	// r.drawingCursor = newCursor
-
-	// r.cursorMutex.Unlock()
 }
 
 // Debug prints the given text to the status bar
 func (r *Renderer) Debug(s string) {
-	// r.cursorMutex.Lock()
-
-	// newCursor := Cursor{
-	// 	X: 0, Y: r.h - 1, Style: Style{},
-	// }
-	// fmt.Print(deltaMarkup(r.drawingCursor, newCursor))
-	// fmt.Print(s)
-	// newCursor.X += len(s)
-	// fmt.Print(deltaMarkup(newCursor, r.drawingCursor))
-
-	// r.cursorMutex.Unlock()
+	for i, ch := range s {
+		r.HandleCh(PositionedChar{
+			Rune: rune(ch),
+			Cursor: Cursor{
+				X: i, Y: r.h - 1,
+				Style: Style{},
+			}})
+	}
 }

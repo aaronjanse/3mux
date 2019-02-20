@@ -7,7 +7,6 @@ import (
 	"os/signal"
 	"sync/atomic"
 	"syscall"
-	"time"
 
 	"github.com/kr/pty"
 )
@@ -57,16 +56,13 @@ func newShell(stdout chan<- rune) Shell {
 			}
 			for _, b := range bs {
 				atomic.AddUint64(&shell.byteCounter, 1)
-				if string(b) == "@" {
-					// if b == '@' {
-					// log.Fatal("sent shutdown signal")
-					nowTime := time.Now().UnixNano()
-					log.Printf("%v ms - time to shell finish\n", (nowTime-startTime)/1000000)
-					// time.Sleep(time.Second)
-					// shutdown <- true
-					// return
-				}
-				// fmt.Println()
+				// if string(b) == "@" {
+				// 	nowTime := time.Now().UnixNano()
+				// 	log.Printf("%v ms - time to shell finish\n", (nowTime-startTime)/1000000)
+				// 	// time.Sleep(time.Second)
+				// 	// shutdown <- true
+				// 	// return
+				// }
 				stdout <- rune(b)
 			}
 		}

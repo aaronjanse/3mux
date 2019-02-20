@@ -44,24 +44,6 @@ func newTerm(selected bool) *Pane {
 
 	t.vterm = vt
 
-	// transformChars := func() {
-	// 	for {
-	// 		char := <-vtermOut
-	// 		if char.Cursor.X > t.renderRect.w-1 {
-	// 			continue
-	// 		}
-	// 		if char.Cursor.Y > t.renderRect.h-1 {
-	// 			continue
-	// 		}
-	// 		char.Cursor.X += t.renderRect.x
-	// 		char.Cursor.Y += t.renderRect.y
-	// 		// renderer.RenderQueue <- char
-	// 		renderer.HandleCh(char)
-	// 	}
-	// }
-
-	// go transformChars()
-
 	return t
 }
 
@@ -75,16 +57,10 @@ func (t *Pane) serialize() string {
 }
 
 func (t *Pane) setRenderRect(x, y, w, h int) {
-	// r := t.renderRect
-	// if x == r.x && y == r.y && w == r.w && h == r.h {
-	// 	return
-	// }
-
 	t.renderRect = Rect{x, y, w, h}
 
 	t.vterm.Reshape(x, y, w, h)
 	t.vterm.RedrawWindow()
-	// renderer.Refresh()
 
 	t.shell.resize(w, h)
 
@@ -92,8 +68,8 @@ func (t *Pane) setRenderRect(x, y, w, h int) {
 }
 
 func (t *Pane) softRefresh() {
+	// only selected Panes get the special highlight color
 	if t.selected {
 		drawSelectionBorder(t.renderRect)
-		// t.win.Box(gc.ACS_VLINE, gc.ACS_HLINE)
 	}
 }

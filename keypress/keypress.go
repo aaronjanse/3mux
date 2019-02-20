@@ -24,7 +24,7 @@ func Listen(c func(name string, raw []byte)) {
 	}
 	defer term.Close()
 
-	fmt.Print("\033[?12h\033[?25h")
+	fmt.Print("\033[?25h\033[?12h") // show cursor, make it blink
 
 	for {
 		data := make([]byte, 16)

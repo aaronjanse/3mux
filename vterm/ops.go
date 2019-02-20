@@ -57,9 +57,6 @@ func (v *VTerm) scrollUp(n int) {
 	if !v.usingSlowRefresh {
 		v.RedrawWindow()
 	}
-
-	// v.RedrawWindow() // FIXME
-	// v.renderer.Refresh()
 }
 
 // scrollDown shifts the screen content down and adds blank lines to the top.
@@ -76,11 +73,9 @@ func (v *VTerm) scrollDown(n int) {
 		v.screen[v.scrollingRegion.top:v.scrollingRegion.bottom-n]...),
 		v.screen[v.scrollingRegion.bottom+1:]...)
 
-	// v.screen = append([][]render.Char{v.blankLine}, v.screen[:len(v.screen)-1]...)
-
-	// if !v.usingSlowRefresh	 {
-	v.RedrawWindow()
-	// }
+	if !v.usingSlowRefresh {
+		v.RedrawWindow()
+	}
 }
 
 func (v *VTerm) setCursorPos(x, y int) {
@@ -125,22 +120,12 @@ func (v *VTerm) putChar(ch rune) {
 	positionedChar.Cursor.X += v.x
 	positionedChar.Cursor.Y += v.y
 
-	// fmt.Print(len(v.screen), v.cursorY, "")
-	// fmt.Print(len(v.screen[v.cursorY]), v.cursorX, ",  ")
-
 	if v.Cursor.Y < len(v.screen) && v.Cursor.X < len(v.screen[v.Cursor.Y]) {
 		v.screen[v.Cursor.Y][v.Cursor.X] = char
 	}
 
-	// v.out <- positionedChar
+	// TODO: print to the window based on scrolling position
 	v.renderer.HandleCh(positionedChar)
-
-	// // TODO: set ncurses style attributes to match those of the cursor
-
-	// // TODO: print to the window based on scrolling position
-	// v.updateCursesStyle(v.Cursor)
-	// v.win.Print(string(ch))
-	// v.win.Refresh()
 
 	if v.Cursor.X < v.w {
 		v.Cursor.X++
@@ -158,8 +143,6 @@ func (v *VTerm) RedrawWindow() {
 				if y >= len(v.screen) || x >= len(v.screen[y]) {
 					continue
 				}
-				// if v.screen[y][x] != v.screenOld[y][x] {
-				// 	v.screenOld[y][x] = v.screen[y][x]
 
 				ch := render.PositionedChar{
 					Rune: v.screen[y][x].Rune,
@@ -169,9 +152,6 @@ func (v *VTerm) RedrawWindow() {
 				}
 
 				v.renderer.HandleCh(ch)
-				// v.out <- ch
-				//
-				// }
 			}
 		}
 	}

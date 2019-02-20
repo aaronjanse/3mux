@@ -29,14 +29,15 @@ var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
 func main() {
 	shutdown = make(chan bool, 20)
 
+	// setup logging
 	f, err := os.OpenFile("logs.txt", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
 		log.Fatalf("error opening file: %v", err)
 	}
 	defer f.Close()
-
 	log.SetOutput(f)
 
+	// setup cpu profiling
 	flag.Parse()
 	if *cpuprofile != "" {
 		f, err := os.Create(*cpuprofile)
@@ -76,30 +77,6 @@ func main() {
 
 	root.setRenderRect(0, 0, termW, h)
 
-	// <-needsShutdown
-
-	// fmt.Println("\033[2JHUJhsjgawhdjhgjgahsdjhggasd")
-
-	// if config.statusBar {
-	// 	debug(root.serialize())
-	// }
-
-	// ticker := time.NewTicker(time.Second / 30)
-	// defer ticker.Stop()
-	// go (func() {
-	// 	for range ticker.C {
-	// 		// for _, pane := range getPanes() {
-	// 		// 	if pane.vterm.NeedsRedraw {
-	// 		// 		pane.vterm.RedrawWindow()
-	// 		// 	}
-	// 		// }
-	// 		// renderer.Refresh()
-
-	// 		t := getSelection().getContainer().(*Pane)
-	// 		t.vterm.RefreshCursor()
-	// 	}
-	// })()
-
 	/* enable mouse reporting */
 
 	fmt.Print("\033[?1000h")
@@ -107,6 +84,8 @@ func main() {
 
 	fmt.Print("\033[?1015h")
 	defer fmt.Print("\033[?1015l")
+
+	/* listen for keypresses */
 
 	keypress.Listen(func(name string, raw []byte) {
 		// fmt.Println(name, raw)

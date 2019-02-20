@@ -30,7 +30,6 @@ func (v *VTerm) handleCSISequence() {
 				case "7": // Auto-wrap Mode (DECAWM)
 				case "12": // start blinking Cursor
 				case "25": // show Cursor
-					// v.StartBlinker()
 				case "1049", "1047", "47": // switch to alt screen buffer
 					if !v.usingAltScreen {
 						v.screenBackup = v.screen
@@ -45,13 +44,11 @@ func (v *VTerm) handleCSISequence() {
 				case "7": // No Auto-wrap Mode (DECAWM)
 				case "12": // stop blinking Cursor
 				case "25": // hide Cursor
-					// v.StopBlinker()
 				case "1049", "1047", "47": // switch to normal screen buffer
 					if v.usingAltScreen {
 						v.screen = v.screenBackup
 					}
 				case "2004": // disable bracketed paste mode
-					// TODO
 				default:
 					// v.debug("CSI Private L Code: " + parameterCode + string(next))
 				}
@@ -60,9 +57,6 @@ func (v *VTerm) handleCSISequence() {
 			}
 			return
 		} else {
-			// if next != 'H' && next != 'C' && next != 'G' && next != 'm' {
-			// 	v.debug(string(next))
-			// }
 			switch next {
 			case 'A': // Cursor Up
 				seq := parseSemicolonNumSeq(parameterCode, 1)
@@ -143,13 +137,13 @@ func (v *VTerm) handleCSISequence() {
 					v.setCursorPos(0, 0)
 					v.RedrawWindow()
 				case 3: // clear entire screen and delete all lines saved in scrollback buffer
+					v.scrollback = [][]render.Char{}
 					for i := range v.screen {
 						for j := range v.screen[i] {
 							v.screen[i][j].Rune = ' '
 						}
 					}
 					v.setCursorPos(0, 0)
-					// v.scrollback = [][]Char{}
 					v.RedrawWindow()
 				}
 			case 'K': // Erase in Line
@@ -185,23 +179,8 @@ func (v *VTerm) handleCSISequence() {
 				seq := parseSemicolonNumSeq(parameterCode, 1)
 				v.scrollDown(seq[0])
 			case 'L': // Insert Lines
-				/*
-					 -->
-					9	8
-					10
-					11
-					12	11
-					13	12
-					14	13
-					15	14
-					16	15
-				*/
 				seq := parseSemicolonNumSeq(parameterCode, 1)
 				v.setCursorX(0)
-
-				// if v.Cursor.Y < v.scrollingRegion.top || v.Cursor.Y > v.scrollingRegion.bottom {
-				// 	return
-				// }
 
 				n := seq[0]
 				newLines := make([][]render.Char, n)
@@ -214,12 +193,6 @@ func (v *VTerm) handleCSISequence() {
 					v.screen[v.Cursor.Y:v.scrollingRegion.bottom-n+1]...),
 					v.screen[v.scrollingRegion.bottom+1:]...)
 
-				// for x := range v.screen[0] {
-				// 	v.screen[0][x].Rune = 0
-				// }
-
-				// v.shiftCursorY(1)
-				// v.setCursorY(2)
 				v.RedrawWindow()
 			case 'm': // Select Graphic Rendition
 				v.handleSDR(parameterCode)

@@ -25,7 +25,6 @@ func drawSelectionBorder(r Rect) {
 	// draw lines
 	if leftBorder {
 		for i := 0; i <= r.h; i++ {
-			// stdscr.MoveAddChar(r.y+i, r.x-1, gc.ACS_VLINE)
 			ch := render.PositionedChar{
 				Rune: '│',
 				Cursor: render.Cursor{
@@ -40,7 +39,6 @@ func drawSelectionBorder(r Rect) {
 	}
 	if rightBorder {
 		for i := 0; i <= r.h; i++ {
-			// stdscr.MoveAddChar(r.y+i, r.x+r.w, gc.ACS_VLINE)
 			ch := render.PositionedChar{
 				Rune: '│',
 				Cursor: render.Cursor{
@@ -55,7 +53,6 @@ func drawSelectionBorder(r Rect) {
 	}
 	if topBorder {
 		for i := 0; i <= r.w; i++ {
-			// stdscr.MoveAddChar(r.y-1, r.x+i, gc.ACS_HLINE)
 			ch := render.PositionedChar{
 				Rune: '─',
 				Cursor: render.Cursor{
@@ -70,7 +67,6 @@ func drawSelectionBorder(r Rect) {
 	}
 	if bottomBorder {
 		for i := 0; i <= r.w; i++ {
-			// stdscr.MoveAddChar(r.y+r.h, r.x+i, gc.ACS_HLINE)
 			ch := render.PositionedChar{
 				Rune: '─',
 				Cursor: render.Cursor{
@@ -86,7 +82,6 @@ func drawSelectionBorder(r Rect) {
 
 	// draw corners
 	if topBorder && leftBorder {
-		// stdscr.MoveAddChar(r.y-1, r.x-1, gc.ACS_ULCORNER)
 		ch := render.PositionedChar{
 			Rune: '┌',
 			Cursor: render.Cursor{
@@ -99,7 +94,6 @@ func drawSelectionBorder(r Rect) {
 		renderer.HandleCh(ch)
 	}
 	if topBorder && rightBorder {
-		// stdscr.MoveAddChar(r.y-1, r.x+r.w, gc.ACS_URCORNER)
 		ch := render.PositionedChar{
 			Rune: '┐',
 			Cursor: render.Cursor{
@@ -112,7 +106,6 @@ func drawSelectionBorder(r Rect) {
 		renderer.HandleCh(ch)
 	}
 	if bottomBorder && leftBorder {
-		// stdscr.MoveAddChar(r.y+r.h, r.x-1, gc.ACS_LLCORNER)
 		ch := render.PositionedChar{
 			Rune: '└',
 			Cursor: render.Cursor{
@@ -125,7 +118,6 @@ func drawSelectionBorder(r Rect) {
 		renderer.HandleCh(ch)
 	}
 	if bottomBorder && rightBorder {
-		// stdscr.MoveAddChar(r.y+r.h, r.y+r.w, gc.ACS_LRCORNER)
 		ch := render.PositionedChar{
 			Rune: '┘',
 			Cursor: render.Cursor{
@@ -137,9 +129,6 @@ func drawSelectionBorder(r Rect) {
 
 		renderer.HandleCh(ch)
 	}
-
-	// stdscr.Refresh()
-	// renderer.Refresh()
 }
 
 // getTermSize returns the wusth

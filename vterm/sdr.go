@@ -44,7 +44,6 @@ func (v *VTerm) handleSDR(parameterCode string) {
 		v.Cursor.Style.Underline = false
 	case 25: // blink off
 	case 27: // inverse off; see case 7
-		// TODO
 	case 28:
 		v.Cursor.Style.Conceal = false
 	case 29:
@@ -78,42 +77,43 @@ func (v *VTerm) handleSDR(parameterCode string) {
 	case 49: // default background color
 		v.Cursor.Style.Bg.ColorMode = render.ColorNone
 	default:
+		var colorMode render.ColorMode
+		var code int32
+		var bg bool
+
 		if c >= 30 && c <= 37 {
+			bg = false
+			code = int32(c - 30)
 			if len(seq) > 1 && seq[1] == 1 {
-				v.Cursor.Style.Fg = render.Color{
-					ColorMode: render.ColorBit3Bright,
-					Code:      int32(c - 30),
-				}
+				colorMode = render.ColorBit3Bright
 			} else {
-				v.Cursor.Style.Fg = render.Color{
-					ColorMode: render.ColorBit3Normal,
-					Code:      int32(c - 30),
-				}
+				colorMode = render.ColorBit3Normal
 			}
 		} else if c >= 40 && c <= 47 {
+			bg = true
+			code = int32(c - 40)
 			if len(seq) > 1 && seq[1] == 1 {
-				v.Cursor.Style.Bg = render.Color{
-					ColorMode: render.ColorBit3Bright,
-					Code:      int32(c - 40),
-				}
+				colorMode = render.ColorBit3Bright
 			} else {
-				v.Cursor.Style.Bg = render.Color{
-					ColorMode: render.ColorBit3Normal,
-					Code:      int32(c - 40),
-				}
+				colorMode = render.ColorBit3Normal
 			}
 		} else if c >= 90 && c <= 97 {
-			v.Cursor.Style.Fg = render.Color{
-				ColorMode: render.ColorBit3Bright,
-				Code:      int32(c - 90),
-			}
+			bg = false
+			code = int32(c - 90)
+			colorMode = render.ColorBit3Bright
 		} else if c >= 100 && c <= 107 {
-			v.Cursor.Style.Bg = render.Color{
-				ColorMode: render.ColorBit3Bright,
-				Code:      int32(c - 100),
-			}
+			bg = true
+			code = int32(c - 100)
+			colorMode = render.ColorBit3Bright
 		} else {
 			// v.debug("SGR Code: " + string(parameterCode))
+		}
+
+		color := render.Color{ColorMode: colorMode, Code: code}
+		if bg {
+			v.Cursor.Style.Bg = color
+		} else {
+			v.Cursor.Style.Fg = color
 		}
 	}
 }

@@ -39,15 +39,7 @@ func (s *Split) serialize() string {
 func (s *Split) setRenderRect(x, y, w, h int) {
 	s.renderRect = Rect{x, y, w, h}
 
-	// // clear the relevant area of the screen
-	// for j := 0; j < h; j++ {
-	// 	for i := 0; i < w; i++ {
-	// 		globalCharAggregate <- vterm.Char{
-	// 			Rune:   '~',
-	// 			Cursor: cursor.Cursor{X: x + i, Y: y + j},
-	// 		}
-	// 	}
-	// }
+	// NOTE: should we clear the screen?
 
 	s.refreshRenderRect()
 }
@@ -113,21 +105,17 @@ func (s *Split) redrawLines() {
 
 		if s.verticallyStacked {
 			for i := 0; i < w; i++ {
-				ch := render.PositionedChar{
+				renderer.HandleCh(render.PositionedChar{
 					Rune:   '─',
 					Cursor: render.Cursor{X: x + i, Y: y + pos},
-				}
-
-				renderer.HandleCh(ch)
+				})
 			}
 		} else {
 			for j := 0; j < h; j++ {
-				ch := render.PositionedChar{
+				renderer.HandleCh(render.PositionedChar{
 					Rune:   '│',
 					Cursor: render.Cursor{X: x + pos, Y: y + j},
-				}
-
-				renderer.HandleCh(ch)
+				})
 			}
 		}
 	}

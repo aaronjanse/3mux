@@ -3,7 +3,6 @@ package vterm
 import (
 	"log"
 	"sync/atomic"
-	"time"
 	"unicode"
 	"unicode/utf8"
 )
@@ -31,30 +30,20 @@ func (v *VTerm) pullByteNoErr() rune {
 // ProcessStream processes and transforms a process' stdout, turning it into a stream of Char's to be sent to the rendering scheduler
 // This includes translating ANSI Cursor coordinates and maintaining a scrolling buffer
 func (v *VTerm) ProcessStream() {
-	// f, err := os.OpenFile("vterm-logs.txt", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
-	// if err != nil {
-	// 	log.Fatalf("error opening file: %v", err)
-	// }
-	// defer f.Close()
-
-	// log.SetOutput(f)
-
 	for {
 		next, ok := v.pullByte()
 		if !ok {
 			return
 		}
 
-		if next == '@' {
-			nowTime := time.Now().UnixNano()
-			log.Printf("%v ms - time to stream finish\n", (nowTime-v.startTime)/1000000)
-			v.RedrawWindow()
-			// time.Sleep(time.Second)
-			// v.shutdown <- true
-			// return
-		}
-
-		// <-time.NewTimer(time.Second / 32).C
+		// if next == '@' {
+		// 	nowTime := time.Now().UnixNano()
+		// 	log.Printf("%v ms - time to stream finish\n", (nowTime-v.startTime)/1000000)
+		// 	v.RedrawWindow()
+		// 	// time.Sleep(time.Second)
+		// 	// v.shutdown <- true
+		// 	// return
+		// }
 
 		if next > 127 {
 			value := []byte{byte(next)}

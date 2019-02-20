@@ -282,10 +282,10 @@ func moveSelection(d Direction) {
 	}
 
 	// deselect the old Term
-	nowTerm := getSelection().getContainer().(*Pane)
-	nowTerm.selected = true
-	nowTerm.softRefresh()
-	nowTerm.vterm.RefreshCursor()
+	newTerm := getSelection().getContainer().(*Pane)
+	newTerm.selected = true
+	newTerm.softRefresh()
+	newTerm.vterm.RefreshCursor()
 }
 
 func newWindow() {
