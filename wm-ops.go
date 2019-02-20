@@ -318,7 +318,7 @@ func newWindow() {
 	parent.refreshRenderRect()
 }
 
-func resizeWindow(d Direction) {
+func resizeWindow(d Direction, diff float32) {
 	parent, _ := getSelection().getParent()
 
 	const shift = 0.1

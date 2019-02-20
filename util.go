@@ -24,7 +24,7 @@ func drawSelectionBorder(r Rect) {
 
 	// draw lines
 	if leftBorder {
-		for i := 0; i <= r.h; i++ {
+		for i := 0; i < r.h; i++ {
 			ch := render.PositionedChar{
 				Rune: '│',
 				Cursor: render.Cursor{
@@ -38,7 +38,7 @@ func drawSelectionBorder(r Rect) {
 		}
 	}
 	if rightBorder {
-		for i := 0; i <= r.h; i++ {
+		for i := 0; i < r.h; i++ {
 			ch := render.PositionedChar{
 				Rune: '│',
 				Cursor: render.Cursor{

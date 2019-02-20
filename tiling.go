@@ -9,6 +9,7 @@ type Node struct {
 // A Container is a renderable, debuggable, and killable unit of the window tree
 type Container interface {
 	setRenderRect(x, y, w, h int)
+	getRenderRect() Rect
 	serialize() string
 	kill()
 }

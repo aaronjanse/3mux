@@ -67,6 +67,10 @@ func (t *Pane) setRenderRect(x, y, w, h int) {
 	t.softRefresh()
 }
 
+func (t *Pane) getRenderRect() Rect {
+	return t.renderRect
+}
+
 func (t *Pane) softRefresh() {
 	// only selected Panes get the special highlight color
 	if t.selected {

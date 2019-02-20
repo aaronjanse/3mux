@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"runtime/pprof"
+	"strconv"
 	"strings"
 	"time"
 
@@ -57,12 +58,16 @@ func main() {
 	startTime = time.Now().UnixNano()
 
 	root = Split{
-		verticallyStacked: false,
+		verticallyStacked: true,
 		selectionIdx:      0,
 		elements: []Node{
 			Node{
-				size:     1,
+				size:     0.5,
 				contents: newTerm(true),
+			},
+			Node{
+				size:     0.5,
+				contents: newTerm(false),
 			},
 		}}
 
@@ -91,20 +96,56 @@ func main() {
 		// fmt.Println(name, raw)
 		if resizeMode {
 			switch name {
-			case "Up":
-				fallthrough
-			case "Down":
-				fallthrough
-			case "Right":
-				fallthrough
-			case "Left":
+			case "Up", "Down", "Right", "Left":
 				d := getDirectionFromString(name)
-				resizeWindow(d)
+				resizeWindow(d, 0.1)
 			case "Enter":
 				resizeMode = false
 			}
 		} else {
 			switch name {
+			case "Mouse Down":
+				path := handleMouseDown(raw)
+				if path != nil {
+					mouseDownPath = path
+				}
+			case "Mouse Up":
+				if mouseDownPath != nil {
+					code := string(raw[5:])
+					parts := strings.Split(code, ";")
+					x, _ := strconv.Atoi(parts[0])
+					y, _ := strconv.Atoi(strings.TrimSuffix(parts[1], "M"))
+
+					parent, _ := mouseDownPath.getParent()
+					pane := mouseDownPath.getContainer()
+					pr := pane.getRenderRect()
+					sr := parent.getRenderRect()
+
+					var desiredArea int
+					var proportionOfParent float32
+					if parent.verticallyStacked {
+						desiredArea = y - pr.y - 1
+						proportionOfParent = float32(desiredArea) / float32(sr.h)
+					} else {
+						desiredArea = x - pr.x - 1
+						proportionOfParent = float32(desiredArea) / float32(sr.w)
+					}
+
+					focusIdx := mouseDownPath[len(mouseDownPath)-1]
+					currentProportion := parent.elements[focusIdx].size
+					numElementsFollowing := len(parent.elements) - (focusIdx + 1)
+					avgShift := (proportionOfParent - currentProportion) / float32(numElementsFollowing)
+					// log.Println(desiredArea, sr.h, proportionOfParent)
+					for i := focusIdx + 1; i < len(parent.elements); i++ {
+						parent.elements[i].size += avgShift
+					}
+
+					parent.elements[focusIdx].size = proportionOfParent
+
+					parent.refreshRenderRect()
+
+					mouseDownPath = nil
+				}
 			case "Scroll Up":
 				t := getSelection().getContainer().(*Pane)
 				t.vterm.ScrollbackDown()
@@ -117,6 +158,10 @@ func main() {
 					root.simplify()
 
 					root.refreshRenderRect()
+
+					if config.statusBar {
+						debug(root.serialize())
+					}
 				} else {
 					t := getSelection().getContainer().(*Pane)
 
@@ -133,6 +178,7 @@ func main() {
 var shutdown chan bool
 
 var resizeMode bool
+var mouseDownPath Path
 
 func executeOperationCode(s string) {
 	sections := strings.Split(s, "(")
@@ -183,27 +229,30 @@ func getDirectionFromString(s string) Direction {
 	}
 }
 
-// func debug(s string) {
-// 	for i := 0; i < termW; i++ {
-// 		r := ' '
-// 		if i < len(s) {
-// 			r = rune(s[i])
-// 		}
+func debug(s string) {
+	for i := 0; i < termW; i++ {
+		r := ' '
+		if i < len(s) {
+			r = rune(s[i])
+		}
 
-// 		globalCharAggregate <- vterm.Char{
-// 			Rune: r,
-// 			Cursor: cursor.Cursor{
-// 				X: i,
-// 				Y: termH - 1,
-// 				Bg: cursor.Color{
-// 					ColorMode: cursor.ColorBit3Bright,
-// 					Code:      2,
-// 				},
-// 				Fg: cursor.Color{
-// 					ColorMode: cursor.ColorBit3Normal,
-// 					Code:      0,
-// 				},
-// 			},
-// 		}
-// 	}
-// }
+		ch := render.PositionedChar{
+			Rune: r,
+			Cursor: render.Cursor{
+				X: i,
+				Y: termH - 1,
+				Style: render.Style{
+					Bg: render.Color{
+						ColorMode: render.ColorBit3Bright,
+						Code:      2,
+					},
+					Fg: render.Color{
+						ColorMode: render.ColorBit3Normal,
+						Code:      0,
+					},
+				},
+			},
+		}
+		renderer.HandleCh(ch)
+	}
+}
