@@ -11,9 +11,13 @@ import (
 	term "github.com/nsf/termbox-go"
 )
 
+var callback func(name string, raw []byte)
+
 // Listen is a blocking function that indefinitely listens for keypresses.
 // When it detects a keypress, it passes on to the callback a human-readable interpretation of the event (e.g. Alt+Shift+Up) along with the raw string of text received by the terminal.
-func Listen(callback func(name string, raw []byte)) {
+func Listen(c func(name string, raw []byte)) {
+	callback = c
+
 	err := term.Init()
 	if err != nil {
 		log.Fatal(err)
@@ -40,7 +44,7 @@ func Listen(callback func(name string, raw []byte)) {
 			} else {
 				handle("Alt+" + string(unicode.ToUpper(letter)))
 			}
-		case 27:
+		case 27: // Escape code
 			if ev.N == 1 { // Lone Esc Key
 				handle("Esc")
 			}
@@ -52,43 +56,37 @@ func Listen(callback func(name string, raw []byte)) {
 				68: "Left",
 			}
 
-			if data[1] == 79 { // Alone
+			switch data[1] {
+			case 79:
+
 				if ev.N == 15 {
 					handle("Scroll " + arrowNames[data[2]])
 				} else {
 					handle(arrowNames[data[2]])
 				}
-			} else if data[1] == 91 { // Combo
-
-				if data[2] == 51 { // mouse
-					// for _, b := range data[3:] {
-					// 	fmt.Print(string(b))
-					// }
+			case 91:
+				switch data[2] {
+				case 51:
 					switch string(data[3]) {
 					case "2":
 						handle("Mouse Down")
 					case "5":
 						handle("Mouse Up")
 					}
-					continue
+				default:
+					arrow := arrowNames[data[5]]
+					switch data[4] {
+					case 50:
+						handle("Shift+" + arrow)
+					case 51:
+						handle("Alt+" + arrow)
+					case 52:
+						handle("Alt+Shift+" + arrow)
+					case 53:
+						handle("Ctrl+" + arrow)
+					}
 				}
-
-				if data[2] == 54 && data[3] == 126 { // PageDown Key
-					return
-				}
-
-				arrow := arrowNames[data[5]]
-				switch data[4] {
-				case 50:
-					handle("Shift+" + arrow)
-				case 51:
-					handle("Alt+" + arrow)
-				case 52:
-					handle("Alt+Shift+" + arrow)
-				case 53:
-					handle("Ctrl+" + arrow)
-				}
-			} else {
+			default:
 				letter := rune(data[1])
 				if unicode.IsUpper(letter) {
 					handle("Alt+Shift+" + string(letter))
@@ -111,9 +109,9 @@ func Listen(callback func(name string, raw []byte)) {
 			}
 		}
 
-		// debugging code
-		fmt.Println(ev)
-		fmt.Println(data)
-		fmt.Println()
+		// // debugging code
+		// fmt.Println(ev)
+		// fmt.Println(data)
+		// fmt.Println()
 	}
 }
