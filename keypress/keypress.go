@@ -58,11 +58,11 @@ func Listen(c func(name string, raw []byte)) {
 
 			switch data[1] {
 			case 79:
-
+				direction := arrowNames[data[2]]
 				if ev.N == 15 {
-					handle("Scroll " + arrowNames[data[2]])
+					handle("Scroll " + direction)
 				} else {
-					handle(arrowNames[data[2]])
+					handle(direction)
 				}
 			case 91:
 				switch data[2] {
@@ -72,6 +72,13 @@ func Listen(c func(name string, raw []byte)) {
 						handle("Mouse Down")
 					case "5":
 						handle("Mouse Up")
+					}
+				case 57: // Scrolling
+					switch data[3] {
+					case 54:
+						handle("Scroll Up")
+					case 55:
+						handle("Scroll Down")
 					}
 				default:
 					arrow := arrowNames[data[5]]
@@ -110,8 +117,8 @@ func Listen(c func(name string, raw []byte)) {
 		}
 
 		// // debugging code
-		// fmt.Println(ev)
-		// fmt.Println(data)
-		// fmt.Println()
+		// log.Println(ev)
+		// log.Println(data)
+		// log.Println()
 	}
 }

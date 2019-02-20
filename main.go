@@ -58,16 +58,12 @@ func main() {
 	startTime = time.Now().UnixNano()
 
 	root = Split{
-		verticallyStacked: true,
+		verticallyStacked: false,
 		selectionIdx:      0,
 		elements: []Node{
 			Node{
-				size:     0.5,
+				size:     1,
 				contents: newTerm(true),
-			},
-			Node{
-				size:     0.5,
-				contents: newTerm(false),
 			},
 		}}
 
