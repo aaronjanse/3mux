@@ -164,14 +164,25 @@ func main() {
 						endY = r.y + r.h
 					}
 
-					// TODO: support "backwards" selections
-
 					if startSelectionY == endY {
+						if startSelectionX > endX {
+							tmp := startSelectionX
+							startSelectionX = endX
+							endX = tmp
+						}
 						for i := startSelectionX; i <= endX; i++ {
 							log.Println(i, startSelectionY)
 							renderer.Highlight(i, startSelectionY)
 						}
 					} else {
+						if startSelectionY > endY {
+							tmpX := startSelectionX
+							tmpY := startSelectionY
+							startSelectionX = endX
+							startSelectionY = endY
+							endX = tmpX
+							endY = tmpY
+						}
 						// highlight the first line
 						for i := startSelectionX; i < r.x+r.w; i++ {
 							renderer.Highlight(i, startSelectionY)
