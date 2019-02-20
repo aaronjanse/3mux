@@ -88,8 +88,8 @@ func main() {
 
 	/* listen for keypresses */
 
-	keypress.Listen(func(name string, raw []byte) {
-		// fmt.Println(name, raw)
+	keypress.Listen(func(name string, data []byte) {
+		// fmt.Println(name, data)
 		if resizeMode {
 			switch name {
 			case "Up", "Down", "Right", "Left":
@@ -101,13 +101,13 @@ func main() {
 		} else {
 			switch name {
 			case "Mouse Down":
-				path := handleMouseDown(raw)
+				path := handleMouseDown(data)
 				if path != nil {
 					mouseDownPath = path
 				}
 			case "Mouse Up":
 				if mouseDownPath != nil {
-					code := string(raw[5:])
+					code := string(data[5:])
 					parts := strings.Split(code, ";")
 					x, _ := strconv.Atoi(parts[0])
 					y, _ := strconv.Atoi(strings.TrimSuffix(parts[1], "M"))
@@ -148,7 +148,7 @@ func main() {
 				t := getSelection().getContainer().(*Pane)
 				t.vterm.ScrollbackUp()
 			case "Start Selection":
-				code := string(raw[3:])
+				code := string(data[3:])
 				code = strings.TrimSuffix(code, "M") // NOTE: are there other codes we are forgetting about?
 				pieces := strings.Split(code, ";")
 
@@ -157,7 +157,7 @@ func main() {
 				startSelectionX--
 				startSelectionY--
 			case "End Selection":
-				code := string(raw[3:])
+				code := string(data[3:])
 				code = strings.TrimSuffix(code, "M") // NOTE: are there other codes we are forgetting about?
 				pieces := strings.Split(code, ";")
 
@@ -214,7 +214,7 @@ func main() {
 				} else {
 					t := getSelection().getContainer().(*Pane)
 
-					t.shell.handleStdin(string(raw))
+					t.shell.handleStdin(string(data))
 					t.vterm.RefreshCursor()
 				}
 			}

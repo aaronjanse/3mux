@@ -1,10 +1,12 @@
 package vterm
 
 import (
+	"log"
+
 	"github.com/aaronduino/i3-tmux/render"
 )
 
-func (v *VTerm) handleSDR(parameterCode string) {
+func (v *VTerm) handleSGR(parameterCode string) {
 	seq := parseSemicolonNumSeq(parameterCode, 0)
 
 	if parameterCode == "39;49" {
@@ -106,7 +108,7 @@ func (v *VTerm) handleSDR(parameterCode string) {
 			code = int32(c - 100)
 			colorMode = render.ColorBit3Bright
 		} else {
-			// v.debug("SGR Code: " + string(parameterCode))
+			log.Printf("Unrecognized SGR code: %v", parameterCode)
 		}
 
 		color := render.Color{ColorMode: colorMode, Code: code}

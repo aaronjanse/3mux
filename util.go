@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"os"
 	"os/exec"
 	"strconv"
@@ -156,19 +155,4 @@ func getTermSize() (int, int, error) {
 	wInt := int(int64(w))
 	hInt := int(int64(h))
 	return wInt, hInt, nil
-}
-
-func getDirectionFromString(s string) Direction {
-	switch s {
-	case "Up":
-		return Up
-	case "Down":
-		return Down
-	case "Left":
-		return Left
-	case "Right":
-		return Right
-	default:
-		panic(fmt.Errorf("invalid direction: %v", s))
-	}
 }

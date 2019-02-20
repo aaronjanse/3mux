@@ -7,8 +7,8 @@ import (
 	"unicode/utf8"
 )
 
-// pullByte returns the next byte in the input stream
-func (v *VTerm) pullByte() (rune, bool) {
+// pullRune returns the next byte in the input stream
+func (v *VTerm) pullRune() (rune, bool) {
 	v.internalByteCounter++
 
 	lag := atomic.LoadUint64(v.shellByteCounter) - v.internalByteCounter
@@ -22,8 +22,8 @@ func (v *VTerm) pullByte() (rune, bool) {
 	return r, ok
 }
 
-func (v *VTerm) pullByteNoErr() rune {
-	r, _ := v.pullByte()
+func (v *VTerm) pullRuneNoErr() rune {
+	r, _ := v.pullRune()
 	return r
 }
 
@@ -31,19 +31,10 @@ func (v *VTerm) pullByteNoErr() rune {
 // This includes translating ANSI Cursor coordinates and maintaining a scrolling buffer
 func (v *VTerm) ProcessStream() {
 	for {
-		next, ok := v.pullByte()
+		next, ok := v.pullRune()
 		if !ok {
 			return
 		}
-
-		// if next == '@' {
-		// 	nowTime := time.Now().UnixNano()
-		// 	log.Printf("%v ms - time to stream finish\n", (nowTime-v.startTime)/1000000)
-		// 	v.RedrawWindow()
-		// 	// time.Sleep(time.Second)
-		// 	// v.shutdown <- true
-		// 	// return
-		// }
 
 		if next > 127 {
 			value := []byte{byte(next)}
@@ -51,14 +42,14 @@ func (v *VTerm) ProcessStream() {
 			leadingHex := next >> 4
 			switch leadingHex {
 			case 12: // 1100
-				value = append(value, byte(v.pullByteNoErr()))
+				value = append(value, byte(v.pullRuneNoErr()))
 			case 14: // 1110
-				value = append(value, byte(v.pullByteNoErr()))
-				value = append(value, byte(v.pullByteNoErr()))
+				value = append(value, byte(v.pullRuneNoErr()))
+				value = append(value, byte(v.pullRuneNoErr()))
 			case 15: // 1111
-				value = append(value, byte(v.pullByteNoErr()))
-				value = append(value, byte(v.pullByteNoErr()))
-				value = append(value, byte(v.pullByteNoErr()))
+				value = append(value, byte(v.pullRuneNoErr()))
+				value = append(value, byte(v.pullRuneNoErr()))
+				value = append(value, byte(v.pullRuneNoErr()))
 			}
 
 			next, _ = utf8.DecodeRune(value)
@@ -93,16 +84,15 @@ func (v *VTerm) ProcessStream() {
 
 				v.putChar(next)
 			} else {
-				// v.debug(fmt.Sprintf("%x    ", next))
+				log.Printf("Unrecognized unprintable rune: %x", next)
 			}
 		}
 	}
 }
 
 func (v *VTerm) handleEscapeCode() {
-	next, ok := v.pullByte()
+	next, ok := v.pullRune()
 	if !ok {
-		log.Fatal("not ok")
 		return
 	}
 
@@ -110,9 +100,9 @@ func (v *VTerm) handleEscapeCode() {
 	case '[':
 		v.handleCSISequence()
 	case '(': // Character set
-		v.pullByte()
-		// TODO
+		v.pullRune()
+		// TODO: implement character sets
 	default:
-		// v.debug("ESC Code: " + string(next))
+		log.Printf("Unrecognized escape code: %v", string(next))
 	}
 }

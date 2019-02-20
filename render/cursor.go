@@ -12,10 +12,8 @@ type Cursor struct {
 type Style struct {
 	Bold, Faint, Italic, Underline, Conceal, CrossedOut bool
 
-	// Fg is the foreground color
-	Fg Color
-	// Bg is the background color
-	Bg Color
+	Fg Color // foreground color
+	Bg Color // background color
 }
 
 // Reset sets all rendering attributes of a cursor to their default values
@@ -35,6 +33,8 @@ func (s *Style) Reset() {
 func deltaMarkup(fromCur, toCur Cursor) string {
 	out := ""
 
+	/* update position */
+
 	xDiff := toCur.X - fromCur.X
 	yDiff := toCur.Y - fromCur.Y
 
@@ -43,6 +43,8 @@ func deltaMarkup(fromCur, toCur Cursor) string {
 	} else if xDiff != 0 || yDiff != 0 {
 		out += fmt.Sprintf("\033[%d;%dH", toCur.Y+1, toCur.X+1)
 	}
+
+	/* update colors */
 
 	to := toCur.Style
 	from := fromCur.Style
@@ -55,7 +57,7 @@ func deltaMarkup(fromCur, toCur Cursor) string {
 		out += to.Fg.ToANSI(false)
 	}
 
-	// FIXME: why do I need this?
+	// Without this, text randomly gets randomly underlined for some reason.
 	if !to.Underline && !from.Underline {
 		out += "\033[24m"
 	}

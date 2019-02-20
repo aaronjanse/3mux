@@ -11,21 +11,17 @@ import (
 type Renderer struct {
 	w, h int
 
-	currentScreen [][]Char
+	writingMutex  *sync.Mutex
 	pendingScreen [][]Char
+	currentScreen [][]Char
 
 	highlights [][]bool
 
 	drawingCursor Cursor
-	writingMutex  *sync.Mutex
-
 	restingCursor Cursor
-
-	// RenderQueue is how requests to change the framebuffer are made
-	RenderQueue chan PositionedChar
 }
 
-// A PositionedChar is a char with a specific location on the screen
+// A PositionedChar is a Char with a specific location on the screen
 type PositionedChar struct {
 	Rune rune
 	Cursor
@@ -40,15 +36,20 @@ type Char struct {
 // NewRenderer returns an initialized Renderer
 func NewRenderer() *Renderer {
 	return &Renderer{
+		writingMutex:  &sync.Mutex{},
 		currentScreen: [][]Char{},
 		pendingScreen: [][]Char{},
-		writingMutex:  &sync.Mutex{},
-		RenderQueue:   make(chan PositionedChar, 100000),
 	}
 }
 
-// Resize changes the size of the framebuffer to match the host terminal size
+// Resize changes the size of the framebuffers to match the host terminal size
 func (r *Renderer) Resize(w, h int) {
+	r.w = w
+	r.h = h
+
+	// NOTE: is there a better way to do this?
+
+	// resize pendingScreen
 	for y := 0; y <= h; y++ {
 		if y >= len(r.pendingScreen) {
 			r.pendingScreen = append(r.pendingScreen, []Char{})
@@ -61,6 +62,7 @@ func (r *Renderer) Resize(w, h int) {
 		}
 	}
 
+	// resize currentScreen
 	for y := 0; y <= h; y++ {
 		if y >= len(r.currentScreen) {
 			r.currentScreen = append(r.currentScreen, []Char{})
@@ -73,6 +75,7 @@ func (r *Renderer) Resize(w, h int) {
 		}
 	}
 
+	// resize highlights
 	for y := 0; y <= h; y++ {
 		if y >= len(r.highlights) {
 			r.highlights = append(r.highlights, []bool{})
@@ -84,9 +87,6 @@ func (r *Renderer) Resize(w, h int) {
 			}
 		}
 	}
-
-	r.w = w
-	r.h = h
 }
 
 // HandleCh places a PositionedChar in the pending screen buffer
@@ -143,12 +143,14 @@ func (r *Renderer) ListenToQueue() {
 
 		fmt.Print(diff.String())
 
+		// put the cursor back in its resting position
 		delta := deltaMarkup(r.drawingCursor, r.restingCursor)
 		fmt.Print(delta)
 		r.drawingCursor = r.restingCursor
 
 		fmt.Print("\033[?25h") // show cursor
 
+		// free up the CPU for an arbitrary amount of time
 		time.Sleep(time.Millisecond * 25)
 	}
 }

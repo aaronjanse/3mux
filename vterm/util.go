@@ -31,15 +31,3 @@ func parseSemicolonNumSeq(s string, d int) []int {
 	}
 	return out
 }
-
-// func (v *VTerm) debug(s string) {
-// 	for i, r := range []rune(s) {
-// 		v.out <- Char{
-// 			Rune: r,
-// 			Cursor: cursor.Cursor{
-// 				X: i + 20,
-// 				Y: 10,
-// 			},
-// 		}
-// 	}
-// }
