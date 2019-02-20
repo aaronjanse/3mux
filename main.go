@@ -97,11 +97,20 @@ func main() {
 			switch name {
 			case "Mouse Down":
 				path := handleMouseDown(data)
-				if path != nil {
+				if path != nil { // start resize
 					mouseDownPath = path
+				} else { // start selection
+					code := string(data[3:])
+					code = strings.TrimSuffix(code, "M") // NOTE: are there other codes we are forgetting about?
+					pieces := strings.Split(code, ";")
+
+					startSelectionX, _ = strconv.Atoi(pieces[1])
+					startSelectionY, _ = strconv.Atoi(pieces[2])
+					startSelectionX--
+					startSelectionY--
 				}
 			case "Mouse Up":
-				if mouseDownPath != nil {
+				if mouseDownPath != nil { // end resize
 					code := string(data[5:])
 					parts := strings.Split(code, ";")
 					x, _ := strconv.Atoi(parts[0])
@@ -135,6 +144,51 @@ func main() {
 					parent.refreshRenderRect()
 
 					mouseDownPath = nil
+				} else { // end selection
+					code := string(data[3:])
+					code = strings.TrimSuffix(code, "M") // NOTE: are there other codes we are forgetting about?
+					pieces := strings.Split(code, ";")
+
+					endX, _ := strconv.Atoi(pieces[1])
+					endY, _ := strconv.Atoi(pieces[2])
+					endX--
+					endY--
+
+					path := findClosestBorderForCoord([]int{}, startSelectionX, startSelectionY)
+					r := path.getContainer().getRenderRect()
+
+					if endX > r.x+r.w {
+						endX = r.x + r.w
+					}
+					if endY > r.y+r.h {
+						endY = r.y + r.h
+					}
+
+					// TODO: support "backwards" selections
+
+					if startSelectionY == endY {
+						for i := startSelectionX; i <= endX; i++ {
+							log.Println(i, startSelectionY)
+							renderer.Highlight(i, startSelectionY)
+						}
+					} else {
+						// highlight the first line
+						for i := startSelectionX; i < r.x+r.w; i++ {
+							renderer.Highlight(i, startSelectionY)
+						}
+
+						// highlight the last line
+						for i := r.x; i < endX; i++ {
+							renderer.Highlight(i, endY)
+						}
+
+						// highlight the lines in between
+						for y := startSelectionY + 1; y < endY; y++ {
+							for x := r.x; x < r.x+r.w; x++ {
+								renderer.Highlight(x, y)
+							}
+						}
+					}
 				}
 			case "Scroll Up":
 				t := getSelection().getContainer().(*Pane)
@@ -142,60 +196,6 @@ func main() {
 			case "Scroll Down":
 				t := getSelection().getContainer().(*Pane)
 				t.vterm.ScrollbackUp()
-			case "Start Selection":
-				code := string(data[3:])
-				code = strings.TrimSuffix(code, "M") // NOTE: are there other codes we are forgetting about?
-				pieces := strings.Split(code, ";")
-
-				startSelectionX, _ = strconv.Atoi(pieces[1])
-				startSelectionY, _ = strconv.Atoi(pieces[2])
-				startSelectionX--
-				startSelectionY--
-			case "End Selection":
-				code := string(data[3:])
-				code = strings.TrimSuffix(code, "M") // NOTE: are there other codes we are forgetting about?
-				pieces := strings.Split(code, ";")
-
-				endX, _ := strconv.Atoi(pieces[1])
-				endY, _ := strconv.Atoi(pieces[2])
-				endX--
-				endY--
-
-				path := findClosestBorderForCoord([]int{}, startSelectionX, startSelectionY)
-				r := path.getContainer().getRenderRect()
-
-				if endX > r.x+r.w {
-					endX = r.x + r.w
-				}
-				if endY > r.y+r.h {
-					endY = r.y + r.h
-				}
-
-				// TODO: support "backwards" selections
-
-				if startSelectionY == endY {
-					for i := startSelectionX; i <= endX; i++ {
-						log.Println(i, startSelectionY)
-						renderer.Highlight(i, startSelectionY)
-					}
-				} else {
-					// highlight the first line
-					for i := startSelectionX; i < r.x+r.w; i++ {
-						renderer.Highlight(i, startSelectionY)
-					}
-
-					// highlight the last line
-					for i := r.x; i < endX; i++ {
-						renderer.Highlight(i, endY)
-					}
-
-					// highlight the lines in between
-					for y := startSelectionY + 1; y < endY; y++ {
-						for x := r.x; x < r.x+r.w; x++ {
-							renderer.Highlight(x, y)
-						}
-					}
-				}
 			default:
 				if operationCode, ok := config.bindings[name]; ok {
 					executeOperationCode(operationCode)

@@ -56,6 +56,7 @@ func (v *VTerm) ProcessStream() {
 		}
 
 		switch next {
+		case 0:
 		case '\x1b':
 			v.handleEscapeCode()
 		case 8:

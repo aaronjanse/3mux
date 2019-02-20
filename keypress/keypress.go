@@ -7,9 +7,6 @@ The following are supported human-readable names:
 	Enter
 	Esc
 
-	Start Selection
-	End Selection
-
 	Mouse Down
 	Mouse Up
 
@@ -42,7 +39,7 @@ import (
 	term "github.com/nsf/termbox-go"
 )
 
-const debugKeycodes = false
+const debugKeycodes = true
 
 var directionNames = map[byte]string{
 	65: "Up",
@@ -129,14 +126,10 @@ func handleEscapeCode(data []byte, handle func(name string)) {
 			code = strings.TrimSuffix(code, "M") // NOTE: are there other codes we are forgetting about?
 			pieces := strings.Split(code, ";")
 			switch pieces[0] {
-			case "2":
-				handle("Mouse Down")
-			case "5":
-				handle("Mouse Up")
 			case "32":
-				handle("Start Selection")
+				handle("Mouse Down")
 			case "35":
-				handle("End Selection")
+				handle("Mouse Up")
 			default:
 				log.Printf("Unrecognized keycode: %v", data)
 			}
