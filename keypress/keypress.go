@@ -30,13 +30,13 @@ func Listen(c func(name string, raw []byte)) {
 		data := make([]byte, 16)
 		ev := term.PollRawEvent(data)
 
-		trimmedData := data[:ev.N]
-
 		handle := func(name string) {
-			callback(name, trimmedData)
+			callback(name, data[:ev.N])
 		}
 
 		switch data[0] {
+		case 13:
+			handle("Enter")
 		case 195: // Alt
 			letter := rune(data[1] - 128 + 64)
 			if unicode.IsUpper(letter) {

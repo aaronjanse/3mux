@@ -32,5 +32,7 @@ var config = Config{
 		"Alt+L": "moveSelection(Right)",
 
 		"Alt+Shift+Q": "killWindow",
+
+		"Alt+R": "resize",
 	},
 }

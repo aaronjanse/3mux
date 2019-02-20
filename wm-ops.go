@@ -318,6 +318,40 @@ func newWindow() {
 	parent.refreshRenderRect()
 }
 
+func resizeWindow(d Direction) {
+	parent, _ := getSelection().getParent()
+
+	const shift = 0.1
+	var delta float32
+
+	if parent.verticallyStacked {
+		if d == Up {
+			delta = +shift
+		} else if d == Down {
+			delta = -shift
+		}
+	} else {
+		if d == Right {
+			delta = +shift
+		} else if d == Left {
+			delta = -shift
+		}
+	}
+
+	size := parent.elements[parent.selectionIdx].size
+
+	scale := (float32(1) - size - delta) / (float32(1) - size)
+
+	parent.elements[parent.selectionIdx].size += delta
+	for i := range parent.elements {
+		if i != parent.selectionIdx {
+			parent.elements[i].size *= scale
+		}
+	}
+
+	parent.refreshRenderRect()
+}
+
 func (p Path) getParent() (*Split, Path) {
 	parentPath := p[:len(p)-1]
 	return parentPath.getContainer().(*Split), parentPath

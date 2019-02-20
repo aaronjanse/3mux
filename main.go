@@ -110,36 +110,50 @@ func main() {
 
 	keypress.Listen(func(name string, raw []byte) {
 		// fmt.Println(name, raw)
-
-		switch name {
-		case "Scroll Up":
-			t := getSelection().getContainer().(*Pane)
-			t.vterm.ScrollbackDown()
-		case "Scroll Down":
-			t := getSelection().getContainer().(*Pane)
-			t.vterm.ScrollbackUp()
-		default:
-			if operationCode, ok := config.bindings[name]; ok {
-				executeOperationCode(operationCode)
-				root.simplify()
-
-				root.refreshRenderRect()
-			} else {
+		if resizeMode {
+			switch name {
+			case "Up":
+				fallthrough
+			case "Down":
+				fallthrough
+			case "Right":
+				fallthrough
+			case "Left":
+				d := getDirectionFromString(name)
+				resizeWindow(d)
+			case "Enter":
+				resizeMode = false
+			}
+		} else {
+			switch name {
+			case "Scroll Up":
 				t := getSelection().getContainer().(*Pane)
+				t.vterm.ScrollbackDown()
+			case "Scroll Down":
+				t := getSelection().getContainer().(*Pane)
+				t.vterm.ScrollbackUp()
+			default:
+				if operationCode, ok := config.bindings[name]; ok {
+					executeOperationCode(operationCode)
+					root.simplify()
 
-				t.shell.handleStdin(string(raw))
-				t.vterm.RefreshCursor()
+					root.refreshRenderRect()
+				} else {
+					t := getSelection().getContainer().(*Pane)
+
+					t.shell.handleStdin(string(raw))
+					t.vterm.RefreshCursor()
+				}
 			}
 		}
 	})
 
-	// shutdown <- true
-
 	// <-shutdown
-
 }
 
 var shutdown chan bool
+
+var resizeMode bool
 
 func executeOperationCode(s string) {
 	sections := strings.Split(s, "(")
@@ -168,6 +182,8 @@ func executeOperationCode(s string) {
 		moveSelection(d)
 	case "killWindow":
 		killWindow()
+	case "resize":
+		resizeMode = true
 	default:
 		panic(funcName)
 	}
