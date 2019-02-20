@@ -9,3 +9,7 @@ The difference is that `tmux2` comes with sane default with a few nice touches.
 - [x] i3-like window manager with i3-like controls
 - [x] resize windows via keyboard
 - [x] resize windows by dragging mouse
+- [ ] text search
+- [ ] fancy text selection
+- [ ] reading i3 configs
+- [ ] reading tmux configs

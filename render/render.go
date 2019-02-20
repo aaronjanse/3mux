@@ -14,6 +14,8 @@ type Renderer struct {
 	currentScreen [][]Char
 	pendingScreen [][]Char
 
+	highlights [][]bool
+
 	drawingCursor Cursor
 	writingMutex  *sync.Mutex
 
@@ -71,6 +73,18 @@ func (r *Renderer) Resize(w, h int) {
 		}
 	}
 
+	for y := 0; y <= h; y++ {
+		if y >= len(r.highlights) {
+			r.highlights = append(r.highlights, []bool{})
+		}
+
+		for x := 0; x <= w; x++ {
+			if x >= len(r.highlights[y]) {
+				r.highlights[y] = append(r.highlights[y], false)
+			}
+		}
+	}
+
 	r.w = w
 	r.h = h
 }
@@ -102,12 +116,21 @@ func (r *Renderer) ListenToQueue() {
 				r.writingMutex.Lock()
 				current := r.currentScreen[y][x]
 				pending := r.pendingScreen[y][x]
+				// FIXME: should only update changed portions of the screen
 				if current != pending || true {
 					r.currentScreen[y][x] = pending
 
 					newCursor := Cursor{
 						X: x, Y: y, Style: pending.Style,
 					}
+
+					if r.highlights[y][x] {
+						newCursor.Style.Bg = Color{
+							ColorMode: ColorBit3Bright,
+							Code:      6,
+						}
+					}
+
 					delta := deltaMarkup(r.drawingCursor, newCursor)
 					diff.WriteString(delta)
 					diff.WriteString(string(pending.Rune))
@@ -146,5 +169,19 @@ func (r *Renderer) Debug(s string) {
 				X: i, Y: r.h - 1,
 				Style: Style{},
 			}})
+	}
+}
+
+// Highlight visually highlights the selected chars
+func (r *Renderer) Highlight(x, y int) {
+	r.highlights[y][x] = true
+}
+
+// UnhighlightAll removes the highlight from all highlighted characters
+func (r *Renderer) UnhighlightAll() {
+	for y := range r.highlights {
+		for x := range r.highlights[y] {
+			r.highlights[y][x] = false
+		}
 	}
 }

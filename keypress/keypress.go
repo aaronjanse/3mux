@@ -6,6 +6,7 @@ package keypress
 import (
 	"fmt"
 	"log"
+	"strings"
 	"unicode"
 
 	term "github.com/nsf/termbox-go"
@@ -30,8 +31,10 @@ func Listen(c func(name string, raw []byte)) {
 		data := make([]byte, 16)
 		ev := term.PollRawEvent(data)
 
+		trimmedData := data[:ev.N]
+
 		handle := func(name string) {
-			callback(name, data[:ev.N])
+			callback(name, trimmedData)
 		}
 
 		switch data[0] {
@@ -67,11 +70,18 @@ func Listen(c func(name string, raw []byte)) {
 			case 91:
 				switch data[2] {
 				case 51:
-					switch string(data[3]) {
+					code := string(trimmedData[2:])
+					code = strings.TrimSuffix(code, "M") // NOTE: are there other codes we are forgetting about?
+					pieces := strings.Split(code, ";")
+					switch pieces[0] {
 					case "2":
 						handle("Mouse Down")
 					case "5":
 						handle("Mouse Up")
+					case "32":
+						handle("Start Selection")
+					case "35":
+						handle("End Selection")
 					}
 				case 57: // Scrolling
 					switch data[3] {
@@ -118,7 +128,12 @@ func Listen(c func(name string, raw []byte)) {
 
 		// // debugging code
 		// log.Println(ev)
-		// log.Println(data)
+		// log.Print(data)
+		// str := ""
+		// for _, b := range data {
+		// 	str += string(b)
+		// }
+		// log.Println(str)
 		// log.Println()
 	}
 }
