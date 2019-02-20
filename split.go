@@ -48,6 +48,12 @@ func (s *Split) getRenderRect() Rect {
 	return s.renderRect
 }
 
+func (s *Split) kill() {
+	for _, n := range s.elements {
+		n.contents.kill()
+	}
+}
+
 // refreshRenderRect recalculates the coordinates of a Split's elements and calls setRenderRect on each of its children
 // this is for when one or more of a split's children are reshaped
 func (s *Split) refreshRenderRect() {

@@ -50,8 +50,7 @@ type VTerm struct {
 	// parentSetCursor sets physical host's cursor taking the pane location into account
 	parentSetCursor func(x, y int)
 
-	in  <-chan rune
-	out chan<- render.PositionedChar
+	in <-chan rune
 
 	storedCursorX, storedCursorY int
 
@@ -59,7 +58,7 @@ type VTerm struct {
 }
 
 // NewVTerm returns a VTerm ready to be used by its exported methods
-func NewVTerm(shellByteCounter *uint64, shutdown chan bool, startTime int64, renderer *render.Renderer, parentSetCursor func(x, y int), in <-chan rune, out chan<- render.PositionedChar) *VTerm {
+func NewVTerm(shellByteCounter *uint64, renderer *render.Renderer, parentSetCursor func(x, y int), in <-chan rune) *VTerm {
 	w := 10
 	h := 10
 
@@ -85,9 +84,6 @@ func NewVTerm(shellByteCounter *uint64, shutdown chan bool, startTime int64, ren
 		usingAltScreen:   false,
 		Cursor:           render.Cursor{},
 		in:               in,
-		out:              out,
-		startTime:        startTime,
-		shutdown:         shutdown,
 		shellByteCounter: shellByteCounter,
 		usingSlowRefresh: false,
 		renderer:         renderer,

@@ -8,7 +8,6 @@ import (
 	"runtime/pprof"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/aaronduino/i3-tmux/keypress"
 	"github.com/aaronduino/i3-tmux/render"
@@ -22,8 +21,6 @@ type Rect struct {
 var termW, termH int
 
 var renderer *render.Renderer
-
-var startTime int64
 
 var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
 
@@ -54,8 +51,6 @@ func main() {
 	renderer = render.NewRenderer()
 	renderer.Resize(termW, termH)
 	go renderer.ListenToQueue()
-
-	startTime = time.Now().UnixNano()
 
 	root = Split{
 		verticallyStacked: false,

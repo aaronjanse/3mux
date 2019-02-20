@@ -20,7 +20,6 @@ type Shell struct {
 }
 
 func newShell(stdout chan<- rune) Shell {
-	// cmd := exec.Command("zsh", "/home/ajanse/Playground/i3-tmux/test.sh")
 	cmd := exec.Command("zsh")
 
 	ptmx, err := pty.Start(cmd)
@@ -56,13 +55,6 @@ func newShell(stdout chan<- rune) Shell {
 			}
 			for _, b := range bs {
 				atomic.AddUint64(&shell.byteCounter, 1)
-				// if string(b) == "@" {
-				// 	nowTime := time.Now().UnixNano()
-				// 	log.Printf("%v ms - time to shell finish\n", (nowTime-startTime)/1000000)
-				// 	// time.Sleep(time.Second)
-				// 	// shutdown <- true
-				// 	// return
-				// }
 				stdout <- rune(b)
 			}
 		}

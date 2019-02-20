@@ -1,6 +1,6 @@
 with import <nixpkgs>{};
 stdenv.mkDerivation rec {
-    name = "LED";
+    name = "multiplexer";
     buildInputs =  [ autoreconfHook pkgconfig cmake ncurses go libtsm ];
     shellHook = ''
         GODEBUG=cgocheck=0 go run *.go -cpuprofile mux.prof

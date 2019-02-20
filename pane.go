@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"math/rand"
 
-	"github.com/aaronduino/i3-tmux/render"
 	"github.com/aaronduino/i3-tmux/vterm"
 )
 
@@ -24,8 +23,6 @@ func newTerm(selected bool) *Pane {
 	stdout := make(chan rune, 3200000)
 	shell := newShell(stdout)
 
-	vtermOut := make(chan render.PositionedChar, 3200)
-
 	t := &Pane{
 		id:       rand.Intn(10),
 		selected: selected,
@@ -39,7 +36,7 @@ func newTerm(selected bool) *Pane {
 		}
 	}
 
-	vt := vterm.NewVTerm(&shell.byteCounter, shutdown, startTime, renderer, parentSetCursor, stdout, vtermOut)
+	vt := vterm.NewVTerm(&shell.byteCounter, renderer, parentSetCursor, stdout)
 	go vt.ProcessStream()
 
 	t.vterm = vt
