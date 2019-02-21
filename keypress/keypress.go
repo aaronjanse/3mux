@@ -174,7 +174,6 @@ func handleEscapeCode(data []byte, handle func(parsedData interface{})) {
 			case 51:
 				handle(AltArrow{arrow})
 			case 52:
-				log.Println("AltShiftArrow!")
 				handle(AltShiftArrow{arrow})
 			case 53:
 				handle(CtrlArrow{arrow})
