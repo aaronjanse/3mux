@@ -39,7 +39,7 @@ import (
 	term "github.com/nsf/termbox-go"
 )
 
-const debugKeycodes = true
+const debugKeycodes = false
 
 var directionNames = map[byte]string{
 	65: "Up",

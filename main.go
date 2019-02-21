@@ -85,7 +85,16 @@ func main() {
 
 	keypress.Listen(func(name string, data []byte) {
 		// fmt.Println(name, data)
-		if resizeMode {
+
+		if showingRealSelection {
+			// enable artificial selection again
+			fmt.Print("\033[?1000h\033[?1015h")
+
+			renderer.Resume <- true
+			renderer.UnhighlightAll()
+
+			showingRealSelection = false
+		} else if resizeMode {
 			switch name {
 			case "Up", "Down", "Right", "Left":
 				d := getDirectionFromString(name)
@@ -96,6 +105,7 @@ func main() {
 		} else {
 			switch name {
 			case "Mouse Down":
+				renderer.UnhighlightAll()
 				path := handleMouseDown(data)
 				if path != nil { // start resize
 					mouseDownPath = path
@@ -164,17 +174,25 @@ func main() {
 						endY = r.y + r.h
 					}
 
+					selectionContent := ""
+
 					if startSelectionY == endY {
+						if startSelectionX == endX {
+							return
+						}
 						if startSelectionX > endX {
 							tmp := startSelectionX
 							startSelectionX = endX
 							endX = tmp
 						}
 						for i := startSelectionX; i <= endX; i++ {
-							log.Println(i, startSelectionY)
 							renderer.Highlight(i, startSelectionY)
+							selectionContent += string(renderer.GetRune(i, startSelectionY))
 						}
+
+						selectionContent = strings.TrimRight(selectionContent, " ")
 					} else {
+						// reverse "backwards" selections
 						if startSelectionY > endY {
 							tmpX := startSelectionX
 							tmpY := startSelectionY
@@ -183,23 +201,45 @@ func main() {
 							endX = tmpX
 							endY = tmpY
 						}
+
 						// highlight the first line
 						for i := startSelectionX; i < r.x+r.w; i++ {
 							renderer.Highlight(i, startSelectionY)
+							selectionContent += string(renderer.GetRune(i, startSelectionY))
 						}
-
-						// highlight the last line
-						for i := r.x; i < endX; i++ {
-							renderer.Highlight(i, endY)
-						}
-
+						selectionContent = strings.TrimRight(selectionContent, " ")
+						selectionContent += "\n"
 						// highlight the lines in between
 						for y := startSelectionY + 1; y < endY; y++ {
 							for x := r.x; x < r.x+r.w; x++ {
 								renderer.Highlight(x, y)
+								selectionContent += string(renderer.GetRune(x, y))
 							}
 						}
+						selectionContent = strings.TrimRight(selectionContent, " ")
+						selectionContent += "\n"
+						// highlight the last line
+						for i := r.x; i < endX; i++ {
+							renderer.Highlight(i, endY)
+							selectionContent += string(renderer.GetRune(i, endY))
+						}
+						selectionContent = strings.TrimRight(selectionContent, " ")
+						selectionContent += "\n"
 					}
+
+					renderer.Pause <- true
+
+					fmt.Print("\033[2J")   // clear screen
+					fmt.Print("\033[0;0H") // move cursor to top left
+					fmt.Print("\033[0m")   // reset styling
+
+					// print out what we previously selected
+					fmt.Print(selectionContent)
+
+					// make real selection possible
+					fmt.Print("\033[?1000l\033[?1015l")
+
+					showingRealSelection = true
 				}
 			case "Scroll Up":
 				t := getSelection().getContainer().(*Pane)
@@ -237,6 +277,8 @@ var mouseDownPath Path
 
 var startSelectionX int
 var startSelectionY int
+
+var showingRealSelection bool
 
 func executeOperationCode(s string) {
 	sections := strings.Split(s, "(")

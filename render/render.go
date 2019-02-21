@@ -19,6 +19,9 @@ type Renderer struct {
 
 	drawingCursor Cursor
 	restingCursor Cursor
+
+	Pause  chan bool
+	Resume chan bool
 }
 
 // A PositionedChar is a Char with a specific location on the screen
@@ -39,6 +42,8 @@ func NewRenderer() *Renderer {
 		writingMutex:  &sync.Mutex{},
 		currentScreen: [][]Char{},
 		pendingScreen: [][]Char{},
+		Pause:         make(chan bool),
+		Resume:        make(chan bool),
 	}
 }
 
@@ -150,8 +155,17 @@ func (r *Renderer) ListenToQueue() {
 
 		fmt.Print("\033[?25h") // show cursor
 
-		// free up the CPU for an arbitrary amount of time
-		time.Sleep(time.Millisecond * 25)
+		// thr delay frees up the CPU for an arbitrary amount of time
+		timer := time.NewTimer(time.Millisecond * 25)
+
+		select {
+		case <-timer.C:
+			timer.Stop()
+		case <-r.Pause:
+			<-r.Resume
+			fmt.Print("\033[0;0H\033[0m") // reset real cursor
+			r.drawingCursor = Cursor{}    // reset virtual cursor
+		}
 	}
 }
 
@@ -186,4 +200,9 @@ func (r *Renderer) UnhighlightAll() {
 			r.highlights[y][x] = false
 		}
 	}
+}
+
+// GetRune returns the rune of the currentScreen at the given coordinates
+func (r *Renderer) GetRune(x, y int) rune {
+	return r.currentScreen[y][x].Rune
 }
