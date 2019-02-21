@@ -13,3 +13,11 @@ The difference is that `tmux2` comes with sane default with a few nice touches.
 - [ ] fancy text selection
 - [ ] reading i3 configs
 - [ ] reading tmux configs
+- [ ] fullscreen mode allows for easy selection of text
+
+## Decisions
+
+### Text Selection
+Originally, text selection was going to be done via vim-like highlighting followed by placing text alone on the screen.
+
+This is confusing and interrupts one's workflow. Instead, users should make the selected pane fullscreen, then select from there. That's one shortcut and one drag instead of two drags and a keypress to signify that copying is complete.

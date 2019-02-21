@@ -34,6 +34,7 @@ package keypress
 import (
 	"fmt"
 	"log"
+	"strconv"
 	"strings"
 	"unicode"
 
@@ -42,16 +43,27 @@ import (
 
 const debugKeycodes = false
 
-var directionNames = map[byte]string{
-	65: "Up",
-	66: "Down",
-	67: "Right",
-	68: "Left",
+var directionNames = map[byte]Direction{
+	65: Up,
+	66: Down,
+	67: Right,
+	68: Left,
 }
+
+// Direction is Up, Down, Left, or Right
+type Direction uint
+
+// Arrow direction
+const (
+	Up Direction = iota
+	Down
+	Left
+	Right
+)
 
 // Listen is a blocking function that indefinitely listens for keypresses.
 // When it detects a keypress, it passes on to the callback a human-readable interpretation of the event (e.g. Alt+Shift+Up) along with the raw string of text received by the terminal.
-func Listen(callback func(name string, data []byte)) {
+func Listen(callback func(parsedData interface{}, rawData []byte)) {
 	err := term.Init()
 	if err != nil {
 		log.Fatal(err)
@@ -67,13 +79,13 @@ func Listen(callback func(name string, data []byte)) {
 
 		data := raw[:ev.N]
 
-		handle := func(name string) {
-			callback(name, data)
+		handle := func(parsedData interface{}) {
+			callback(parsedData, data)
 		}
 
 		switch data[0] {
 		case 13:
-			handle("Enter")
+			handle(Enter{})
 		case 195: // Alt
 			parseAltLetter(data[1]-64, handle)
 		case 27: // Escape code
@@ -81,14 +93,14 @@ func Listen(callback func(name string, data []byte)) {
 		default:
 			if len(data) == 1 {
 				if data[0] <= 26 { // Ctrl
-					letter := string('A' + data[0] - 1)
-					if letter == "Q" { // exit upon Ctrl+Q
+					letter := rune('A' + data[0] - 1)
+					if letter == 'Q' { // exit upon Ctrl+Q
 						return
 					}
-					handle("Ctrl+" + letter)
+					handle(CtrlChar{letter})
 				} else {
-					letter := string(data[0])
-					handle(letter)
+					letter := rune(data[0])
+					handle(Character{letter})
 				}
 			}
 		}
@@ -106,7 +118,7 @@ func Listen(callback func(name string, data []byte)) {
 	}
 }
 
-func handleEscapeCode(data []byte, handle func(name string)) {
+func handleEscapeCode(data []byte, handle func(parsedData interface{})) {
 	if len(data) == 1 { // Lone Esc Key
 		handle("Esc")
 		return
@@ -115,9 +127,16 @@ func handleEscapeCode(data []byte, handle func(name string)) {
 	switch data[1] {
 	case 79:
 		direction := directionNames[data[2]]
-		if len(data) == 15 {
-			handle("Scroll " + direction)
-		} else {
+		if len(data) == 15 { // scrolling
+			switch data[2] {
+			case 65:
+				handle(ScrollUp{})
+			case 66:
+				handle(ScrollDown{})
+			default:
+				log.Printf("Unrecognized scroll code: %v", data)
+			}
+		} else { // arrow
 			handle(direction)
 		}
 	case 91:
@@ -128,35 +147,36 @@ func handleEscapeCode(data []byte, handle func(name string)) {
 			pieces := strings.Split(code, ";")
 			switch pieces[0] {
 			case "32":
-				handle("Mouse Down")
+				x, _ := strconv.Atoi(pieces[0])
+				y, _ := strconv.Atoi(strings.TrimSuffix(pieces[1], "M"))
+				handle(MouseDown{X: x, Y: y})
 			case "35":
-				handle("Mouse Up")
+				x, _ := strconv.Atoi(pieces[0])
+				y, _ := strconv.Atoi(strings.TrimSuffix(pieces[1], "M"))
+				handle(MouseUp{X: x, Y: y})
 			default:
 				log.Printf("Unrecognized keycode: %v", data)
 			}
 		case 57: // Scrolling
 			switch data[3] {
 			case 54:
-				handle("Scroll Up")
+				handle(ScrollUp{})
 			case 55:
-				handle("Scroll Down")
+				handle(ScrollDown{})
 			default:
 				log.Printf("Unrecognized keycode: %v", data)
 			}
-		case 77: // mouse moved
-			// log.Printf("%v, %v", data[4]-32, data[5]-32)
-			handle("Mouse Moved")
 		default:
 			arrow := directionNames[data[5]]
 			switch data[4] {
 			case 50:
-				handle("Shift+" + arrow)
+				handle(ShiftArrow{arrow})
 			case 51:
-				handle("Alt+" + arrow)
+				handle(AltArrow{arrow})
 			case 52:
-				handle("Alt+Shift+" + arrow)
+				handle(AltShiftArrow{arrow})
 			case 53:
-				handle("Ctrl+" + arrow)
+				handle(CtrlArrow{arrow})
 			default:
 				log.Printf("Unrecognized keycode: %v", data)
 			}
@@ -166,11 +186,11 @@ func handleEscapeCode(data []byte, handle func(name string)) {
 	}
 }
 
-func parseAltLetter(b byte, handle func(name string)) {
+func parseAltLetter(b byte, handle func(parsedData interface{})) {
 	letter := rune(b)
 	if unicode.IsUpper(letter) {
-		handle("Alt+Shift+" + string(letter))
+		handle(AltShiftChar{letter})
 	} else {
-		handle("Alt+" + string(unicode.ToUpper(letter)))
+		handle(AltChar{unicode.ToUpper(letter)})
 	}
 }
