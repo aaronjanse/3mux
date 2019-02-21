@@ -49,49 +49,28 @@ func NewRenderer() *Renderer {
 
 // Resize changes the size of the framebuffers to match the host terminal size
 func (r *Renderer) Resize(w, h int) {
+	r.pendingScreen = expandBuffer(r.pendingScreen, w, h)
+	r.currentScreen = expandBuffer(r.currentScreen, w, h)
+
 	r.w = w
 	r.h = h
+}
 
-	// NOTE: is there a better way to do this?
-
-	// resize pendingScreen
-	for y := 0; y <= h; y++ {
-		if y >= len(r.pendingScreen) {
-			r.pendingScreen = append(r.pendingScreen, []Char{})
-		}
-
-		for x := 0; x <= w; x++ {
-			if x >= len(r.pendingScreen[y]) {
-				r.pendingScreen[y] = append(r.pendingScreen[y], Char{Rune: ' ', Style: Style{}})
-			}
-		}
-	}
-
+func expandBuffer(buffer [][]Char, w, h int) [][]Char {
 	// resize currentScreen
 	for y := 0; y <= h; y++ {
-		if y >= len(r.currentScreen) {
-			r.currentScreen = append(r.currentScreen, []Char{})
+		if y >= len(buffer) {
+			buffer = append(buffer, []Char{})
 		}
 
 		for x := 0; x <= w; x++ {
-			if x >= len(r.currentScreen[y]) {
-				r.currentScreen[y] = append(r.currentScreen[y], Char{Rune: ' ', Style: Style{}})
+			if x >= len(buffer[y]) {
+				buffer[y] = append(buffer[y], Char{Rune: ' '})
 			}
 		}
 	}
 
-	// resize highlights
-	for y := 0; y <= h; y++ {
-		if y >= len(r.highlights) {
-			r.highlights = append(r.highlights, []bool{})
-		}
-
-		for x := 0; x <= w; x++ {
-			if x >= len(r.highlights[y]) {
-				r.highlights[y] = append(r.highlights[y], false)
-			}
-		}
-	}
+	return buffer
 }
 
 // HandleCh places a PositionedChar in the pending screen buffer
@@ -185,20 +164,6 @@ func (r *Renderer) Debug(s string) {
 				X: i, Y: r.h - 1,
 				Style: Style{},
 			}})
-	}
-}
-
-// Highlight visually highlights the selected chars
-func (r *Renderer) Highlight(x, y int) {
-	r.highlights[y][x] = true
-}
-
-// UnhighlightAll removes the highlight from all highlighted characters
-func (r *Renderer) UnhighlightAll() {
-	for y := range r.highlights {
-		for x := range r.highlights[y] {
-			r.highlights[y][x] = false
-		}
 	}
 }
 

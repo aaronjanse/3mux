@@ -91,7 +91,6 @@ func main() {
 			fmt.Print("\033[?1000h\033[?1015h")
 
 			renderer.Resume <- true
-			renderer.UnhighlightAll()
 
 			showingRealSelection = false
 		} else if resizeMode {
@@ -105,7 +104,6 @@ func main() {
 		} else {
 			switch name {
 			case "Mouse Down":
-				renderer.UnhighlightAll()
 				path := handleMouseDown(data)
 				if path != nil { // start resize
 					mouseDownPath = path
@@ -180,13 +178,15 @@ func main() {
 						if startSelectionX == endX {
 							return
 						}
+
+						// reverse "backwards" selections
 						if startSelectionX > endX {
 							tmp := startSelectionX
 							startSelectionX = endX
 							endX = tmp
 						}
+
 						for i := startSelectionX; i <= endX; i++ {
-							renderer.Highlight(i, startSelectionY)
 							selectionContent += string(renderer.GetRune(i, startSelectionY))
 						}
 
@@ -202,25 +202,22 @@ func main() {
 							endY = tmpY
 						}
 
-						// highlight the first line
+						// first line
 						for i := startSelectionX; i < r.x+r.w; i++ {
-							renderer.Highlight(i, startSelectionY)
 							selectionContent += string(renderer.GetRune(i, startSelectionY))
 						}
 						selectionContent = strings.TrimRight(selectionContent, " ")
 						selectionContent += "\n"
-						// highlight the lines in between
+						// lines in between
 						for y := startSelectionY + 1; y < endY; y++ {
 							for x := r.x; x < r.x+r.w; x++ {
-								renderer.Highlight(x, y)
 								selectionContent += string(renderer.GetRune(x, y))
 							}
 						}
 						selectionContent = strings.TrimRight(selectionContent, " ")
 						selectionContent += "\n"
-						// highlight the last line
+						// last line
 						for i := r.x; i < endX; i++ {
-							renderer.Highlight(i, endY)
 							selectionContent += string(renderer.GetRune(i, endY))
 						}
 						selectionContent = strings.TrimRight(selectionContent, " ")
