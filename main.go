@@ -78,8 +78,11 @@ func main() {
 	fmt.Print("\033[?1000h")
 	defer fmt.Print("\033[?1000l")
 
-	fmt.Print("\033[?1015h")
-	defer fmt.Print("\033[?1015l")
+	fmt.Print("\033[?1003h")
+	defer fmt.Print("\033[?1003l")
+
+	// fmt.Print("\033[?1015h")
+	// defer fmt.Print("\033[?1015l")
 
 	/* listen for keypresses */
 

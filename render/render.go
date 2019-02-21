@@ -108,13 +108,6 @@ func (r *Renderer) ListenToQueue() {
 						X: x, Y: y, Style: pending.Style,
 					}
 
-					if r.highlights[y][x] {
-						newCursor.Style.Bg = Color{
-							ColorMode: ColorBit3Bright,
-							Code:      6,
-						}
-					}
-
 					delta := deltaMarkup(r.drawingCursor, newCursor)
 					diff.WriteString(delta)
 					diff.WriteString(string(pending.Rune))
@@ -135,7 +128,7 @@ func (r *Renderer) ListenToQueue() {
 		fmt.Print("\033[?25h") // show cursor
 
 		// thr delay frees up the CPU for an arbitrary amount of time
-		timer := time.NewTimer(time.Millisecond * 25)
+		timer := time.NewTimer(time.Millisecond * 1000)
 
 		select {
 		case <-timer.C:

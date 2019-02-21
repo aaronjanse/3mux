@@ -7,6 +7,7 @@ The following are supported human-readable names:
 	Enter
 	Esc
 
+	Mouse Moved
 	Mouse Down
 	Mouse Up
 
@@ -142,6 +143,9 @@ func handleEscapeCode(data []byte, handle func(name string)) {
 			default:
 				log.Printf("Unrecognized keycode: %v", data)
 			}
+		case 77: // mouse moved
+			// log.Printf("%v, %v", data[4]-32, data[5]-32)
+			handle("Mouse Moved")
 		default:
 			arrow := directionNames[data[5]]
 			switch data[4] {
