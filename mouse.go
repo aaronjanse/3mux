@@ -1,28 +1,5 @@
 package main
 
-import (
-	"strconv"
-	"strings"
-)
-
-func handleMouseDown(data []byte) Path {
-	code := string(data[5:])
-	parts := strings.Split(code, ";")
-	x, _ := strconv.Atoi(parts[0])
-	y, _ := strconv.Atoi(strings.TrimSuffix(parts[1], "M"))
-
-	// are we clicking a border? if so, which one?
-	path := findClosestBorderForCoord([]int{}, x, y)
-	pane := path.getContainer()
-	r := pane.getRenderRect()
-
-	if x == r.x+r.w+1 || y == r.y+r.h+1 {
-		return path
-	}
-
-	return nil
-}
-
 func findClosestBorderForCoord(path Path, x, y int) Path {
 	switch c := path.getContainer().(type) {
 	case *Split:

@@ -1,38 +1,97 @@
 package main
 
+import (
+	"log"
+	"strings"
+
+	"github.com/aaronduino/i3-tmux/keypress"
+)
+
 // Config stores all user configuration values
 type Config struct {
 	statusBar bool
-	bindings  map[string]string
+	bindings  map[interface{}]string
 }
 
 var config = Config{
 	statusBar: false,
-	bindings: map[string]string{
-		"Alt+N": "newWindow",
+	bindings: map[interface{}]string{
+		keypress.AltChar{'N'}: "newWindow",
 
-		"Alt+Shift+Up":    "moveWindow(Up)",
-		"Alt+Shift+Down":  "moveWindow(Down)",
-		"Alt+Shift+Left":  "moveWindow(Left)",
-		"Alt+Shift+Right": "moveWindow(Right)",
+		keypress.AltShiftArrow{keypress.Up}:    "moveWindow(Up)",
+		keypress.AltShiftArrow{keypress.Down}:  "moveWindow(Down)",
+		keypress.AltShiftArrow{keypress.Left}:  "moveWindow(Left)",
+		keypress.AltShiftArrow{keypress.Right}: "moveWindow(Right)",
 
-		"Alt+Shift+I": "moveWindow(Up)",
-		"Alt+Shift+K": "moveWindow(Down)",
-		"Alt+Shift+J": "moveWindow(Left)",
-		"Alt+Shift+L": "moveWindow(Right)",
+		keypress.AltShiftChar{'I'}: "moveWindow(Up)",
+		keypress.AltShiftChar{'K'}: "moveWindow(Down)",
+		keypress.AltShiftChar{'J'}: "moveWindow(Left)",
+		keypress.AltShiftChar{'L'}: "moveWindow(Right)",
 
-		"Alt+Up":    "moveSelection(Up)",
-		"Alt+Down":  "moveSelection(Down)",
-		"Alt+Left":  "moveSelection(Left)",
-		"Alt+Right": "moveSelection(Right)",
+		keypress.AltArrow{keypress.Up}:    "moveSelection(Up)",
+		keypress.AltArrow{keypress.Down}:  "moveSelection(Down)",
+		keypress.AltArrow{keypress.Left}:  "moveSelection(Left)",
+		keypress.AltArrow{keypress.Right}: "moveSelection(Right)",
 
-		"Alt+I": "moveSelection(Up)",
-		"Alt+K": "moveSelection(Down)",
-		"Alt+J": "moveSelection(Left)",
-		"Alt+L": "moveSelection(Right)",
+		keypress.AltChar{'I'}: "moveSelection(Up)",
+		keypress.AltChar{'K'}: "moveSelection(Down)",
+		keypress.AltChar{'J'}: "moveSelection(Left)",
+		keypress.AltChar{'L'}: "moveSelection(Right)",
 
-		"Alt+Shift+Q": "killWindow",
+		keypress.AltShiftChar{'Q'}: "killWindow",
 
-		"Alt+R": "resize",
+		keypress.AltChar{'R'}: "resize",
 	},
+}
+
+func seiveConfigEvents(ev interface{}) bool {
+	log.Println(ev == keypress.AltShiftArrow{keypress.Left})
+	if operationCode, ok := config.bindings[ev]; ok {
+		executeOperationCode(operationCode)
+		root.simplify()
+
+		root.refreshRenderRect()
+
+		if config.statusBar {
+			debug(root.serialize())
+		}
+
+		return true
+	}
+
+	return false
+}
+
+func executeOperationCode(s string) {
+	sections := strings.Split(s, "(")
+
+	funcName := sections[0]
+
+	var parametersText string
+	if len(sections) < 2 {
+		parametersText = ""
+	} else {
+		parametersText = strings.TrimRight(sections[1], ")")
+	}
+	params := strings.Split(parametersText, ",")
+	for idx, param := range params {
+		params[idx] = strings.TrimSpace(param)
+	}
+
+	switch funcName {
+	case "newWindow":
+		newWindow()
+	case "moveWindow":
+		d := getDirectionFromString(params[0])
+		moveWindow(d)
+	case "moveSelection":
+		d := getDirectionFromString(params[0])
+		moveSelection(d)
+	case "killWindow":
+		killWindow()
+	case "resize":
+		resizeMode = true
+	default:
+		panic(funcName)
+	}
 }
