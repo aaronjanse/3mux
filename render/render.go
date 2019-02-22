@@ -100,8 +100,7 @@ func (r *Renderer) ListenToQueue() {
 				r.writingMutex.Lock()
 				current := r.currentScreen[y][x]
 				pending := r.pendingScreen[y][x]
-				// FIXME: should only update changed portions of the screen
-				if current != pending || true {
+				if current != pending {
 					r.currentScreen[y][x] = pending
 
 					newCursor := Cursor{
