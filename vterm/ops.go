@@ -83,6 +83,8 @@ func (v *VTerm) setCursorPos(x, y int) {
 
 	v.Cursor.X = x
 	v.Cursor.Y = y
+
+	v.RefreshCursor()
 }
 
 func (v *VTerm) setCursorX(x int) {
