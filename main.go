@@ -22,7 +22,10 @@ var renderer *render.Renderer
 
 var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
 
+var shouldShutdown chan bool
+
 func main() {
+	shouldShutdown = make(chan bool, 2)
 	// setup logging
 	f, err := os.OpenFile("logs.txt", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
@@ -77,7 +80,9 @@ func main() {
 	fmt.Print("\033[?1015h")
 	defer fmt.Print("\033[?1015l")
 
-	keypress.Listen(handleInput)
+	keypress.Listen(handleInput, shouldShutdown)
+
+	log.Println("exiting main()")
 }
 
 var resizeMode bool

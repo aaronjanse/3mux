@@ -1,8 +1,6 @@
 package main
 
 import (
-	"log"
-
 	"github.com/aaronduino/i3-tmux/keypress"
 )
 
@@ -53,19 +51,15 @@ func handleInput(event interface{}, rawData []byte) {
 func seiveMouseEvents(event interface{}) bool {
 	switch ev := event.(type) {
 	case keypress.MouseDown:
-		log.Printf("Mouse down, x: %v, y: %v", ev.X, ev.Y)
 		// are we clicking a border? if so, which one?
 		path := findClosestBorderForCoord([]int{}, ev.X, ev.Y)
 		pane := path.getContainer()
 		r := pane.getRenderRect()
 
-		log.Printf("Border, x: %v, y: %v", r.x+r.w+1, r.y+r.h+1)
-
 		if ev.X == r.x+r.w+1 || ev.Y == r.y+r.h+1 {
 			mouseDownPath = path
 		}
 	case keypress.MouseUp:
-		log.Println(mouseDownPath)
 		if mouseDownPath != nil { // end resize
 			x := ev.X
 			y := ev.Y

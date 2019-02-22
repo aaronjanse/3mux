@@ -1,7 +1,6 @@
 package main
 
 import (
-	"log"
 	"strings"
 
 	"github.com/aaronduino/i3-tmux/keypress"
@@ -45,7 +44,6 @@ var config = Config{
 }
 
 func seiveConfigEvents(ev interface{}) bool {
-	log.Println(ev == keypress.AltShiftArrow{keypress.Left})
 	if operationCode, ok := config.bindings[ev]; ok {
 		executeOperationCode(operationCode)
 		root.simplify()

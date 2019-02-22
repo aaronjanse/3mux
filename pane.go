@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"math/rand"
 
 	"github.com/aaronduino/i3-tmux/vterm"
@@ -17,18 +18,31 @@ type Pane struct {
 
 	vterm *vterm.VTerm
 	shell Shell
+
+	Dead bool
 }
 
 func newTerm(selected bool) *Pane {
 	stdout := make(chan rune, 3200000)
-	shell := newShell(stdout)
 
 	t := &Pane{
 		id:       rand.Intn(10),
 		selected: selected,
 
-		shell: shell,
+		shell: newShell(stdout),
 	}
+
+	go func() {
+		t.shell.cmd.Wait()
+		t.Dead = true
+		removeTheDead([]int{})
+
+		if len(root.elements) == 0 {
+			log.Println("about to send signal")
+			shouldShutdown <- true
+			log.Println("sent signal")
+		}
+	}()
 
 	parentSetCursor := func(x, y int) {
 		if t.selected {
@@ -36,7 +50,7 @@ func newTerm(selected bool) *Pane {
 		}
 	}
 
-	vt := vterm.NewVTerm(&shell.byteCounter, renderer, parentSetCursor, stdout)
+	vt := vterm.NewVTerm(&t.shell.byteCounter, renderer, parentSetCursor, stdout)
 	go vt.ProcessStream()
 
 	t.vterm = vt

@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/aaronduino/i3-tmux/render"
 )
@@ -51,6 +52,24 @@ func (s *Split) getRenderRect() Rect {
 func (s *Split) kill() {
 	for _, n := range s.elements {
 		n.contents.kill()
+	}
+}
+
+// removeTheDead recursively searches the tree and removes panes with Dead == true.
+// A pane declares itself dead when its shell dies.
+func removeTheDead(path Path) {
+	s := path.getContainer().(*Split)
+	log.Println(path, s)
+	for idx := len(s.elements) - 1; idx >= 0; idx-- {
+		element := s.elements[idx]
+		switch c := element.contents.(type) {
+		case *Split:
+			removeTheDead(append(path, idx))
+		case *Pane:
+			if c.Dead {
+				path.popContainer(idx)
+			}
+		}
 	}
 }
 

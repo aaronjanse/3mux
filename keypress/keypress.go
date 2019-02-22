@@ -63,7 +63,7 @@ const (
 
 // Listen is a blocking function that indefinitely listens for keypresses.
 // When it detects a keypress, it passes on to the callback a human-readable interpretation of the event (e.g. Alt+Shift+Up) along with the raw string of text received by the terminal.
-func Listen(callback func(parsedData interface{}, rawData []byte)) {
+func Listen(callback func(parsedData interface{}, rawData []byte), shouldShutdown chan bool) {
 	err := term.Init()
 	if err != nil {
 		log.Fatal(err)
@@ -74,10 +74,30 @@ func Listen(callback func(parsedData interface{}, rawData []byte)) {
 	fmt.Print("\033[?25h\033[?12h") // EXPLAIN: do we need this?
 
 	for {
-		raw := make([]byte, 16) // EXPLAIN: why 16?
-		ev := term.PollRawEvent(raw)
+		var keydata chan []byte
+		keydata = make(chan []byte, 1)
+		go func() {
+			raw := make([]byte, 16) // EXPLAIN: why 16?
+			ev := term.PollRawEvent(raw)
 
-		data := raw[:ev.N]
+			log.Println("about to send keydata")
+
+			keydata <- raw[:ev.N]
+
+			log.Println("sent keydata")
+		}()
+
+		log.Println("selecting keydata")
+		var data []byte
+		select {
+		case d := <-keydata:
+			data = d
+		case <-shouldShutdown:
+			log.Println("got the signal")
+			return
+		}
+
+		log.Println("processing keydata")
 
 		handle := func(parsedData interface{}) {
 			callback(parsedData, data)
@@ -106,7 +126,6 @@ func Listen(callback func(parsedData interface{}, rawData []byte)) {
 		}
 
 		if debugKeycodes {
-			log.Println(ev)
 			log.Print(data)
 			str := ""
 			for _, b := range data {
