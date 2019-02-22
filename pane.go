@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"math/rand"
 
 	"github.com/aaronduino/i3-tmux/vterm"
@@ -38,9 +37,7 @@ func newTerm(selected bool) *Pane {
 		removeTheDead([]int{})
 
 		if len(root.elements) == 0 {
-			log.Println("about to send signal")
-			shouldShutdown <- true
-			log.Println("sent signal")
+			shutdownNow()
 		}
 	}()
 

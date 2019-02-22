@@ -63,7 +63,7 @@ const (
 
 // Listen is a blocking function that indefinitely listens for keypresses.
 // When it detects a keypress, it passes on to the callback a human-readable interpretation of the event (e.g. Alt+Shift+Up) along with the raw string of text received by the terminal.
-func Listen(callback func(parsedData interface{}, rawData []byte), shouldShutdown chan bool) {
+func Listen(callback func(parsedData interface{}, rawData []byte)) {
 	err := term.Init()
 	if err != nil {
 		log.Fatal(err)
@@ -74,30 +74,10 @@ func Listen(callback func(parsedData interface{}, rawData []byte), shouldShutdow
 	fmt.Print("\033[?25h\033[?12h") // EXPLAIN: do we need this?
 
 	for {
-		var keydata chan []byte
-		keydata = make(chan []byte, 1)
-		go func() {
-			raw := make([]byte, 16) // EXPLAIN: why 16?
-			ev := term.PollRawEvent(raw)
+		raw := make([]byte, 16) // EXPLAIN: why 16?
+		ev := term.PollRawEvent(raw)
 
-			log.Println("about to send keydata")
-
-			keydata <- raw[:ev.N]
-
-			log.Println("sent keydata")
-		}()
-
-		log.Println("selecting keydata")
-		var data []byte
-		select {
-		case d := <-keydata:
-			data = d
-		case <-shouldShutdown:
-			log.Println("got the signal")
-			return
-		}
-
-		log.Println("processing keydata")
+		data := raw[:ev.N]
 
 		handle := func(parsedData interface{}) {
 			callback(parsedData, data)

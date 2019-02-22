@@ -9,6 +9,8 @@ import (
 
 	"github.com/aaronduino/i3-tmux/keypress"
 	"github.com/aaronduino/i3-tmux/render"
+
+	term "github.com/nsf/termbox-go"
 )
 
 // Rect is a rectangle with an origin x, origin y, width, and height
@@ -22,10 +24,7 @@ var renderer *render.Renderer
 
 var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
 
-var shouldShutdown chan bool
-
 func main() {
-	shouldShutdown = make(chan bool, 2)
 	// setup logging
 	f, err := os.OpenFile("logs.txt", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
@@ -80,9 +79,12 @@ func main() {
 	fmt.Print("\033[?1015h")
 	defer fmt.Print("\033[?1015l")
 
-	keypress.Listen(handleInput, shouldShutdown)
+	keypress.Listen(handleInput)
+}
 
-	log.Println("exiting main()")
+func shutdownNow() {
+	term.Close()
+	os.Exit(0)
 }
 
 var resizeMode bool
