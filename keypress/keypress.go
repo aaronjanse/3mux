@@ -146,12 +146,12 @@ func handleEscapeCode(data []byte, handle func(parsedData interface{})) {
 			pieces := strings.Split(code, ";")
 			switch pieces[0] {
 			case "32":
-				y, _ := strconv.Atoi(pieces[0])
-				x, _ := strconv.Atoi(strings.TrimSuffix(pieces[1], "M"))
+				x, _ := strconv.Atoi(pieces[1])
+				y, _ := strconv.Atoi(strings.TrimSuffix(pieces[2], "M"))
 				handle(MouseDown{X: x, Y: y})
 			case "35":
-				y, _ := strconv.Atoi(pieces[0])
-				x, _ := strconv.Atoi(strings.TrimSuffix(pieces[1], "M"))
+				x, _ := strconv.Atoi(pieces[1])
+				y, _ := strconv.Atoi(strings.TrimSuffix(pieces[2], "M"))
 				handle(MouseUp{X: x, Y: y})
 			default:
 				log.Printf("Unrecognized keycode: %v", data)
