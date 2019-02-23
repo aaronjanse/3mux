@@ -83,24 +83,28 @@ func Listen(callback func(parsedData interface{}, rawData []byte)) {
 			callback(parsedData, data)
 		}
 
-		switch data[0] {
-		case 13:
-			handle(Enter{})
-		case 195: // Alt
-			parseAltLetter(data[1]-64, handle)
-		case 27: // Escape code
-			handleEscapeCode(data, handle)
-		default:
-			if len(data) == 1 {
-				if data[0] <= 26 { // Ctrl
-					letter := rune('A' + data[0] - 1)
-					if letter == 'Q' { // exit upon Ctrl+Q
-						return
+		if ev.N == 0 && ev.Type == term.EventResize {
+			handle(Resize{W: ev.Width, H: ev.Height})
+		} else {
+			switch data[0] {
+			case 13:
+				handle(Enter{})
+			case 195: // Alt
+				parseAltLetter(data[1]-64, handle)
+			case 27: // Escape code
+				handleEscapeCode(data, handle)
+			default:
+				if len(data) == 1 {
+					if data[0] <= 26 { // Ctrl
+						letter := rune('A' + data[0] - 1)
+						if letter == 'Q' { // exit upon Ctrl+Q
+							return
+						}
+						handle(CtrlChar{letter})
+					} else {
+						letter := rune(data[0])
+						handle(Character{letter})
 					}
-					handle(CtrlChar{letter})
-				} else {
-					letter := rune(data[0])
-					handle(Character{letter})
 				}
 			}
 		}

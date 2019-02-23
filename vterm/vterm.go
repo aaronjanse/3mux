@@ -121,6 +121,14 @@ func (v *VTerm) Reshape(x, y, w, h int) {
 		}
 	}
 
+	if v.Cursor.Y >= h {
+		v.setCursorY(h - 1)
+	}
+
+	if v.Cursor.X >= w {
+		v.setCursorX(w - 1)
+	}
+
 	// if h > len(v.screen) { // move lines from scrollback
 	// 	linesToAdd := h - len(v.screen)
 	// 	scrollbackLinesToAdd := linesToAdd

@@ -11,6 +11,12 @@ type inputState struct {
 // handleInput puts the input through a series of switches and seive functions.
 // When something acts on the event, we stop passing it downstream
 func handleInput(event interface{}, rawData []byte) {
+	defer func() {
+		if config.statusBar {
+			debug(root.serialize())
+		}
+	}()
+
 	if resizeMode {
 		switch ev := event.(type) {
 		case keypress.Arrow:
@@ -28,6 +34,14 @@ func handleInput(event interface{}, rawData []byte) {
 		case keypress.Enter:
 			resizeMode = false
 		}
+		return
+	}
+
+	switch ev := event.(type) {
+	case keypress.Resize:
+		resize(ev.W, ev.H)
+
+		debug(root.serialize())
 		return
 	}
 

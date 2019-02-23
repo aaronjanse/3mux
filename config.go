@@ -13,7 +13,7 @@ type Config struct {
 }
 
 var config = Config{
-	statusBar: false,
+	statusBar: true,
 	bindings: map[interface{}]string{
 		keypress.AltChar{'N'}: "newWindow",
 

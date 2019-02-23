@@ -73,3 +73,8 @@ type MouseDown struct {
 type MouseUp struct {
 	X, Y int
 }
+
+// Resize is for host terminal resize eventd
+type Resize struct {
+	W, H int
+}

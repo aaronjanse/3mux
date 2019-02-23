@@ -47,7 +47,6 @@ func main() {
 	termW, termH, _ = getTermSize()
 
 	renderer = render.NewRenderer()
-	renderer.Resize(termW, termH)
 	go renderer.ListenToQueue()
 
 	root = Split{
@@ -62,14 +61,7 @@ func main() {
 
 	defer root.kill()
 
-	var h int
-	if config.statusBar {
-		h = termH - 1
-	} else {
-		h = termH
-	}
-
-	root.setRenderRect(0, 0, termW, h)
+	resize(termW, termH)
 
 	// enable mouse reporting
 	fmt.Print("\033[?1000h")
@@ -79,7 +71,26 @@ func main() {
 	fmt.Print("\033[?1015h")
 	defer fmt.Print("\033[?1015l")
 
+	if config.statusBar {
+		debug(root.serialize())
+	}
+
 	keypress.Listen(handleInput)
+}
+
+func resize(w, h int) {
+	termW = w
+	termH = h
+
+	renderer.Resize(w, h)
+
+	var wmH int
+	if config.statusBar {
+		wmH = h - 1
+	} else {
+		wmH = h
+	}
+	root.setRenderRect(0, 0, w, wmH)
 }
 
 func shutdownNow() {
