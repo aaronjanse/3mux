@@ -15,6 +15,12 @@ The difference is that `tmux2` comes with sane default with a few nice touches.
 - [ ] reading tmux configs
 - [ ] fullscreen mode allows for easy selection of text
 
+## Getting Started
+
+Run `cmd:fixme` to get started.
+
+Use <kbd>Ctrl+N</kbd> to create a new window.
+
 ## Decisions
 
 ### Text Selection
