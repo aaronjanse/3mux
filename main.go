@@ -140,6 +140,6 @@ func debug(s string) {
 				},
 			},
 		}
-		renderer.HandleCh(ch)
+		renderer.ForceHandleCh(ch)
 	}
 }

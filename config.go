@@ -50,10 +50,6 @@ func seiveConfigEvents(ev interface{}) bool {
 
 		root.refreshRenderRect()
 
-		if config.statusBar {
-			debug(root.serialize())
-		}
-
 		return true
 	}
 

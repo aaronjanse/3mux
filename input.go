@@ -40,8 +40,6 @@ func handleInput(event interface{}, rawData []byte) {
 	switch ev := event.(type) {
 	case keypress.Resize:
 		resize(ev.W, ev.H)
-
-		debug(root.serialize())
 		return
 	}
 

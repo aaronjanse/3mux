@@ -87,6 +87,14 @@ func (r *Renderer) HandleCh(ch PositionedChar) {
 	r.writingMutex.Unlock()
 }
 
+// ForceHandleCh places a PositionedChar in the pending screen buffer, ignoring cache buffering
+func (r *Renderer) ForceHandleCh(ch PositionedChar) {
+	r.currentScreen[ch.Y][ch.X] = Char{
+		Rune: 0,
+	}
+	r.HandleCh(ch)
+}
+
 // ListenToQueue is a blocking function that processes data sent to the RenderQueue
 func (r *Renderer) ListenToQueue() {
 	fmt.Print("\033[2J") // clear screen
