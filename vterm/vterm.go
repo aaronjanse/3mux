@@ -121,6 +121,13 @@ func (v *VTerm) Reshape(x, y, w, h int) {
 		}
 	}
 
+	if v.scrollingRegion.top == 0 && v.scrollingRegion.bottom == v.h-1 {
+		v.scrollingRegion.bottom = h - 1
+	}
+
+	v.w = w
+	v.h = h
+
 	if v.Cursor.Y >= h {
 		v.setCursorY(h - 1)
 	}
@@ -128,34 +135,6 @@ func (v *VTerm) Reshape(x, y, w, h int) {
 	if v.Cursor.X >= w {
 		v.setCursorX(w - 1)
 	}
-
-	// if h > len(v.screen) { // move lines from scrollback
-	// 	linesToAdd := h - len(v.screen)
-	// 	scrollbackLinesToAdd := linesToAdd
-	// 	if scrollbackLinesToAdd > len(v.scrollback) {
-	// 		scrollbackLinesToAdd = len(v.scrollback)
-	// 	}
-
-	// 	v.screen = append(v.scrollback[len(v.scrollback)-scrollbackLinesToAdd:], v.screen...)
-	// 	v.screen = append(v.screen, make([][]Char, linesToAdd-scrollbackLinesToAdd)...)
-	// 	v.scrollback = v.scrollback[:len(v.scrollback)-scrollbackLinesToAdd]
-	// } else if h < len(v.screen)-1 { // move lines to scrollback
-	// 	linesToMove := len(v.screen) - h
-
-	// 	v.scrollback = append(v.scrollback, v.screen[:linesToMove]...)
-	// 	// v.debug(strconv.Itoa(linesToMove))
-	// 	// fmt.Fprintln(os.Stdout, strconv.Itoa(len(v.screen)-linesToMove))
-	// 	if linesToMove < len(v.screen) {
-	// 		v.screen = v.screen[linesToMove:]
-	// 	}
-	// }
-
-	if v.scrollingRegion.top == 0 && v.scrollingRegion.bottom == v.h-1 {
-		v.scrollingRegion.bottom = h - 1
-	}
-
-	v.w = w
-	v.h = h
 
 	v.RedrawWindow()
 }

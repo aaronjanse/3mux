@@ -170,6 +170,10 @@ func handleEscapeCode(data []byte, handle func(parsedData interface{})) {
 				log.Printf("Unrecognized keycode: %v", data)
 			}
 		default:
+			if len(data) < 6 {
+				log.Printf("Unrecognized arrow %v", data)
+				return
+			}
 			arrow := directionNames[data[5]]
 			switch data[4] {
 			case 50:

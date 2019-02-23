@@ -86,6 +86,8 @@ func (s *Shell) handleStdin(data string) {
 }
 
 func (s *Shell) resize(w, h int) {
+	w--
+	h--
 	// Handle pty size.
 	ch := make(chan os.Signal, 1)
 	signal.Notify(ch, syscall.SIGWINCH)

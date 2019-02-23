@@ -171,3 +171,13 @@ func (r *Renderer) Debug(s string) {
 func (r *Renderer) GetRune(x, y int) rune {
 	return r.currentScreen[y][x].Rune
 }
+
+// HardRefresh force clears all cached chars
+func (r *Renderer) HardRefresh() {
+	fmt.Print("\033[2J")
+	for y := range r.currentScreen {
+		for x := range r.currentScreen[y] {
+			r.currentScreen[y][x].Rune = ' '
+		}
+	}
+}

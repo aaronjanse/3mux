@@ -61,8 +61,6 @@ func main() {
 
 	defer root.kill()
 
-	resize(termW, termH)
-
 	// enable mouse reporting
 	fmt.Print("\033[?1000h")
 	defer fmt.Print("\033[?1000l")
@@ -70,6 +68,8 @@ func main() {
 	defer fmt.Print("\033[?1005l")
 	fmt.Print("\033[?1015h")
 	defer fmt.Print("\033[?1015l")
+
+	resize(termW, termH)
 
 	if config.statusBar {
 		debug(root.serialize())
@@ -91,6 +91,8 @@ func resize(w, h int) {
 		wmH = h
 	}
 	root.setRenderRect(0, 0, w, wmH)
+
+	renderer.HardRefresh()
 }
 
 func shutdownNow() {
