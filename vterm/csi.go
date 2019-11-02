@@ -4,7 +4,7 @@ import (
 	"log"
 	"unicode"
 
-	"github.com/aaronduino/i3-tmux/render"
+	"github.com/aaronjanse/i3-tmux/render"
 )
 
 func (v *VTerm) handleCSISequence() {

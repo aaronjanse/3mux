@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/aaronduino/i3-tmux/render"
+	"github.com/aaronjanse/i3-tmux/render"
 )
 
 // A Split splits a region of the screen into a areas reserved for multiple child nodes

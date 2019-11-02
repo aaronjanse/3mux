@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"math/rand"
 
-	"github.com/aaronduino/i3-tmux/vterm"
+	"github.com/aaronjanse/i3-tmux/vterm"
 )
 
 // A Pane is a tiling unit representing a terminal

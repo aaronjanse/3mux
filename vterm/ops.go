@@ -1,7 +1,7 @@
 package vterm
 
 import (
-	"github.com/aaronduino/i3-tmux/render"
+	"github.com/aaronjanse/i3-tmux/render"
 )
 
 // ScrollbackUp shifts the screen contents up, with scrollback

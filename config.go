@@ -3,7 +3,7 @@ package main
 import (
 	"strings"
 
-	"github.com/aaronduino/i3-tmux/keypress"
+	"github.com/aaronjanse/i3-tmux/keypress"
 )
 
 // Config stores all user configuration values

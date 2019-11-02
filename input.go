@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/aaronduino/i3-tmux/keypress"
+	"github.com/aaronjanse/i3-tmux/keypress"
 )
 
 type inputState struct {

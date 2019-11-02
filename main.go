@@ -7,8 +7,8 @@ import (
 	"os"
 	"runtime/pprof"
 
-	"github.com/aaronduino/i3-tmux/keypress"
-	"github.com/aaronduino/i3-tmux/render"
+	"github.com/aaronjanse/i3-tmux/keypress"
+	"github.com/aaronjanse/i3-tmux/render"
 
 	term "github.com/nsf/termbox-go"
 )
