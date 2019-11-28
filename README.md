@@ -23,6 +23,8 @@ Run `cmd:fixme` to get started.
 
 Use <kbd>Ctrl+N</kbd> to create a new window.
 
+Try out ctrl+ i/j/k/l.
+
 ## Decisions
 
 ### Text Selection
