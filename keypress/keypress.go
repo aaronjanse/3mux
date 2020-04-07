@@ -169,6 +169,15 @@ func handleEscapeCode(data []byte, handle func(parsedData interface{})) {
 			default:
 				log.Printf("Unrecognized keycode: %v", data)
 			}
+		case 77:
+			switch data[3] {
+			case 96:
+				handle(ScrollUp{})
+			case 97:
+				handle(ScrollDown{})
+			default:
+				log.Printf("Unrecognized keycode: %v", data)
+			}
 		default:
 			if len(data) < 6 {
 				log.Printf("Unrecognized arrow %v", data)
