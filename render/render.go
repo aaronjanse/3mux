@@ -129,12 +129,13 @@ func (r *Renderer) ListenToQueue() {
 
 			fmt.Print(diff.String())
 
-			// put the cursor back in its resting position
+			fmt.Print("\033[?25h") // show cursor
+		}
+
+		if r.drawingCursor != r.restingCursor {
 			delta := deltaMarkup(r.drawingCursor, r.restingCursor)
 			fmt.Print(delta)
 			r.drawingCursor = r.restingCursor
-
-			fmt.Print("\033[?25h") // show cursor
 		}
 
 		// thr delay frees up the CPU for an arbitrary amount of time
