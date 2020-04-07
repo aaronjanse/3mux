@@ -50,6 +50,12 @@ func (u *Universe) kill() {
 	}
 }
 
+func (u *Universe) setPause(pause bool) {
+	for _, n := range u.workspaces {
+		n.contents.setPause(pause)
+	}
+}
+
 // refreshRenderRect recalculates the coordinates of a Split's elements and calls setRenderRect on each of its children
 // this is for when one or more of a split's children are reshaped
 func (u *Universe) refreshRenderRect() {
@@ -59,6 +65,6 @@ func (u *Universe) refreshRenderRect() {
 	h := u.renderRect.h
 
 	for _, child := range u.workspaces {
-		child.contents.setRenderRect(x, y, w, h)
+		child.setRenderRect(x, y, w, h)
 	}
 }

@@ -16,6 +16,7 @@ var config = Config{
 	statusBar: true,
 	bindings: map[interface{}]string{
 		keypress.AltChar{'N'}: "newWindow",
+		keypress.AltChar{'F'}: "fullscreen",
 
 		keypress.AltShiftArrow{keypress.Up}:    "moveWindow(Up)",
 		keypress.AltShiftArrow{keypress.Down}:  "moveWindow(Down)",
@@ -72,20 +73,33 @@ func executeOperationCode(s string) {
 		params[idx] = strings.TrimSpace(param)
 	}
 
-	switch funcName {
-	case "newWindow":
-		newWindow()
-	case "moveWindow":
-		d := getDirectionFromString(params[0])
-		moveWindow(d)
-	case "moveSelection":
-		d := getDirectionFromString(params[0])
-		moveSelection(d)
-	case "killWindow":
-		killWindow()
-	case "resize":
-		resizeMode = true
-	default:
-		panic(funcName)
+	if root.workspaces[root.selectionIdx].doFullscreen {
+		switch funcName {
+		case "fullscreen":
+			unfullscreen()
+		case "killWindow":
+			unfullscreen()
+			killWindow()
+		}
+	} else {
+		switch funcName {
+		case "fullscreen":
+			fullscreen()
+		case "newWindow":
+			newWindow()
+		case "moveWindow":
+			d := getDirectionFromString(params[0])
+			moveWindow(d)
+		case "moveSelection":
+			d := getDirectionFromString(params[0])
+			moveSelection(d)
+		case "killWindow":
+			killWindow()
+		case "resize":
+			resizeMode = true
+		default:
+			panic(funcName)
+		}
+
 	}
 }

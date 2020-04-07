@@ -1,5 +1,22 @@
 package main
 
+func fullscreen() {
+	root.workspaces[root.selectionIdx].doFullscreen = true
+	path := getSelection()
+
+	root.workspaces[root.selectionIdx].contents.setPause(true)
+
+	r := root.workspaces[root.selectionIdx].contents.getRenderRect()
+	specaialPane := path.getContainer()
+	specaialPane.setRenderRect(r.x, r.y, r.w, r.h)
+	specaialPane.setPause(false)
+}
+
+func unfullscreen() {
+	root.workspaces[root.selectionIdx].doFullscreen = false
+	root.workspaces[root.selectionIdx].contents.setPause(false)
+}
+
 func moveWindow(d Direction) {
 	path := getSelection()
 	parent, parentPath := path.getParent()

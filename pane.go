@@ -69,6 +69,10 @@ func (t *Pane) kill() {
 	t.shell.Kill()
 }
 
+func (t *Pane) setPause(pause bool) {
+	t.vterm.Paused = pause
+}
+
 func (t *Pane) serialize() string {
 	return fmt.Sprintf("Term")
 }

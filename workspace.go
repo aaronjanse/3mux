@@ -15,5 +15,9 @@ func (s *Workspace) serialize() string {
 }
 
 func (s *Workspace) setRenderRect(x, y, w, h int) {
-	s.contents.setRenderRect(x, y, w, h)
+	if s.doFullscreen {
+		getSelection().getContainer().setRenderRect(x, y, w, h)
+	} else {
+		s.contents.setRenderRect(x, y, w, h)
+	}
 }

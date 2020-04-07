@@ -13,6 +13,7 @@ type Container interface {
 	serialize() string
 	simplify()
 	kill()
+	setPause(bool)
 }
 
 var root Universe

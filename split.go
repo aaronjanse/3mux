@@ -54,6 +54,12 @@ func (s *Split) kill() {
 	}
 }
 
+func (s *Split) setPause(pause bool) {
+	for _, e := range s.elements {
+		e.contents.setPause(pause)
+	}
+}
+
 // removeTheDead recursively searches the tree and removes panes with Dead == true.
 // A pane declares itself dead when its shell dies.
 func removeTheDead(path Path) {

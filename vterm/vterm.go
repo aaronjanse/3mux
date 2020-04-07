@@ -55,6 +55,8 @@ type VTerm struct {
 	storedCursorX, storedCursorY int
 
 	scrollingRegion ScrollingRegion
+
+	Paused bool
 }
 
 // NewVTerm returns a VTerm ready to be used by its exported methods
@@ -91,6 +93,7 @@ func NewVTerm(shellByteCounter *uint64, renderer *render.Renderer, parentSetCurs
 		scrollingRegion:  ScrollingRegion{top: 0, bottom: h - 1},
 		shutdown:         make(chan bool, 1),
 		NeedsRedraw:      false,
+		Paused:           false,
 	}
 }
 
