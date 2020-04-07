@@ -14,7 +14,7 @@ func (v *VTerm) handlePrivateSequence(next rune, parameterCode string) {
 		case "25": // show Cursor
 		case "1049", "1047", "47": // switch to alt screen buffer
 			if !v.usingAltScreen {
-				v.screenBackup = v.screen
+				v.screenBackup = v.Screen
 			}
 		case "2004": // enable bracketed paste mode
 		default:
@@ -28,7 +28,7 @@ func (v *VTerm) handlePrivateSequence(next rune, parameterCode string) {
 		case "25": // hide Cursor
 		case "1049", "1047", "47": // switch to normal screen buffer
 			if v.usingAltScreen {
-				v.screen = v.screenBackup
+				v.Screen = v.screenBackup
 			}
 		case "2004": // disable bracketed paste mode
 		default:

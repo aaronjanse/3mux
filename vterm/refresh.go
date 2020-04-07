@@ -23,7 +23,7 @@ func (v *VTerm) useSlowRefresh() {
 		ticker := time.NewTicker(time.Millisecond * 250)
 
 		for range ticker.C {
-			if !v.usingSlowRefresh {
+			if !v.usingSlowRefresh || v.IsPaused {
 				ticker.Stop()
 				return
 			}

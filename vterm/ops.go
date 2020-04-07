@@ -5,7 +5,7 @@ import (
 )
 
 func (v *VTerm) ScrollbackReset() {
-	v.scrollbackPos = 0
+	v.ScrollbackPos = 0
 
 	v.RedrawWindow()
 }
@@ -16,8 +16,8 @@ func (v *VTerm) ScrollbackUp() {
 		return
 	}
 
-	if v.scrollbackPos-5 >= 0 {
-		v.scrollbackPos -= 5
+	if v.ScrollbackPos-5 >= 0 {
+		v.ScrollbackPos -= 5
 	}
 
 	v.RedrawWindow()
@@ -29,19 +29,19 @@ func (v *VTerm) ScrollbackDown() {
 		return
 	}
 
-	if len(v.scrollback) == 0 {
+	if len(v.Scrollback) == 0 {
 		return
 	}
 
-	if v.scrollbackPos+5 < len(v.scrollback) {
-		v.scrollbackPos += 5
+	if v.ScrollbackPos+5 < len(v.Scrollback) {
+		v.ScrollbackPos += 5
 		v.RedrawWindow()
 	}
 }
 
 // RefreshCursor refreshes the ncurses cursor position
 func (v *VTerm) RefreshCursor() {
-	if v.isPaused {
+	if v.IsPaused {
 		return
 	}
 	v.parentSetCursor(v.Cursor.X, v.Cursor.Y)
@@ -51,8 +51,8 @@ func (v *VTerm) RefreshCursor() {
 // Lines pushed out of view are put in the scrollback.
 func (v *VTerm) scrollUp(n int) {
 	if !v.usingAltScreen {
-		rows := v.screen[v.scrollingRegion.top : v.scrollingRegion.top+n]
-		v.scrollback = append(v.scrollback, rows...)
+		rows := v.Screen[v.scrollingRegion.top : v.scrollingRegion.top+n]
+		v.Scrollback = append(v.Scrollback, rows...)
 	}
 
 	blankLine := []render.Char{}
@@ -65,11 +65,11 @@ func (v *VTerm) scrollUp(n int) {
 		newLines[i] = blankLine
 	}
 
-	v.screen = append(append(append(
-		v.screen[:v.scrollingRegion.top],
-		v.screen[v.scrollingRegion.top+n:v.scrollingRegion.bottom+1]...),
+	v.Screen = append(append(append(
+		v.Screen[:v.scrollingRegion.top],
+		v.Screen[v.scrollingRegion.top+n:v.scrollingRegion.bottom+1]...),
 		newLines...),
-		v.screen[v.scrollingRegion.bottom+1:]...)
+		v.Screen[v.scrollingRegion.bottom+1:]...)
 
 	if !v.usingSlowRefresh {
 		v.RedrawWindow()
@@ -84,11 +84,11 @@ func (v *VTerm) scrollDown(n int) {
 		newLines[i] = v.blankLine
 	}
 
-	v.screen = append(append(append(
-		v.screen[:v.scrollingRegion.top],
+	v.Screen = append(append(append(
+		v.Screen[:v.scrollingRegion.top],
 		newLines...),
-		v.screen[v.scrollingRegion.top:v.scrollingRegion.bottom-n]...),
-		v.screen[v.scrollingRegion.bottom+1:]...)
+		v.Screen[v.scrollingRegion.top:v.scrollingRegion.bottom-n]...),
+		v.Screen[v.scrollingRegion.bottom+1:]...)
 
 	if !v.usingSlowRefresh {
 		v.RedrawWindow()
@@ -139,8 +139,8 @@ func (v *VTerm) putChar(ch rune) {
 	positionedChar.Cursor.X += v.x
 	positionedChar.Cursor.Y += v.y
 
-	if v.Cursor.Y < len(v.screen) && v.Cursor.X < len(v.screen[v.Cursor.Y]) {
-		v.screen[v.Cursor.Y][v.Cursor.X] = char
+	if v.Cursor.Y < len(v.Screen) && v.Cursor.X < len(v.Screen[v.Cursor.Y]) {
+		v.Screen[v.Cursor.Y][v.Cursor.X] = char
 	}
 
 	// TODO: print to the window based on scrolling position
@@ -156,20 +156,17 @@ func (v *VTerm) putChar(ch rune) {
 // RedrawWindow redraws the screen into ncurses from scratch.
 // This should be reserved for operations not yet formalized into a generic, efficient function.
 func (v *VTerm) RedrawWindow() {
-	if v.isPaused {
-		return
-	}
-	if v.scrollbackPos < v.h {
-		for y := 0; y < v.h-v.scrollbackPos; y++ {
+	if v.ScrollbackPos < v.h {
+		for y := 0; y < v.h-v.ScrollbackPos; y++ {
 			for x := 0; x < v.w; x++ {
-				if y >= len(v.screen) || x >= len(v.screen[y]) {
+				if y >= len(v.Screen) || x >= len(v.Screen[y]) {
 					continue
 				}
 
 				ch := render.PositionedChar{
-					Rune: v.screen[y][x].Rune,
+					Rune: v.Screen[y][x].Rune,
 					Cursor: render.Cursor{
-						X: v.x + x, Y: v.y + y + v.scrollbackPos, Style: v.screen[y][x].Style,
+						X: v.x + x, Y: v.y + y + v.ScrollbackPos, Style: v.Screen[y][x].Style,
 					},
 				}
 
@@ -182,20 +179,20 @@ func (v *VTerm) RedrawWindow() {
 		v.RefreshCursor()
 	}
 
-	if v.scrollbackPos > 0 {
-		numLinesVisible := v.scrollbackPos
-		if v.scrollbackPos > v.h {
+	if v.ScrollbackPos > 0 {
+		numLinesVisible := v.ScrollbackPos
+		if v.ScrollbackPos > v.h {
 			numLinesVisible = v.h
 		}
 		for y := 0; y < numLinesVisible; y++ {
 			for x := 0; x < v.w; x++ {
-				idx := len(v.scrollback) - v.scrollbackPos + y - 1
+				idx := len(v.Scrollback) - v.ScrollbackPos + y - 1
 
-				if x < len(v.scrollback[idx]) {
+				if x < len(v.Scrollback[idx]) {
 					ch := render.PositionedChar{
-						Rune: v.scrollback[idx][x].Rune,
+						Rune: v.Scrollback[idx][x].Rune,
 						Cursor: render.Cursor{
-							X: v.x + x, Y: v.y + y, Style: v.scrollback[idx][x].Style,
+							X: v.x + x, Y: v.y + y, Style: v.Scrollback[idx][x].Style,
 						},
 					}
 					v.renderer.HandleCh(ch)

@@ -24,11 +24,11 @@ type VTerm struct {
 	x, y, w, h int
 
 	// visible screen; char cursor coords are ignored
-	screen [][]render.Char
+	Screen [][]render.Char
 
-	// scrollback[0] is the line farthest from the screen
-	scrollback    [][]render.Char // disabled when using alt screen; char cursor coords are ignored
-	scrollbackPos int             // scrollbackPos is the number of lines of scrollback visible
+	// Scrollback[0] is the line farthest from the screen
+	Scrollback    [][]render.Char // disabled when using alt screen; char cursor coords are ignored
+	ScrollbackPos int             // ScrollbackPos is the number of lines of scrollback visible
 
 	usingAltScreen bool
 	screenBackup   [][]render.Char
@@ -56,7 +56,7 @@ type VTerm struct {
 	scrollingRegion ScrollingRegion
 
 	ChangePause chan bool
-	isPaused    bool
+	IsPaused    bool
 }
 
 // NewVTerm returns a VTerm ready to be used by its exported methods
@@ -81,8 +81,8 @@ func NewVTerm(shellByteCounter *uint64, renderer *render.Renderer, parentSetCurs
 		w:                w,
 		h:                h,
 		blankLine:        []render.Char{},
-		screen:           screen,
-		scrollback:       [][]render.Char{},
+		Screen:           screen,
+		Scrollback:       [][]render.Char{},
 		usingAltScreen:   false,
 		Cursor:           render.Cursor{},
 		in:               in,
@@ -93,7 +93,7 @@ func NewVTerm(shellByteCounter *uint64, renderer *render.Renderer, parentSetCurs
 		scrollingRegion:  ScrollingRegion{top: 0, bottom: h - 1},
 		NeedsRedraw:      false,
 		ChangePause:      make(chan bool, 1),
-		isPaused:         false,
+		IsPaused:         false,
 	}
 
 	return v
@@ -118,13 +118,13 @@ func (v *VTerm) Reshape(x, y, w, h int) {
 	v.y = y
 
 	for y := 0; y <= h; y++ {
-		if y >= len(v.screen) {
-			v.screen = append(v.screen, []render.Char{})
+		if y >= len(v.Screen) {
+			v.Screen = append(v.Screen, []render.Char{})
 		}
 
 		for x := 0; x <= w; x++ {
-			if x >= len(v.screen[y]) {
-				v.screen[y] = append(v.screen[y], render.Char{Rune: ' ', Style: render.Style{}})
+			if x >= len(v.Screen[y]) {
+				v.Screen[y] = append(v.Screen[y], render.Char{Rune: ' ', Style: render.Style{}})
 			}
 		}
 	}

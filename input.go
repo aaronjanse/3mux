@@ -66,10 +66,7 @@ func handleInput(event interface{}, rawData []byte) {
 
 	t := getSelection().getContainer().(*Pane)
 
-	t.vterm.ScrollbackReset()
-
 	t.handleStdin(string(rawData))
-	t.vterm.RefreshCursor()
 }
 
 // seiveMouseEvents processes mouse events and returns true if the data should *not* be passed downstream

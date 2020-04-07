@@ -108,10 +108,10 @@ func (v *VTerm) handleCSISequence() {
 				newLines[i] = make([]render.Char, v.w)
 			}
 
-			v.screen = append(append(
+			v.Screen = append(append(
 				newLines,
-				v.screen[v.Cursor.Y:v.scrollingRegion.bottom-n+1]...),
-				v.screen[v.scrollingRegion.bottom+1:]...)
+				v.Screen[v.Cursor.Y:v.scrollingRegion.bottom-n+1]...),
+				v.Screen[v.scrollingRegion.bottom+1:]...)
 
 			v.RedrawWindow()
 		case 'm': // Select Graphic Rendition
@@ -131,37 +131,37 @@ func (v *VTerm) handleEraseInDisplay(parameterCode string) {
 	seq := parseSemicolonNumSeq(parameterCode, 0)
 	switch seq[0] {
 	case 0: // clear from Cursor to end of screen
-		for i := v.Cursor.X; i < len(v.screen[v.Cursor.Y]); i++ {
-			v.screen[v.Cursor.Y][i].Rune = ' '
+		for i := v.Cursor.X; i < len(v.Screen[v.Cursor.Y]); i++ {
+			v.Screen[v.Cursor.Y][i].Rune = ' '
 		}
-		if v.Cursor.Y+1 < len(v.screen) {
-			for j := v.Cursor.Y; j < len(v.screen); j++ {
-				for i := 0; i < len(v.screen[j]); i++ {
-					v.screen[j][i].Rune = ' '
+		if v.Cursor.Y+1 < len(v.Screen) {
+			for j := v.Cursor.Y; j < len(v.Screen); j++ {
+				for i := 0; i < len(v.Screen[j]); i++ {
+					v.Screen[j][i].Rune = ' '
 				}
 			}
 		}
 		v.RedrawWindow()
 	case 1: // clear from Cursor to beginning of screen
 		for j := 0; j < v.Cursor.Y; j++ {
-			for i := 0; i < len(v.screen[j]); j++ {
-				v.screen[j][i].Rune = ' '
+			for i := 0; i < len(v.Screen[j]); j++ {
+				v.Screen[j][i].Rune = ' '
 			}
 		}
 		v.RedrawWindow()
 	case 2: // clear entire screen (and move Cursor to top left?)
-		for i := range v.screen {
-			for j := range v.screen[i] {
-				v.screen[i][j].Rune = ' '
+		for i := range v.Screen {
+			for j := range v.Screen[i] {
+				v.Screen[i][j].Rune = ' '
 			}
 		}
 		v.setCursorPos(0, 0)
 		v.RedrawWindow()
 	case 3: // clear entire screen and delete all lines saved in scrollback buffer
-		v.scrollback = [][]render.Char{}
-		for i := range v.screen {
-			for j := range v.screen[i] {
-				v.screen[i][j].Rune = ' '
+		v.Scrollback = [][]render.Char{}
+		for i := range v.Screen {
+			for j := range v.Screen[i] {
+				v.Screen[i][j].Rune = ' '
 			}
 		}
 		v.setCursorPos(0, 0)
@@ -175,16 +175,16 @@ func (v *VTerm) handleEraseInLine(parameterCode string) {
 	seq := parseSemicolonNumSeq(parameterCode, 0)
 	switch seq[0] {
 	case 0: // clear from Cursor to end of line
-		for i := v.Cursor.X; i < len(v.screen[v.Cursor.Y]); i++ {
-			v.screen[v.Cursor.Y][i].Rune = ' '
+		for i := v.Cursor.X; i < len(v.Screen[v.Cursor.Y]); i++ {
+			v.Screen[v.Cursor.Y][i].Rune = ' '
 		}
 	case 1: // clear from Cursor to beginning of line
 		for i := 0; i < v.Cursor.X; i++ {
-			v.screen[v.Cursor.Y][i].Rune = ' '
+			v.Screen[v.Cursor.Y][i].Rune = ' '
 		}
 	case 2: // clear entire line; Cursor position remains the same
-		for i := 0; i < len(v.screen[v.Cursor.Y]); i++ {
-			v.screen[v.Cursor.Y][i].Rune = ' '
+		for i := 0; i < len(v.Screen[v.Cursor.Y]); i++ {
+			v.Screen[v.Cursor.Y][i].Rune = ' '
 		}
 	default:
 		log.Printf("Unrecognized erase in line directive: %v", seq[0])

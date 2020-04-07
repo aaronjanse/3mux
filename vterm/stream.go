@@ -24,7 +24,7 @@ func (v *VTerm) pullRune() (rune, bool) {
 			return r, ok
 		case p := <-v.ChangePause:
 			for {
-				v.isPaused = p
+				v.IsPaused = p
 				if !p {
 					break
 				}
