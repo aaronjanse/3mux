@@ -12,7 +12,11 @@ func (v *VTerm) ScrollbackReset() {
 
 // ScrollbackUp shifts the screen contents up, with scrollback
 func (v *VTerm) ScrollbackUp() {
-	if v.scrollbackPos > 0 {
+	if v.usingAltScreen {
+		return
+	}
+
+	if v.scrollbackPos-5 >= 0 {
 		v.scrollbackPos -= 5
 	}
 
@@ -21,11 +25,15 @@ func (v *VTerm) ScrollbackUp() {
 
 // ScrollbackDown shifts the screen contents down, with scrollback
 func (v *VTerm) ScrollbackDown() {
+	if v.usingAltScreen {
+		return
+	}
+
 	if len(v.scrollback) == 0 {
 		return
 	}
 
-	if v.scrollbackPos < len(v.scrollback) {
+	if v.scrollbackPos+5 < len(v.scrollback) {
 		v.scrollbackPos += 5
 		v.RedrawWindow()
 	}
