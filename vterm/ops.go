@@ -4,6 +4,12 @@ import (
 	"github.com/aaronjanse/i3-tmux/render"
 )
 
+func (v *VTerm) ScrollbackReset() {
+	v.scrollbackPos = 0
+
+	v.RedrawWindow()
+}
+
 // ScrollbackUp shifts the screen contents up, with scrollback
 func (v *VTerm) ScrollbackUp() {
 	if v.scrollbackPos > 0 {

@@ -62,9 +62,12 @@ func handleInput(event interface{}, rawData []byte) {
 		return
 	}
 
+
 	// if we didn't find anything special, just pass the raw data to the selected terminal
 
 	t := getSelection().getContainer().(*Pane)
+
+	t.vterm.ScrollbackReset()
 
 	t.shell.handleStdin(string(rawData))
 	t.vterm.RefreshCursor()
