@@ -100,8 +100,6 @@ func (r *Renderer) ListenToQueue() {
 	fmt.Print("\033[2J") // clear screen
 
 	for {
-		fmt.Print("\033[?25l") // hide cursor
-
 		var diff strings.Builder
 		for y := 0; y < r.h; y++ {
 			for x := 0; x < r.w; x++ {
@@ -125,14 +123,19 @@ func (r *Renderer) ListenToQueue() {
 			}
 		}
 
-		fmt.Print(diff.String())
+		diffStr := diff.String()
+		if len(diffStr) > 0 {
+			fmt.Print("\033[?25l") // hide cursor
 
-		// put the cursor back in its resting position
-		delta := deltaMarkup(r.drawingCursor, r.restingCursor)
-		fmt.Print(delta)
-		r.drawingCursor = r.restingCursor
+			fmt.Print(diff.String())
 
-		fmt.Print("\033[?25h") // show cursor
+			// put the cursor back in its resting position
+			delta := deltaMarkup(r.drawingCursor, r.restingCursor)
+			fmt.Print(delta)
+			r.drawingCursor = r.restingCursor
+
+			fmt.Print("\033[?25h") // show cursor
+		}
 
 		// thr delay frees up the CPU for an arbitrary amount of time
 		timer := time.NewTimer(time.Millisecond * 25)
