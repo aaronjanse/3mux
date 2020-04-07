@@ -36,7 +36,6 @@ type VTerm struct {
 	NeedsRedraw bool
 
 	startTime           int64
-	shutdown            chan bool
 	shellByteCounter    *uint64
 	internalByteCounter uint64
 	usingSlowRefresh    bool
@@ -56,7 +55,8 @@ type VTerm struct {
 
 	scrollingRegion ScrollingRegion
 
-	Paused bool
+	ChangePause chan bool
+	isPaused    bool
 }
 
 // NewVTerm returns a VTerm ready to be used by its exported methods
@@ -76,7 +76,7 @@ func NewVTerm(shellByteCounter *uint64, renderer *render.Renderer, parentSetCurs
 		screen = append(screen, row)
 	}
 
-	return &VTerm{
+	v := &VTerm{
 		x: 0, y: 0,
 		w:                w,
 		h:                h,
@@ -91,15 +91,18 @@ func NewVTerm(shellByteCounter *uint64, renderer *render.Renderer, parentSetCurs
 		renderer:         renderer,
 		parentSetCursor:  parentSetCursor,
 		scrollingRegion:  ScrollingRegion{top: 0, bottom: h - 1},
-		shutdown:         make(chan bool, 1),
 		NeedsRedraw:      false,
-		Paused:           false,
+		ChangePause:      make(chan bool, 1),
+		isPaused:         false,
 	}
+
+	return v
 }
 
 // Kill safely shuts down all vterm processes for the instance
 func (v *VTerm) Kill() {
-	v.shutdown <- true
+	v.usingSlowRefresh = false
+	v.ChangePause <- true
 }
 
 // Reshape safely updates a VTerm's width & height

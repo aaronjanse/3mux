@@ -68,7 +68,7 @@ func handleInput(event interface{}, rawData []byte) {
 
 	t.vterm.ScrollbackReset()
 
-	t.shell.handleStdin(string(rawData))
+	t.handleStdin(string(rawData))
 	t.vterm.RefreshCursor()
 }
 

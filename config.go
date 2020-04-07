@@ -18,6 +18,8 @@ var config = Config{
 		keypress.AltChar{'N'}: "newWindow",
 		keypress.AltChar{'F'}: "fullscreen",
 
+		keypress.AltChar{'/'}: "search",
+
 		keypress.AltShiftArrow{keypress.Up}:    "moveWindow(Up)",
 		keypress.AltShiftArrow{keypress.Down}:  "moveWindow(Down)",
 		keypress.AltShiftArrow{keypress.Left}:  "moveWindow(Left)",
@@ -83,6 +85,8 @@ func executeOperationCode(s string) {
 		}
 	} else {
 		switch funcName {
+		case "search":
+			search()
 		case "fullscreen":
 			fullscreen()
 		case "newWindow":

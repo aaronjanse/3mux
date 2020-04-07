@@ -33,7 +33,7 @@ func (v *VTerm) ScrollbackDown() {
 
 // RefreshCursor refreshes the ncurses cursor position
 func (v *VTerm) RefreshCursor() {
-	if v.Paused {
+	if v.isPaused {
 		return
 	}
 	v.parentSetCursor(v.Cursor.X, v.Cursor.Y)
@@ -148,7 +148,7 @@ func (v *VTerm) putChar(ch rune) {
 // RedrawWindow redraws the screen into ncurses from scratch.
 // This should be reserved for operations not yet formalized into a generic, efficient function.
 func (v *VTerm) RedrawWindow() {
-	if v.Paused {
+	if v.isPaused {
 		return
 	}
 	if v.scrollbackPos < v.h {

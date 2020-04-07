@@ -1,5 +1,9 @@
 package main
 
+func search() {
+	getSelection().getContainer().(*Pane).toggleSearch()
+}
+
 func fullscreen() {
 	root.workspaces[root.selectionIdx].doFullscreen = true
 	path := getSelection()

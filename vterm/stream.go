@@ -18,8 +18,20 @@ func (v *VTerm) pullRune() (rune, bool) {
 		v.useFastRefresh()
 	}
 
-	r, ok := <-v.in
-	return r, ok
+	for {
+		select {
+		case r, ok := <-v.in:
+			return r, ok
+		case p := <-v.ChangePause:
+			for {
+				v.isPaused = p
+				if !p {
+					break
+				}
+				p = <-v.ChangePause
+			}
+		}
+	}
 }
 
 func (v *VTerm) pullRuneNoErr() rune {

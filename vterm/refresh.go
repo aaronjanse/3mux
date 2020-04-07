@@ -22,13 +22,9 @@ func (v *VTerm) useSlowRefresh() {
 	go func() {
 		ticker := time.NewTicker(time.Millisecond * 250)
 
-		go func() {
-			<-v.shutdown
-			ticker.Stop()
-		}()
-
 		for range ticker.C {
 			if !v.usingSlowRefresh {
+				ticker.Stop()
 				return
 			}
 

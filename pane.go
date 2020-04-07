@@ -3,7 +3,9 @@ package main
 import (
 	"fmt"
 	"math/rand"
+	"time"
 
+	"github.com/aaronjanse/i3-tmux/render"
 	"github.com/aaronjanse/i3-tmux/vterm"
 )
 
@@ -17,6 +19,9 @@ type Pane struct {
 
 	vterm *vterm.VTerm
 	shell Shell
+
+	searchMode bool
+	searchText string
 
 	Dead bool
 }
@@ -64,13 +69,104 @@ func newTerm(selected bool) *Pane {
 	return t
 }
 
+func (t *Pane) handleStdin(in string) {
+	if t.searchMode {
+		for _, c := range in {
+			if c == 13 {
+				continue // carriage return
+			}
+			if c == 8 || c == 127 { // backspace
+				if len(t.searchText) > 0 {
+					t.searchText = t.searchText[:len(t.searchText)-1]
+				}
+			} else if c == 10 {
+				// TODO (newline)
+			} else {
+				t.searchText += string(c)
+			}
+		}
+		t.displayStatusText(t.searchText)
+	} else {
+		t.shell.handleStdin(in)
+	}
+}
+
+func (t *Pane) toggleSearch() {
+	t.searchMode = !t.searchMode
+	t.vterm.ChangePause <- t.searchMode
+
+	if t.searchMode {
+		// FIXME hacky way to wait for full control of screen section
+		timer := time.NewTimer(time.Millisecond * 5)
+		select {
+		case <-timer.C:
+			timer.Stop()
+		}
+
+		t.displayStatusText("Search...")
+	} else {
+		t.clearStatusText()
+	}
+}
+
+func (t *Pane) displayStatusText(s string) {
+	for i := 0; i < t.renderRect.w; i++ {
+		r := ' '
+		if i < len(s) {
+			r = rune(s[i])
+		}
+
+		ch := render.PositionedChar{
+			Rune: r,
+			Cursor: render.Cursor{
+				X: i,
+				Y: t.renderRect.h - 1,
+				Style: render.Style{
+					Bg: render.Color{
+						ColorMode: render.ColorBit3Bright,
+						Code:      2,
+					},
+					Fg: render.Color{
+						ColorMode: render.ColorBit3Normal,
+						Code:      0,
+					},
+				},
+			},
+		}
+		renderer.ForceHandleCh(ch)
+	}
+}
+
+func (t *Pane) clearStatusText() {
+	for i := 0; i < t.renderRect.w; i++ {
+		ch := render.PositionedChar{
+			Rune: ' ',
+			Cursor: render.Cursor{
+				X: i,
+				Y: t.renderRect.h - 1,
+				Style: render.Style{
+					Bg: render.Color{
+						ColorMode: render.ColorBit3Bright,
+						Code:      2,
+					},
+					Fg: render.Color{
+						ColorMode: render.ColorBit3Normal,
+						Code:      0,
+					},
+				},
+			},
+		}
+		renderer.ForceHandleCh(ch)
+	}
+}
+
 func (t *Pane) kill() {
 	t.vterm.Kill()
 	t.shell.Kill()
 }
 
 func (t *Pane) setPause(pause bool) {
-	t.vterm.Paused = pause
+	t.vterm.ChangePause <- pause
 }
 
 func (t *Pane) serialize() string {
