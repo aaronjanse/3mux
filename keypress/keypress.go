@@ -43,6 +43,8 @@ import (
 
 const debugKeycodes = false
 
+var isProcessingMouse = true
+
 var directionNames = map[byte]Direction{
 	65: Up,
 	66: Down,
@@ -61,6 +63,21 @@ const (
 	Right
 )
 
+// ShouldProcessMouse controls whether typical mouse actions (e.g. selection) should be disabled in exhange for i3-mux-specific features
+func ShouldProcessMouse(should bool) {
+	if isProcessingMouse == should {
+		return
+	}
+
+	if should {
+		term.SetInputMode(term.InputEsc | term.InputAlt | term.InputMouse)
+	} else {
+		term.SetInputMode(term.InputEsc | term.InputAlt)
+	}
+
+	isProcessingMouse = should
+}
+
 // Listen is a blocking function that indefinitely listens for keypresses.
 // When it detects a keypress, it passes on to the callback a human-readable interpretation of the event (e.g. Alt+Shift+Up) along with the raw string of text received by the terminal.
 func Listen(callback func(parsedData interface{}, rawData []byte)) {
@@ -69,6 +86,8 @@ func Listen(callback func(parsedData interface{}, rawData []byte)) {
 		log.Fatal(err)
 	}
 	defer term.Close()
+
+	ShouldProcessMouse(true)
 
 	// show cursor, make it blink
 	fmt.Print("\033[?25h\033[?12h") // EXPLAIN: do we need this?
@@ -94,6 +113,7 @@ func Listen(callback func(parsedData interface{}, rawData []byte)) {
 			case 27: // Escape code
 				handleEscapeCode(data, handle)
 			default:
+				log.Println("uncaught:", data)
 				if len(data) == 1 {
 					if data[0] <= 26 { // Ctrl
 						letter := rune('A' + data[0] - 1)
@@ -169,8 +189,42 @@ func handleEscapeCode(data []byte, handle func(parsedData interface{})) {
 			default:
 				log.Printf("Unrecognized keycode: %v", data)
 			}
+		case 60:
+			switch data[3] {
+			case 54:
+				switch data[4] {
+				case 52:
+					handle(ScrollUp{})
+				case 53:
+					handle(ScrollDown{})
+				}
+			case 48:
+				code := string(data[5:])
+				mode := data[len(data)-1]
+				pieces := strings.Split(code[:len(code)-1], ";")
+				log.Println("pieces", pieces)
+				var x int
+				if len(pieces[0]) == 0 {
+					x = 1
+				} else {
+					x, _ = strconv.Atoi(pieces[0])
+				}
+				y, _ := strconv.Atoi(pieces[1])
+				switch mode {
+				case 'M':
+					handle(MouseDown{X: x, Y: y})
+				case 'm':
+					handle(MouseUp{X: x, Y: y})
+				default:
+					log.Printf("Unrecognzied mouse code: %v", data)
+				}
+			}
 		case 77:
 			switch data[3] {
+			case 32:
+				handle(MouseDown{X: int(data[4] - 32), Y: int(data[5] - 32)})
+			case 35:
+				handle(MouseUp{X: int(data[4] - 32), Y: int(data[5] - 32)})
 			case 96:
 				handle(ScrollUp{})
 			case 97:

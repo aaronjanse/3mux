@@ -74,7 +74,7 @@ func seiveMouseEvents(event interface{}) bool {
 	switch ev := event.(type) {
 	case keypress.MouseDown:
 		// are we clicking a border? if so, which one?
-		path := findClosestBorderForCoord([]int{}, ev.X, ev.Y)
+		path := findClosestBorderForCoord([]int{root.selectionIdx}, ev.X, ev.Y)
 		pane := path.getContainer()
 		r := pane.getRenderRect()
 

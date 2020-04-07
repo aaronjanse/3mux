@@ -12,7 +12,7 @@ The difference is that `tmux2` comes with sane default with a few nice touches.
 - [x] resize windows via keyboard
 - [x] resize windows by dragging mouse
 - [x] fullscreen mode
-- [ ] text selection in fullscreen mode
+- [x] text selection in fullscreen mode
 - [ ] text search
 - [ ] reading i3 configs
 - [ ] reading tmux configs

@@ -1,5 +1,7 @@
 package main
 
+import "log"
+
 func findClosestBorderForCoord(path Path, x, y int) Path {
 	switch c := path.getContainer().(type) {
 	case *Split:
@@ -18,6 +20,8 @@ func findClosestBorderForCoord(path Path, x, y int) Path {
 		}
 	case *Pane:
 		return path
+	default:
+		log.Println("Unexpected type! ", c)
 	}
 
 	return nil

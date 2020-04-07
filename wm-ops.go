@@ -1,5 +1,7 @@
 package main
 
+import "github.com/aaronjanse/i3-tmux/keypress"
+
 func search() {
 	getSelection().getContainer().(*Pane).toggleSearch()
 }
@@ -14,11 +16,15 @@ func fullscreen() {
 	specaialPane := path.getContainer()
 	specaialPane.setRenderRect(r.x, r.y, r.w, r.h)
 	specaialPane.setPause(false)
+
+	keypress.ShouldProcessMouse(false)
 }
 
 func unfullscreen() {
 	root.workspaces[root.selectionIdx].doFullscreen = false
 	root.workspaces[root.selectionIdx].contents.setPause(false)
+
+	keypress.ShouldProcessMouse(true)
 }
 
 func moveWindow(d Direction) {
