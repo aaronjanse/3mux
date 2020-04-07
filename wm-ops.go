@@ -98,6 +98,12 @@ func killWindow() {
 	parent, parentPath := getSelection().getParent()
 	t := parentPath.popContainer(parent.selectionIdx)
 	t.(*Pane).kill()
+
+	// deselect the old Term
+	newTerm := getSelection().getContainer().(*Pane)
+	newTerm.selected = true
+	newTerm.softRefresh()
+	newTerm.vterm.RefreshCursor()
 }
 
 // stuff like h(h(x), y) -> h(x, y)

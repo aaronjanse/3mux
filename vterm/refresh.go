@@ -1,6 +1,8 @@
 package vterm
 
-import "time"
+import (
+	"time"
+)
 
 /*
 https://github.com/tmux/tmux/issues/849#issuecomment-291828893
@@ -19,6 +21,12 @@ func (v *VTerm) useSlowRefresh() {
 
 	go func() {
 		ticker := time.NewTicker(time.Millisecond * 250)
+
+		go func() {
+			<-v.shutdown
+			ticker.Stop()
+		}()
+
 		for range ticker.C {
 			if !v.usingSlowRefresh {
 				return

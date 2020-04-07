@@ -89,12 +89,14 @@ func NewVTerm(shellByteCounter *uint64, renderer *render.Renderer, parentSetCurs
 		renderer:         renderer,
 		parentSetCursor:  parentSetCursor,
 		scrollingRegion:  ScrollingRegion{top: 0, bottom: h - 1},
+		shutdown:         make(chan bool, 1),
 		NeedsRedraw:      false,
 	}
 }
 
 // Kill safely shuts down all vterm processes for the instance
 func (v *VTerm) Kill() {
+	v.shutdown <- true
 }
 
 // Reshape safely updates a VTerm's width & height
