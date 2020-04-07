@@ -22,7 +22,10 @@ type Path []int
 
 func getSelection() Path {
 	path := Path{root.selectionIdx}
-	selection := root.elements[root.selectionIdx].contents
+	wsSplit := root.workspaces[root.selectionIdx].contents
+
+	path = append(path, wsSplit.selectionIdx)
+	selection := wsSplit.elements[wsSplit.selectionIdx].contents
 
 	for {
 		switch val := selection.(type) {
@@ -47,8 +50,14 @@ func (p Path) getContainer() Container {
 		return &root
 	}
 
-	cur := root.elements[p[0]].contents
-	p = p[1:]
+	wsSplit := root.workspaces[p[0]].contents
+
+	if len(p) == 1 {
+		return wsSplit
+	}
+
+	cur := wsSplit.elements[p[1]].contents
+	p = p[2:]
 	for len(p) > 0 {
 		switch val := cur.(type) {
 		case *Split:
@@ -63,7 +72,7 @@ func (p Path) getContainer() Container {
 }
 
 func getPanes() []*Pane {
-	return getPanesOfSplit(&root)
+	return getPanesOfSplit(root.workspaces[root.selectionIdx].contents)
 }
 
 func getPanesOfSplit(s *Split) []*Pane {
@@ -97,7 +106,7 @@ func (p Path) popContainer(idx int) Container {
 		s.selectionIdx--
 	}
 
-	if len(s.elements) == 1 && len(p) >= 1 {
+	if len(s.elements) == 1 && len(p) > 1 {
 		switch val := (*s).elements[0].contents.(type) {
 		case *Pane:
 			parent, _ := p.getParent()

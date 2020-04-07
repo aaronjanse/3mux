@@ -34,9 +34,9 @@ func newTerm(selected bool) *Pane {
 	go func() {
 		t.shell.cmd.Wait()
 		t.Dead = true
-		removeTheDead([]int{})
+		removeTheDead([]int{root.selectionIdx})
 
-		if len(root.elements) == 0 {
+		if len(root.workspaces[root.selectionIdx].contents.elements) == 0 {
 			shutdownNow()
 		} else {
 			// deselect the old Term
@@ -72,6 +72,8 @@ func (t *Pane) kill() {
 func (t *Pane) serialize() string {
 	return fmt.Sprintf("Term")
 }
+
+func (t *Pane) simplify() {}
 
 func (t *Pane) setRenderRect(x, y, w, h int) {
 	t.renderRect = Rect{x, y, w, h}

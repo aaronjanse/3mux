@@ -38,7 +38,7 @@ func moveWindow(d Direction) {
 		movingVert := d == Up || d == Down
 
 		p := path
-		for len(p) > 0 {
+		for len(p) > 1 {
 			s, _ := p.getParent()
 			if s.verticallyStacked == movingVert {
 				tmp := parentPath.popContainer((*parent).selectionIdx)
@@ -57,9 +57,9 @@ func moveWindow(d Direction) {
 			p = p[:len(p)-1]
 		}
 
-		if len(p) == 0 {
+		if len(p) == 1 {
 			tmp := parentPath.popContainer(parent.selectionIdx)
-			tmpRoot := root
+			tmpRoot := root.workspaces[root.selectionIdx].contents
 
 			var h int
 			if config.statusBar {
@@ -68,14 +68,14 @@ func moveWindow(d Direction) {
 				h = termH
 			}
 
-			root = Split{
+			root.workspaces[root.selectionIdx].contents = &Split{
 				renderRect:        Rect{w: termW, h: h},
 				verticallyStacked: movingVert,
 				selectionIdx:      0,
 				elements: []Node{
 					Node{
 						size:     1,
-						contents: &tmpRoot,
+						contents: tmpRoot,
 					},
 				},
 			}
@@ -84,8 +84,8 @@ func moveWindow(d Direction) {
 			if d == Down || d == Right {
 				insertIdx = 1
 			}
-			root.insertContainer(tmp, insertIdx)
-			root.selectionIdx = insertIdx
+			root.workspaces[root.selectionIdx].contents.insertContainer(tmp, insertIdx)
+			root.workspaces[root.selectionIdx].contents.selectionIdx = insertIdx
 
 			// root.refreshRenderRect()
 		}
@@ -176,7 +176,7 @@ func moveSelection(d Direction) {
 		movingVert := d == Up || d == Down
 
 		p := path
-		for len(p) > 0 {
+		for len(p) > 1 {
 			s, _ := p.getParent()
 			if s.verticallyStacked == movingVert {
 				if d == Up || d == Left {

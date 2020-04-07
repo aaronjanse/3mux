@@ -11,7 +11,8 @@ type Container interface {
 	setRenderRect(x, y, w, h int)
 	getRenderRect() Rect
 	serialize() string
+	simplify()
 	kill()
 }
 
-var root Split
+var root Universe

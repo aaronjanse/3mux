@@ -49,15 +49,23 @@ func main() {
 	renderer = render.NewRenderer()
 	go renderer.ListenToQueue()
 
-	root = Split{
-		verticallyStacked: false,
-		selectionIdx:      0,
-		elements: []Node{
-			Node{
-				size:     1,
-				contents: newTerm(true),
+	root = Universe{
+		workspaces: []*Workspace{
+			&Workspace{
+				contents: &Split{
+					verticallyStacked: false,
+					selectionIdx:      0,
+					elements: []Node{
+						Node{
+							size:     1,
+							contents: newTerm(true),
+						},
+					}},
+				doFullscreen: false,
 			},
-		}}
+		},
+		selectionIdx: 0,
+	}
 
 	defer root.kill()
 
