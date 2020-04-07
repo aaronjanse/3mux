@@ -38,6 +38,15 @@ func newTerm(selected bool) *Pane {
 
 		if len(root.elements) == 0 {
 			shutdownNow()
+		} else {
+			// deselect the old Term
+			newTerm := getSelection().getContainer().(*Pane)
+			newTerm.selected = true
+			newTerm.softRefresh()
+			newTerm.vterm.RefreshCursor()
+
+			root.simplify()
+			root.refreshRenderRect()
 		}
 	}()
 

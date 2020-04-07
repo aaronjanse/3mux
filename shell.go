@@ -48,7 +48,7 @@ func newShell(stdout chan<- rune) Shell {
 			_, err := ptmx.Read(bs)
 			if err != nil {
 				if err.Error() == "read /dev/ptmx: input/output error" {
-					break
+					break // ^D
 				} else {
 					panic(err)
 				}
@@ -73,8 +73,8 @@ func (s *Shell) Kill() {
 	}
 
 	err = s.cmd.Process.Kill()
-	if err != nil {
-		log.Fatal("failed to kill term process", err)
+	if err != nil { // FIXME
+		log.Println("failed to kill term process", err)
 	}
 }
 

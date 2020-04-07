@@ -65,7 +65,8 @@ func removeTheDead(path Path) {
 			removeTheDead(append(path, idx))
 		case *Pane:
 			if c.Dead {
-				path.popContainer(idx)
+				t := path.popContainer(idx)
+				t.(*Pane).kill()
 			}
 		}
 	}
