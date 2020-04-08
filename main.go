@@ -151,4 +151,29 @@ func debug(s string) {
 		}
 		renderer.ForceHandleCh(ch)
 	}
+
+	if resizeMode {
+		resizeText := "RESIZE"
+
+		for i, r := range resizeText {
+			ch := render.PositionedChar{
+				Rune: r,
+				Cursor: render.Cursor{
+					X: termW - len(resizeText) + i,
+					Y: termH - 1,
+					Style: render.Style{
+						Bg: render.Color{
+							ColorMode: render.ColorBit3Bright,
+							Code:      3,
+						},
+						Fg: render.Color{
+							ColorMode: render.ColorBit3Normal,
+							Code:      0,
+						},
+					},
+				},
+			}
+			renderer.ForceHandleCh(ch)
+		}
+	}
 }
