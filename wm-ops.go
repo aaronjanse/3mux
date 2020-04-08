@@ -132,7 +132,7 @@ func killWindow() {
 		return
 	}
 
-	// deselect the old Term
+	// select the new Term
 	newTerm := getSelection().getContainer().(*Pane)
 	newTerm.selected = true
 	newTerm.softRefresh()
@@ -229,7 +229,7 @@ func moveSelection(d Direction) {
 		}
 	}
 
-	// deselect the old Term
+	// select the new Term
 	newTerm := getSelection().getContainer().(*Pane)
 	newTerm.selected = true
 	newTerm.softRefresh()

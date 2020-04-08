@@ -109,7 +109,6 @@ func shutdownNow() {
 }
 
 var resizeMode bool
-var mouseDownPath Path
 
 func getDirectionFromString(s string) Direction {
 	switch s {

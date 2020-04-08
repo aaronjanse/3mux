@@ -40,6 +40,22 @@ func getSelection() Path {
 	}
 }
 
+func setSelection(path Path) {
+	root.selectionIdx = path[0]
+
+	split := root.workspaces[root.selectionIdx].contents
+
+	for i := range path {
+		if i == 0 {
+			continue
+		} else if i > 1 {
+			split = split.elements[split.selectionIdx].contents.(*Split)
+		}
+
+		split.selectionIdx = path[i]
+	}
+}
+
 func (p Path) getParent() (*Split, Path) {
 	parentPath := p[:len(p)-1]
 	return parentPath.getContainer().(*Split), parentPath

@@ -69,6 +69,8 @@ func handleInput(event interface{}, rawData []byte) {
 	t.handleStdin(string(rawData))
 }
 
+var mouseDownPath Path
+
 // seiveMouseEvents processes mouse events and returns true if the data should *not* be passed downstream
 func seiveMouseEvents(event interface{}) bool {
 	switch ev := event.(type) {
@@ -78,38 +80,64 @@ func seiveMouseEvents(event interface{}) bool {
 		pane := path.getContainer()
 		r := pane.getRenderRect()
 
-		if ev.X == r.x+r.w+1 || ev.Y == r.y+r.h+1 {
+		if ev.Y == r.y+r.h+1 {
 			mouseDownPath = path
+			parent, _ := mouseDownPath.getParent()
+			if !parent.verticallyStacked {
+				mouseDownPath = mouseDownPath[:len(mouseDownPath)-1]
+			}
+		} else if ev.X == r.x+r.w+1 {
+			mouseDownPath = path
+			parent, _ := mouseDownPath.getParent()
+			if parent.verticallyStacked {
+				mouseDownPath = mouseDownPath[:len(mouseDownPath)-1]
+			}
+		} else {
+			// deselect the old Term
+			oldTerm := getSelection().getContainer().(*Pane)
+			oldTerm.selected = false
+			// oldTerm.softRefresh()
+
+			setSelection(path)
+
+			// select the new Term
+			newTerm := getSelection().getContainer().(*Pane)
+			newTerm.selected = true
+			// newTerm.softRefresh()
+
+			newTerm.vterm.RefreshCursor()
+			root.refreshRenderRect()
 		}
 	case keypress.MouseUp:
 		if mouseDownPath != nil { // end resize
-			x := ev.X
-			y := ev.Y
+			lastPathIdx := mouseDownPath[len(mouseDownPath)-1]
 
 			parent, _ := mouseDownPath.getParent()
-			pane := mouseDownPath.getContainer()
-			pr := pane.getRenderRect()
-			sr := parent.getRenderRect()
+			first := mouseDownPath.getContainer()
+			second := parent.elements[lastPathIdx+1].contents
 
-			var desiredArea int
-			var proportionOfParent float32
+			firstRec := first.getRenderRect()
+			secondRec := second.getRenderRect()
+
+			var combinedSize int
 			if parent.verticallyStacked {
-				desiredArea = y - pr.y - 1
-				proportionOfParent = float32(desiredArea) / float32(sr.h)
+				combinedSize = firstRec.h + secondRec.h
 			} else {
-				desiredArea = x - pr.x - 1
-				proportionOfParent = float32(desiredArea) / float32(sr.w)
+				combinedSize = firstRec.w + secondRec.w
 			}
 
-			focusIdx := mouseDownPath[len(mouseDownPath)-1]
-			currentProportion := parent.elements[focusIdx].size
-			numElementsFollowing := len(parent.elements) - (focusIdx + 1)
-			avgShift := (proportionOfParent - currentProportion) / float32(numElementsFollowing)
-			for i := focusIdx + 1; i < len(parent.elements); i++ {
-				parent.elements[i].size += avgShift
+			var wantedRelativeBorderPos int
+			if parent.verticallyStacked {
+				wantedRelativeBorderPos = ev.Y - firstRec.y
+			} else {
+				wantedRelativeBorderPos = ev.X - firstRec.x
 			}
 
-			parent.elements[focusIdx].size = proportionOfParent
+			wantedBorderRatio := float32(wantedRelativeBorderPos) / float32(combinedSize)
+			totalProportion := parent.elements[lastPathIdx].size + parent.elements[lastPathIdx+1].size
+
+			parent.elements[lastPathIdx].size = wantedBorderRatio * totalProportion
+			parent.elements[lastPathIdx+1].size = (1 - wantedBorderRatio) * totalProportion
 
 			parent.refreshRenderRect()
 

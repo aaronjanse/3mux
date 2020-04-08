@@ -1,8 +1,6 @@
 package vterm
 
 import (
-	"log"
-
 	"github.com/aaronjanse/i3-tmux/render"
 )
 
@@ -97,13 +95,13 @@ func (v *VTerm) setCursorPos(x, y int) {
 	if x >= 0 && x < v.w {
 		v.Cursor.X = x
 	} else {
-		log.Println("Attempted bad cursor X") // TODO: stack trace
+		// log.Println("Attempted bad cursor X") // TODO: stack trace
 	}
 
 	if y >= 0 && y < v.h {
 		v.Cursor.Y = y
 	} else {
-		log.Println("Attempted bad cursor Y") // TODO: stack trace
+		// log.Println("Attempted bad cursor Y") // TODO: stack trace
 	}
 
 	v.RefreshCursor()

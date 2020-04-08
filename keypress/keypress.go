@@ -204,7 +204,6 @@ func handleEscapeCode(data []byte, handle func(parsedData interface{})) {
 				code := string(data[5:])
 				mode := data[len(data)-1]
 				pieces := strings.Split(code[:len(code)-1], ";")
-				log.Println("pieces", pieces)
 				var x int
 				if len(pieces[0]) == 0 {
 					x = 1

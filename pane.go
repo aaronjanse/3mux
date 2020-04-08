@@ -2,7 +2,6 @@ package main
 
 import (
 	"errors"
-	"fmt"
 	"log"
 	"math/rand"
 	"strings"
@@ -299,7 +298,10 @@ func (t *Pane) setPause(pause bool) {
 }
 
 func (t *Pane) serialize() string {
-	return fmt.Sprintf("Term")
+	if t.selected {
+		return "Term*"
+	}
+	return "Term"
 }
 
 func (t *Pane) simplify() {}

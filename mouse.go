@@ -13,8 +13,10 @@ func findClosestBorderForCoord(path Path, x, y int) Path {
 		for idx, node := range c.elements {
 			r := node.contents.getRenderRect()
 
-			if (c.verticallyStacked && r.y >= y) || (!c.verticallyStacked && r.x >= x) {
-				newPath := append(path, idx-1)
+			vertValid := c.verticallyStacked && y > r.y && y <= r.y+r.h+1
+			horizValid := !c.verticallyStacked && x > r.x && x <= r.x+r.w+1
+			if vertValid || horizValid {
+				newPath := append(path, idx)
 				return findClosestBorderForCoord(newPath, x, y)
 			}
 		}
