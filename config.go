@@ -15,8 +15,9 @@ type Config struct {
 var config = Config{
 	statusBar: true,
 	bindings: map[interface{}]string{
-		keypress.AltChar{'N'}: "newWindow",
-		keypress.AltChar{'F'}: "fullscreen",
+		keypress.AltChar{'\n'}: "newWindow",
+		keypress.AltChar{'N'}:  "newWindow",
+		keypress.AltChar{'F'}:  "fullscreen",
 
 		keypress.AltChar{'/'}: "search",
 
