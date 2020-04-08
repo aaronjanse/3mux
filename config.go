@@ -44,9 +44,9 @@ var config = Config{
 		keypress.AltChar{Char: 'K'}: "moveSelection(Up)",
 		keypress.AltChar{Char: 'L'}: "moveSelection(Right)",
 
-		keypress.AltShiftChar{'Q'}: "killWindow",
+		keypress.AltShiftChar{Char: 'Q'}: "killWindow",
 
-		keypress.AltChar{'R'}: "resize",
+		keypress.AltChar{Char: 'R'}: "resize",
 	},
 }
 
