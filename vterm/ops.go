@@ -1,6 +1,8 @@
 package vterm
 
 import (
+	"log"
+
 	"github.com/aaronjanse/i3-tmux/render"
 )
 
@@ -97,9 +99,17 @@ func (v *VTerm) scrollDown(n int) {
 
 func (v *VTerm) setCursorPos(x, y int) {
 	// TODO: account for scrolling positon
+	if x >= 0 && x < v.w {
+		v.Cursor.X = x
+	} else {
+		log.Println("Attempted bad cursor X") // TODO: stack trace
+	}
 
-	v.Cursor.X = x
-	v.Cursor.Y = y
+	if y >= 0 && y < v.h {
+		v.Cursor.Y = y
+	} else {
+		log.Println("Attempted bad cursor Y") // TODO: stack trace
+	}
 
 	v.RefreshCursor()
 }
