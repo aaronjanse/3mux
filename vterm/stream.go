@@ -3,6 +3,7 @@ package vterm
 import (
 	"log"
 	"sync/atomic"
+	"time"
 	"unicode"
 	"unicode/utf8"
 )
@@ -21,9 +22,12 @@ func (v *VTerm) pullRune() (rune, bool) {
 	for {
 		select {
 		case r, ok := <-v.in:
-			// if r != 0 {
-			// 	log.Printf("rune: %v (%s)", r, string(r))
-			// }
+			if r != 0 {
+				if v.DebugSlowMode {
+					log.Printf("rune: %v (%s)", r, string(r))
+					time.Sleep(100 * time.Millisecond)
+				}
+			}
 			return r, ok
 		case p := <-v.ChangePause:
 			for {
@@ -100,7 +104,7 @@ func (v *VTerm) ProcessStream() {
 
 				if v.Cursor.X >= v.w-1 {
 					v.setCursorX(0)
-					if v.Cursor.Y >= v.h-1 {
+					if v.Cursor.Y == v.scrollingRegion.bottom {
 						v.scrollUp(1)
 					} else {
 						v.shiftCursorY(1)
@@ -135,6 +139,8 @@ func (v *VTerm) handleEscapeCode() {
 				return
 			}
 		}
+	case '=': // Application Keypad
+		// TODO
 	default:
 		log.Printf("Unrecognized escape code: %v", string(next))
 	}

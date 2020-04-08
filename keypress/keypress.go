@@ -113,7 +113,7 @@ func Listen(callback func(parsedData interface{}, rawData []byte)) {
 			case 27: // Escape code
 				handleEscapeCode(data, handle)
 			default:
-				log.Println("uncaught:", data)
+				// log.Println("uncaught:", data)
 				if len(data) == 1 {
 					if data[0] <= 26 { // Ctrl
 						letter := rune('A' + data[0] - 1)

@@ -2,7 +2,7 @@ package render
 
 import "fmt"
 
-// Cursor is Style along with position
+// Cursor is Style along with position. Coordinates are relative to top left
 type Cursor struct {
 	X, Y int
 	Style

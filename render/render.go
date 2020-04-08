@@ -101,7 +101,7 @@ func (r *Renderer) ListenToQueue() {
 
 	for {
 		var diff strings.Builder
-		for y := 0; y < r.h; y++ {
+		for y := 0; y <= r.h; y++ {
 			for x := 0; x < r.w; x++ {
 				r.writingMutex.Lock()
 				current := r.currentScreen[y][x]

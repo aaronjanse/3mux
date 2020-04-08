@@ -57,14 +57,9 @@ func (v *VTerm) scrollUp(n int) {
 		v.Scrollback = append(v.Scrollback, rows...)
 	}
 
-	blankLine := []render.Char{}
-	for i := 0; i < v.w; i++ {
-		blankLine = append(blankLine, render.Char{Rune: ' ', Style: render.Style{}})
-	}
-
 	newLines := make([][]render.Char, n)
 	for i := range newLines {
-		newLines[i] = blankLine
+		newLines[i] = make([]render.Char, v.w)
 	}
 
 	v.Screen = append(append(append(
@@ -141,6 +136,8 @@ func (v *VTerm) putChar(ch rune) {
 		Style: v.Cursor.Style,
 	}
 
+	v.Screen[v.Cursor.Y][v.Cursor.X] = char
+
 	positionedChar := render.PositionedChar{
 		Rune:   ch,
 		Cursor: v.Cursor,
@@ -148,10 +145,6 @@ func (v *VTerm) putChar(ch rune) {
 
 	positionedChar.Cursor.X += v.x
 	positionedChar.Cursor.Y += v.y
-
-	if v.Cursor.Y < len(v.Screen) && v.Cursor.X < len(v.Screen[v.Cursor.Y]) {
-		v.Screen[v.Cursor.Y][v.Cursor.X] = char
-	}
 
 	// TODO: print to the window based on scrolling position
 	v.renderer.HandleCh(positionedChar)

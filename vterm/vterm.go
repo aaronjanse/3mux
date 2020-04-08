@@ -49,18 +49,20 @@ type VTerm struct {
 	// parentSetCursor sets physical host's cursor taking the pane location into account
 	parentSetCursor func(x, y int)
 
-	in <-chan rune
+	in  <-chan rune
+	out chan<- rune
 
 	storedCursorX, storedCursorY int
 
 	scrollingRegion ScrollingRegion
 
-	ChangePause chan bool
-	IsPaused    bool
+	ChangePause   chan bool
+	IsPaused      bool
+	DebugSlowMode bool
 }
 
 // NewVTerm returns a VTerm ready to be used by its exported methods
-func NewVTerm(shellByteCounter *uint64, renderer *render.Renderer, parentSetCursor func(x, y int), in <-chan rune) *VTerm {
+func NewVTerm(shellByteCounter *uint64, renderer *render.Renderer, parentSetCursor func(x, y int), in <-chan rune, out chan<- rune) *VTerm {
 	w := 10
 	h := 10
 
@@ -86,6 +88,7 @@ func NewVTerm(shellByteCounter *uint64, renderer *render.Renderer, parentSetCurs
 		usingAltScreen:   false,
 		Cursor:           render.Cursor{},
 		in:               in,
+		out:              out,
 		shellByteCounter: shellByteCounter,
 		usingSlowRefresh: false,
 		renderer:         renderer,
@@ -94,6 +97,7 @@ func NewVTerm(shellByteCounter *uint64, renderer *render.Renderer, parentSetCurs
 		NeedsRedraw:      false,
 		ChangePause:      make(chan bool, 1),
 		IsPaused:         false,
+		DebugSlowMode:    false,
 	}
 
 	return v

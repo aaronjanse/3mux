@@ -9,7 +9,9 @@ func (v *VTerm) handlePrivateSequence(next rune, parameterCode string) {
 	case 'h': // generally enables features
 		switch parameterCode {
 		case "1": // application arrow keys (DECCKM)
+			log.Println("FIXME: APP ARROW KEYS")
 		case "7": // Auto-wrap Mode (DECAWM)
+			log.Println("FIXME: ENABLE AUTO WRAP")
 		case "12": // start blinking Cursor
 		case "25": // show Cursor
 		case "1049", "1047", "47": // switch to alt screen buffer
@@ -24,6 +26,7 @@ func (v *VTerm) handlePrivateSequence(next rune, parameterCode string) {
 		switch parameterCode {
 		case "1": // Normal Cursor keys (DECCKM)
 		case "7": // No Auto-wrap Mode (DECAWM)
+			log.Println("FIXME: DISABLE AUTO WRAP")
 		case "12": // stop blinking Cursor
 		case "25": // hide Cursor
 		case "1049", "1047", "47": // switch to normal screen buffer

@@ -34,6 +34,7 @@ type Pane struct {
 
 func newTerm(selected bool) *Pane {
 	stdout := make(chan rune, 3200000)
+	stdin := make(chan rune, 3200000)
 
 	t := &Pane{
 		id:       rand.Intn(10),
@@ -41,6 +42,13 @@ func newTerm(selected bool) *Pane {
 
 		shell: newShell(stdout),
 	}
+
+	go func() {
+		for {
+			x := <-stdin
+			t.shell.handleStdin(string(x))
+		}
+	}()
 
 	go func() {
 		t.shell.cmd.Wait()
@@ -67,7 +75,7 @@ func newTerm(selected bool) *Pane {
 		}
 	}
 
-	vt := vterm.NewVTerm(&t.shell.byteCounter, renderer, parentSetCursor, stdout)
+	vt := vterm.NewVTerm(&t.shell.byteCounter, renderer, parentSetCursor, stdout, stdin)
 	go vt.ProcessStream()
 
 	t.vterm = vt

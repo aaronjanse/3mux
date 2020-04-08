@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"strings"
 
 	"github.com/aaronjanse/i3-tmux/keypress"
@@ -18,6 +19,8 @@ var config = Config{
 		keypress.AltChar{'\n'}: "newWindow",
 		keypress.AltChar{'N'}:  "newWindow",
 		keypress.AltChar{'F'}:  "fullscreen",
+
+		keypress.AltChar{'X'}: "debugSlowMode",
 
 		keypress.AltChar{'/'}: "search",
 
@@ -102,6 +105,23 @@ func executeOperationCode(s string) {
 			killWindow()
 		case "resize":
 			resizeMode = true
+		case "debugSlowMode":
+			log.Println("slowmo enabled!")
+			if getSelection().getContainer().(*Pane).vterm.DebugSlowMode {
+				dbug := ""
+				scr := getSelection().getContainer().(*Pane).vterm.Screen
+				for _, row := range scr {
+					for _, ch := range row {
+						dbug += string(ch.Rune)
+					}
+					dbug += "\n"
+				}
+				log.Println("=== SCREEN OUTPUT ===")
+				log.Println(dbug)
+				getSelection().getContainer().(*Pane).vterm.DebugSlowMode = false
+			} else {
+				getSelection().getContainer().(*Pane).vterm.DebugSlowMode = true
+			}
 		default:
 			panic(funcName)
 		}

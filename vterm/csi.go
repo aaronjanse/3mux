@@ -1,6 +1,7 @@
 package vterm
 
 import (
+	"fmt"
 	"log"
 	"unicode"
 
@@ -83,6 +84,34 @@ func (v *VTerm) handleCSISequence() {
 			v.handleEraseInDisplay(parameterCode)
 		case 'K': // Erase in Line
 			v.handleEraseInLine(parameterCode)
+		case 'M': // Delete Lines; https://vt100.net/docs/vt510-rm/DL.html
+			n := parseSemicolonNumSeq(parameterCode, 1)[0]
+
+			newLines := make([][]render.Char, n)
+			for i := range newLines {
+				newLines[i] = make([]render.Char, v.w)
+			}
+
+			v.Screen = append(append(append(
+				v.Screen[:v.Cursor.Y],
+				v.Screen[v.Cursor.Y+n:v.scrollingRegion.bottom+1]...),
+				newLines...),
+				v.Screen[v.scrollingRegion.bottom+1:]...)
+
+			if !v.usingSlowRefresh {
+				v.RedrawWindow()
+			}
+		case 'n': // Device Status Report
+			seq := parseSemicolonNumSeq(parameterCode, 0)
+			switch seq[0] {
+			case 6:
+				response := fmt.Sprintf("\x1b[%d;%dR", v.Cursor.Y+1, v.Cursor.X+1)
+				for _, r := range response {
+					v.out <- r
+				}
+			default:
+				log.Println("Unrecognized DSR code", seq)
+			}
 		case 'r': // Set Scrolling Region
 			seq := parseSemicolonNumSeq(parameterCode, 1)
 			v.scrollingRegion.top = seq[0] - 1
@@ -98,6 +127,8 @@ func (v *VTerm) handleCSISequence() {
 		case 'T': // Scroll Down; new lines added to top
 			seq := parseSemicolonNumSeq(parameterCode, 1)
 			v.scrollDown(seq[0])
+		case 't': // Window Manipulation
+			// TODO
 		case 'L': // Insert Lines; https://vt100.net/docs/vt510-rm/IL.html
 			seq := parseSemicolonNumSeq(parameterCode, 1)
 			v.setCursorX(0)
