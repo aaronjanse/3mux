@@ -16,33 +16,33 @@ type Config struct {
 var config = Config{
 	statusBar: true,
 	bindings: map[interface{}]string{
-		keypress.AltChar{'\n'}: "newWindow",
-		keypress.AltChar{'N'}:  "newWindow",
-		keypress.AltChar{'F'}:  "fullscreen",
+		keypress.AltChar{Char: 'N'}:  "newWindow",
+		keypress.AltChar{Char: '\n'}: "newWindow",
+		keypress.AltChar{Char: 'F'}:  "fullscreen",
 
-		keypress.AltChar{'X'}: "debugSlowMode",
+		keypress.AltChar{Char: 'X'}: "debugSlowMode",
 
-		keypress.AltChar{'/'}: "search",
+		keypress.AltChar{Char: '/'}: "search",
 
-		keypress.AltShiftArrow{keypress.Up}:    "moveWindow(Up)",
-		keypress.AltShiftArrow{keypress.Down}:  "moveWindow(Down)",
-		keypress.AltShiftArrow{keypress.Left}:  "moveWindow(Left)",
-		keypress.AltShiftArrow{keypress.Right}: "moveWindow(Right)",
+		keypress.AltShiftArrow{Direction: keypress.Up}:    "moveWindow(Up)",
+		keypress.AltShiftArrow{Direction: keypress.Down}:  "moveWindow(Down)",
+		keypress.AltShiftArrow{Direction: keypress.Left}:  "moveWindow(Left)",
+		keypress.AltShiftArrow{Direction: keypress.Right}: "moveWindow(Right)",
 
-		keypress.AltShiftChar{'I'}: "moveWindow(Up)",
-		keypress.AltShiftChar{'K'}: "moveWindow(Down)",
-		keypress.AltShiftChar{'J'}: "moveWindow(Left)",
-		keypress.AltShiftChar{'L'}: "moveWindow(Right)",
+		keypress.AltShiftChar{Char: 'H'}: "moveWindow(Left)",
+		keypress.AltShiftChar{Char: 'J'}: "moveWindow(Down)",
+		keypress.AltShiftChar{Char: 'K'}: "moveWindow(Up)",
+		keypress.AltShiftChar{Char: 'L'}: "moveWindow(Right)",
 
-		keypress.AltArrow{keypress.Up}:    "moveSelection(Up)",
-		keypress.AltArrow{keypress.Down}:  "moveSelection(Down)",
-		keypress.AltArrow{keypress.Left}:  "moveSelection(Left)",
-		keypress.AltArrow{keypress.Right}: "moveSelection(Right)",
+		keypress.AltArrow{Direction: keypress.Up}:    "moveSelection(Up)",
+		keypress.AltArrow{Direction: keypress.Down}:  "moveSelection(Down)",
+		keypress.AltArrow{Direction: keypress.Left}:  "moveSelection(Left)",
+		keypress.AltArrow{Direction: keypress.Right}: "moveSelection(Right)",
 
-		keypress.AltChar{'I'}: "moveSelection(Up)",
-		keypress.AltChar{'K'}: "moveSelection(Down)",
-		keypress.AltChar{'J'}: "moveSelection(Left)",
-		keypress.AltChar{'L'}: "moveSelection(Right)",
+		keypress.AltChar{Char: 'H'}: "moveSelection(Left)",
+		keypress.AltChar{Char: 'J'}: "moveSelection(Down)",
+		keypress.AltChar{Char: 'K'}: "moveSelection(Up)",
+		keypress.AltChar{Char: 'L'}: "moveSelection(Right)",
 
 		keypress.AltShiftChar{'Q'}: "killWindow",
 

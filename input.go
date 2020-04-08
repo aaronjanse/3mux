@@ -33,12 +33,12 @@ func handleInput(event interface{}, rawData []byte) {
 			}
 		case keypress.Character:
 			switch ev.Char {
-			case 'i':
-				resizeWindow(Up, 0.1)
-			case 'k':
-				resizeWindow(Down, 0.1)
-			case 'j':
+			case 'h':
 				resizeWindow(Left, 0.1)
+			case 'j':
+				resizeWindow(Down, 0.1)
+			case 'k':
+				resizeWindow(Up, 0.1)
 			case 'l':
 				resizeWindow(Right, 0.1)
 			default:
