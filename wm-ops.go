@@ -246,6 +246,10 @@ func newWindow() {
 
 	parent, _ := path.getParent()
 
+	if len(parent.elements) > 8 {
+		return
+	}
+
 	size := float32(1) / float32(len(parent.elements)+1)
 
 	// resize siblings
@@ -267,18 +271,32 @@ func newWindow() {
 }
 
 func resizeWindow(d Direction, diff float32) {
-	parent, _ := getSelection().getParent()
+	resizeWindowImpl(getSelection(), d, diff)
+}
+
+func resizeWindowImpl(path Path, d Direction, diff float32) {
+	parent, parentPath := path.getParent()
 
 	const shift = 0.1
 	var delta float32
 
 	if parent.verticallyStacked {
+		if d == Left || d == Right {
+			resizeWindowImpl(parentPath, d, diff)
+			return
+		}
+
 		if d == Up {
 			delta = +shift
 		} else if d == Down {
 			delta = -shift
 		}
 	} else {
+		if d == Up || d == Down {
+			resizeWindowImpl(parentPath, d, diff)
+			return
+		}
+
 		if d == Right {
 			delta = +shift
 		} else if d == Left {
@@ -288,7 +306,39 @@ func resizeWindow(d Direction, diff float32) {
 
 	size := parent.elements[parent.selectionIdx].size
 
+	selContents := parent.elements[parent.selectionIdx].contents
+
+	var wh float32
+	if parent.verticallyStacked {
+		wh = float32(selContents.getRenderRect().h)
+	} else {
+		wh = float32(selContents.getRenderRect().w)
+	}
+
+	var min float32 = 1
+	if (size+delta)*wh <= min {
+		return
+	}
+
 	scale := (float32(1) - size - delta) / (float32(1) - size)
+
+	for i := range parent.elements {
+		if i != parent.selectionIdx {
+			elem := parent.elements[i]
+			newSize := elem.size * scale
+
+			var wh float32
+			if parent.verticallyStacked {
+				wh = float32(elem.contents.getRenderRect().h)
+			} else {
+				wh = float32(elem.contents.getRenderRect().w)
+			}
+
+			if newSize*wh <= min {
+				return
+			}
+		}
+	}
 
 	parent.elements[parent.selectionIdx].size += delta
 	for i := range parent.elements {
