@@ -21,6 +21,9 @@ func (v *VTerm) pullRune() (rune, bool) {
 	for {
 		select {
 		case r, ok := <-v.in:
+			// if r != 0 {
+			// 	log.Printf("rune: %v (%s)", r, string(r))
+			// }
 			return r, ok
 		case p := <-v.ChangePause:
 			for {
@@ -115,6 +118,14 @@ func (v *VTerm) handleEscapeCode() {
 	case '(': // Character set
 		v.pullRune()
 		// TODO: implement character sets
+	case ']': // operating system command
+		// FIXME: are the more terminators than BEL?
+		for next != 7 { // slurp until-and-including BEL
+			next, ok = v.pullRune()
+			if !ok {
+				return
+			}
+		}
 	default:
 		log.Printf("Unrecognized escape code: %v", string(next))
 	}
