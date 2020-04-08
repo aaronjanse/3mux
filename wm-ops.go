@@ -126,6 +126,12 @@ func killWindow() {
 	t := parentPath.popContainer(parent.selectionIdx)
 	t.(*Pane).kill()
 
+	// FIXME: allows for only one workspace
+	if len(root.workspaces[root.selectionIdx].contents.elements) == 0 {
+		shutdownNow()
+		return
+	}
+
 	// deselect the old Term
 	newTerm := getSelection().getContainer().(*Pane)
 	newTerm.selected = true
