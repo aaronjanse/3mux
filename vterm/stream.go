@@ -98,6 +98,15 @@ func (v *VTerm) ProcessStream() {
 					v.setCursorY(0)
 				}
 
+				if v.Cursor.X >= v.w-1 {
+					v.setCursorX(0)
+					if v.Cursor.Y >= v.h-1 {
+						v.scrollUp(1)
+					} else {
+						v.shiftCursorY(1)
+					}
+				}
+
 				v.putChar(next)
 			} else {
 				log.Printf("Unrecognized unprintable rune: %x", next)
