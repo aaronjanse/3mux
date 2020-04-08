@@ -8,7 +8,6 @@
 
 ## TODO:
 - [ ] finish search implementation
-- [ ] fix pasting
 - [ ] support default tmux keybindings
 
 ## Key Bindings

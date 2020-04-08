@@ -125,6 +125,13 @@ func Listen(callback func(parsedData interface{}, rawData []byte)) {
 						letter := rune(data[0])
 						handle(Character{letter})
 					}
+				} else {
+					for _, b := range data {
+						if b == 0 {
+							break
+						}
+						callback(Character{rune(b)}, []byte{b})
+					}
 				}
 			}
 		}
