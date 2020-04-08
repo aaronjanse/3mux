@@ -42,10 +42,12 @@ func handleInput(event interface{}, rawData []byte) {
 			case 'l':
 				resizeWindow(Right, 0.1)
 			}
-		case keypress.Enter:
+		default:
 			resizeMode = false
 		}
-		return
+		if resizeMode {
+			return
+		}
 	}
 
 	switch ev := event.(type) {
