@@ -19,9 +19,9 @@ func handleInput(event interface{}, rawData []byte) {
 
 	if resizeMode {
 		switch ev := event.(type) {
-		case keypress.Arrow:
+		case keypress.Direction:
 			// we can get rid of this if keypress and everything else have a common Direction enum
-			switch ev.Direction {
+			switch ev {
 			case keypress.Up:
 				resizeWindow(Up, 0.1)
 			case keypress.Down:
