@@ -11,6 +11,15 @@ import (
 	"github.com/aaronjanse/i3-tmux/vterm"
 )
 
+// SearchDirection is which direction we move through search results
+type SearchDirection int
+
+// enum of search directions
+const (
+	SearchUp SearchDirection = iota
+	SearchDown
+)
+
 // A Pane is a tiling unit representing a terminal
 type Pane struct {
 	id int
@@ -27,6 +36,8 @@ type Pane struct {
 	searchPos             int
 	searchBackupScrollPos int
 	searchDidShiftUp      bool
+	searchResultsMode     bool
+	searchDirection       SearchDirection
 
 	Dead bool
 }
@@ -83,22 +94,58 @@ func newTerm(selected bool) *Pane {
 }
 
 func (t *Pane) handleStdin(in string) {
-	if t.searchMode {
+	if t.searchMode && t.searchResultsMode {
+		switch in[0] { // FIXME ignores extra chars
+		case 'n': // next
+			t.searchDirection = SearchDown
+			t.searchPos--
+			if t.searchPos < 0 {
+				t.searchPos = 0
+			}
+			t.doSearch()
+		case 'N': // prev
+			t.searchDirection = SearchUp
+			t.searchPos++
+			max := len(t.vterm.Scrollback) + len(t.vterm.Screen) - 1
+			if t.searchPos > max {
+				t.searchPos = max
+			}
+			t.doSearch()
+		case '/':
+			t.searchResultsMode = false
+			t.displayStatusText(t.searchText)
+		case 127:
+			fallthrough
+		case 8:
+			t.searchResultsMode = false
+			t.searchText = t.searchText[:len(t.searchText)-1]
+			t.displayStatusText(t.searchText)
+		case 13:
+			fallthrough
+		case 10: // enter
+			t.toggleSearch()
+			t.vterm.ScrollbackPos = t.searchPos - len(t.vterm.Screen) + t.renderRect.h/2
+			t.vterm.RedrawWindow()
+		}
+	} else if t.searchMode {
 		for _, c := range in {
 			if c == 8 || c == 127 { // backspace
 				if len(t.searchText) > 0 {
 					t.searchText = t.searchText[:len(t.searchText)-1]
 				}
 			} else if c == 10 || c == 13 {
-				// TODO (newline)
 				if len(t.searchText) == 0 {
 					t.toggleSearch()
 					return
+				} else {
+					t.searchResultsMode = true
+					return // FIXME ignores extra chars
 				}
 			} else {
 				t.searchText += string(c)
 			}
 		}
+		t.searchPos = 0
 		t.doSearch()
 		t.displayStatusText(t.searchText)
 	} else {
@@ -110,9 +157,11 @@ func (t *Pane) handleStdin(in string) {
 
 func (t *Pane) doSearch() {
 	fullBuffer := append(t.vterm.Scrollback, t.vterm.Screen...)
-	match, err := locateText(fullBuffer, t.searchText)
+	match, err := t.locateText(fullBuffer, t.searchText)
 
 	if err == nil {
+		t.searchPos = match.y1
+
 		bottomOfScreen := 0
 		if match.y1 > t.renderRect.h {
 			topOfScreen := match.y1 + t.renderRect.h/2
@@ -161,9 +210,11 @@ type SearchMatch struct {
 	x1, y1, x2, y2 int
 }
 
-func locateText(chars [][]render.Char, text string) (SearchMatch, error) {
-	lineFromBottom := 0
-	for i := len(chars) - 1; i >= 0; i-- {
+func (t *Pane) locateText(chars [][]render.Char, text string) (SearchMatch, error) {
+	lineFromBottom := t.searchPos
+
+	i := len(chars) - t.searchPos - 1
+	for {
 		var str strings.Builder
 
 		for _, c := range chars[i] {
@@ -179,7 +230,19 @@ func locateText(chars [][]render.Char, text string) (SearchMatch, error) {
 				y2: lineFromBottom,
 			}, nil
 		}
-		lineFromBottom++
+		if t.searchDirection == SearchUp {
+			lineFromBottom++
+			i--
+			if i < 0 {
+				break
+			}
+		} else {
+			lineFromBottom--
+			i++
+			if i >= len(chars) {
+				break
+			}
+		}
 	}
 
 	return SearchMatch{}, errors.New("could not find match")
@@ -191,6 +254,8 @@ func (t *Pane) toggleSearch() {
 	if t.searchMode {
 		t.vterm.ChangePause <- true
 		t.searchBackupScrollPos = t.vterm.ScrollbackPos
+		t.searchResultsMode = false
+		t.searchDirection = SearchUp
 
 		// FIXME hacky way to wait for full control of screen section
 		timer := time.NewTimer(time.Millisecond * 5)

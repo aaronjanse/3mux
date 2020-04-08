@@ -7,8 +7,9 @@
 <!--TODO: GIF!-->
 
 ## TODO:
-- [ ] finish search implementation
 - [ ] support default tmux keybindings
+- [ ] test on macOS
+- [ ] improve cursor blinking
 
 ## Key Bindings
 
