@@ -41,6 +41,8 @@ func handleInput(event interface{}, rawData []byte) {
 				resizeWindow(Left, 0.1)
 			case 'l':
 				resizeWindow(Right, 0.1)
+			default:
+				resizeMode = false
 			}
 		default:
 			resizeMode = false
