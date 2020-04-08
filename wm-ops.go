@@ -84,7 +84,7 @@ func moveWindow(d Direction) {
 			p = p[:len(p)-1]
 		}
 
-		if len(p) == 1 {
+		if len(p) == 1 && len(parent.elements) > 1 {
 			tmp := parentPath.popContainer(parent.selectionIdx)
 			tmpRoot := root.workspaces[root.selectionIdx].contents
 
