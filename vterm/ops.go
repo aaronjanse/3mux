@@ -171,7 +171,7 @@ func (v *VTerm) RedrawWindow() {
 					},
 				}
 
-				v.renderer.HandleCh(ch)
+				v.renderer.ForceHandleCh(ch)
 			}
 		}
 	}
@@ -196,7 +196,7 @@ func (v *VTerm) RedrawWindow() {
 							X: v.x + x, Y: v.y + y, Style: v.Scrollback[idx][x].Style,
 						},
 					}
-					v.renderer.HandleCh(ch)
+					v.renderer.ForceHandleCh(ch)
 				} else {
 					ch := render.PositionedChar{
 						Rune: ' ',
@@ -204,7 +204,7 @@ func (v *VTerm) RedrawWindow() {
 							X: v.x + x, Y: v.y + y, Style: render.Style{},
 						},
 					}
-					v.renderer.HandleCh(ch)
+					v.renderer.ForceHandleCh(ch)
 				}
 			}
 		}
