@@ -72,7 +72,6 @@ func moveWindow(d Direction) {
 
 				if d == Left || d == Up {
 					s.insertContainer(tmp, s.selectionIdx)
-					s.selectionIdx--
 				} else {
 					s.insertContainer(tmp, s.selectionIdx+1)
 					s.selectionIdx++
