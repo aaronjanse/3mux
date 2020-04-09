@@ -94,8 +94,8 @@ func (s *Shell) resize(w, h int) {
 	go func() {
 		for range ch {
 			err := pty.Setsize(s.ptmx, &pty.Winsize{
-				Rows: uint16(h), Cols: uint16(w),
-				X: 16 * uint16(w), Y: 16 * uint16(h),
+				Rows: uint16(h + 1), Cols: uint16(w),
+				X: 16 * uint16(w), Y: 16 * uint16(h+1),
 			})
 			if err != nil {
 				log.Fatal(err)
