@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/aaronjanse/i3-tmux/keypress"
 	"github.com/aaronjanse/i3-tmux/render"
 	"github.com/aaronjanse/i3-tmux/vterm"
 )
@@ -68,9 +69,17 @@ func newTerm(selected bool) *Pane {
 			}
 		}()
 
+		// FIXME: only supports one workspace
+		if t.selected {
+			root.workspaces[root.selectionIdx].doFullscreen = false
+			keypress.ShouldProcessMouse(true)
+		}
+
 		t.shell.cmd.Wait()
 		t.Dead = true
 		removeTheDead([]int{root.selectionIdx})
+
+		root.workspaces[root.selectionIdx].contents.setPause(false)
 
 		if len(root.workspaces[root.selectionIdx].contents.elements) == 0 {
 			shutdownNow()
