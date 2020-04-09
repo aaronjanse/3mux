@@ -25,3 +25,9 @@
 |<kbd>Alt+R</kbd> | Enter resize mode. Resize selected window with arrow keys or <kbd>h/j/k/l</kbd>. Exit using any other key(s)
 |<kbd>Alt+/</kbd> | Enter search mode. Type query, navigate between results with arrow keys or <kbd>n/N</kbd>
 |<kbd>Scroll</kbd> | Move through scrollback
+
+### Installation Instructions
+
+1. Install Golang
+2. `go get github.com/aaronjanse/3mux`
+3. Run `3mux` to launch the terminal multiplexer
