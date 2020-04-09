@@ -134,7 +134,11 @@ func (v *VTerm) putChar(ch rune) {
 		Style: v.Cursor.Style,
 	}
 
-	v.Screen[v.Cursor.Y][v.Cursor.X] = char
+	if v.Cursor.Y >= 0 && v.Cursor.Y < len(v.Screen) {
+		if v.Cursor.X >= 0 && v.Cursor.X < len(v.Screen[v.Cursor.Y]) {
+			v.Screen[v.Cursor.Y][v.Cursor.X] = char
+		}
+	}
 
 	positionedChar := render.PositionedChar{
 		Rune:   ch,
