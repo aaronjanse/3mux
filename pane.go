@@ -86,7 +86,14 @@ func newTerm(selected bool) *Pane {
 	}
 
 	vt := vterm.NewVTerm(&t.shell.byteCounter, renderer, parentSetCursor, stdout, stdin)
-	go vt.ProcessStream()
+	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				fatalShutdownNow("pane.go")
+			}
+		}()
+		vt.ProcessStream()
+	}()
 
 	t.vterm = vt
 

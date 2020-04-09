@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	runtimeDebug "runtime/debug"
 	"runtime/pprof"
 
 	"github.com/aaronjanse/i3-tmux/keypress"
@@ -25,6 +26,12 @@ var renderer *render.Renderer
 var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
 
 func main() {
+	defer func() {
+		if r := recover(); r != nil {
+			fatalShutdownNow("main.go")
+		}
+	}()
+
 	// setup logging
 	f, err := os.OpenFile("logs.txt", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
@@ -105,6 +112,15 @@ func resize(w, h int) {
 
 func shutdownNow() {
 	term.Close()
+	os.Exit(0)
+}
+
+func fatalShutdownNow(where string) {
+	term.Close()
+	fmt.Println("Error during:", where)
+	fmt.Println(string(runtimeDebug.Stack()))
+	fmt.Println()
+	fmt.Println("Please submit a bug report with this stack trace to https://github.com/aaronjanse/3mux/issues")
 	os.Exit(0)
 }
 
