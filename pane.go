@@ -61,6 +61,12 @@ func newTerm(selected bool) *Pane {
 	}()
 
 	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				fatalShutdownNow("pane.go (shell death)\n" + r.(error).Error())
+			}
+		}()
+
 		t.shell.cmd.Wait()
 		t.Dead = true
 		removeTheDead([]int{root.selectionIdx})
@@ -89,7 +95,7 @@ func newTerm(selected bool) *Pane {
 	go func() {
 		defer func() {
 			if r := recover(); r != nil {
-				fatalShutdownNow("pane.go\n" + r.(error).Error())
+				fatalShutdownNow("pane.go (vt.ProcessStream)\n" + r.(error).Error())
 			}
 		}()
 		vt.ProcessStream()
