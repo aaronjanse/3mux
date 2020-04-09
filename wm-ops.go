@@ -27,6 +27,8 @@ func unfullscreen() {
 	root.workspaces[root.selectionIdx].contents.setPause(false)
 
 	keypress.ShouldProcessMouse(true)
+
+	root.refreshRenderRect()
 }
 
 func moveWindow(d Direction) {

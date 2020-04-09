@@ -90,6 +90,10 @@ func main() {
 		debug(root.serialize())
 	}
 
+	if demoMode {
+		go doDemo()
+	}
+
 	keypress.Listen(handleInput)
 }
 

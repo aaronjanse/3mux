@@ -13,7 +13,7 @@ type inputState struct {
 const demoMode = false
 
 var demoTextTimer *time.Timer = nil
-var demoTextDuration = 400 * time.Millisecond
+var demoTextDuration = 1000 * time.Millisecond
 
 // handleInput puts the input through a series of switches and seive functions.
 // When something acts on the event, we stop passing it downstream

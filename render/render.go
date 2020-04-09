@@ -105,7 +105,7 @@ func (r *Renderer) DemoKeypress(str string) {
 
 // ListenToQueue is a blocking function that processes data sent to the RenderQueue
 func (r *Renderer) ListenToQueue() {
-	fmt.Print("\033[2J") // clear screen
+	// fmt.Print("\033[2J") // clear screen
 
 	for {
 		var diff strings.Builder

@@ -1,10 +1,21 @@
 # 3mux
 
-`3mux` is a terminal multiplexer with out-of-the-box support for search, mouse-controlled scrollback, and i3-like keybindings. 
+`3mux` is a terminal multiplexer with out-of-the-box support for search, mouse-controlled scrollback, and i3-like keybindings.
 
-![Screenshot](./i3-tmux.png)
+![3mux](./demo.gif)
 
 <!--TODO: GIF!-->
+
+## Features
+
+* i3-like keybindings
+* search
+* scrollback
+* mouse support
+  * drag to resize windows
+  * click to select window
+  * scrollwheel
+
 
 ## TODO:
 - [ ] support default tmux keybindings
