@@ -86,6 +86,8 @@ func executeOperationCode(s string) {
 		case "killWindow":
 			unfullscreen()
 			killWindow()
+		case "search":
+			search()
 		}
 	} else {
 		switch funcName {
