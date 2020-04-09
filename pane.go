@@ -89,7 +89,7 @@ func newTerm(selected bool) *Pane {
 	go func() {
 		defer func() {
 			if r := recover(); r != nil {
-				fatalShutdownNow("pane.go")
+				fatalShutdownNow("pane.go\n" + r.(error).Error())
 			}
 		}()
 		vt.ProcessStream()

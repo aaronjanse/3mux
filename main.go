@@ -28,7 +28,7 @@ var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
 func main() {
 	defer func() {
 		if r := recover(); r != nil {
-			fatalShutdownNow("main.go")
+			fatalShutdownNow("main.go\n" + r.(error).Error())
 		}
 	}()
 
