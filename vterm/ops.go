@@ -92,16 +92,21 @@ func (v *VTerm) scrollDown(n int) {
 
 func (v *VTerm) setCursorPos(x, y int) {
 	// TODO: account for scrolling positon
-	if x >= 0 && x < v.w {
-		v.Cursor.X = x
+
+	if x < 0 {
+		v.Cursor.X = 0
+	} else if x > v.w {
+		v.Cursor.X = v.w
 	} else {
-		// log.Println("Attempted bad cursor X") // TODO: stack trace
+		v.Cursor.X = x
 	}
 
-	if y >= 0 && y < v.h {
-		v.Cursor.Y = y
+	if y < 0 {
+		v.Cursor.Y = 0
+	} else if y > v.h {
+		v.Cursor.Y = v.h
 	} else {
-		// log.Println("Attempted bad cursor Y") // TODO: stack trace
+		v.Cursor.Y = y
 	}
 
 	v.RefreshCursor()
