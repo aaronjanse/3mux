@@ -76,14 +76,14 @@ func (v *VTerm) scrollUp(n int) {
 func (v *VTerm) scrollDown(n int) {
 	newLines := make([][]render.Char, n)
 	for i := range newLines {
-		newLines[i] = v.blankLine
+		newLines[i] = make([]render.Char, v.w)
 	}
 
-	v.Screen = append(append(append(
-		v.Screen[:v.scrollingRegion.top],
-		newLines...),
-		v.Screen[v.scrollingRegion.top:v.scrollingRegion.bottom-n]...),
-		v.Screen[v.scrollingRegion.bottom+1:]...)
+	v.Screen =
+		append(v.Screen[:v.scrollingRegion.top],
+			append(newLines,
+				append(v.Screen[v.scrollingRegion.top:v.scrollingRegion.bottom+1-n],
+					v.Screen[v.scrollingRegion.bottom+1:]...)...)...)
 
 	if !v.usingSlowRefresh {
 		v.RedrawWindow()
