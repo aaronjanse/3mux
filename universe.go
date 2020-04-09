@@ -22,8 +22,11 @@ func (u *Universe) serialize() string {
 	out := fmt.Sprintf("Universe[%d]", u.selectionIdx)
 
 	out += "("
-	for _, e := range u.workspaces {
-		out += e.serialize() + ", "
+	for i, e := range u.workspaces {
+		if i != 0 {
+			out += ", "
+		}
+		out += e.serialize()
 	}
 	out += ")"
 

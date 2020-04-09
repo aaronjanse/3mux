@@ -26,8 +26,11 @@ func (s *Split) serialize() string {
 	out += fmt.Sprintf("[%d]", s.selectionIdx)
 
 	out += "("
-	for _, e := range s.elements {
-		out += e.contents.serialize() + ", "
+	for i, e := range s.elements {
+		if i != 0 {
+			out += ", "
+		}
+		out += e.contents.serialize()
 	}
 	out += ")"
 
