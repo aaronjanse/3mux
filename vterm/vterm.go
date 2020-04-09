@@ -44,6 +44,7 @@ type VTerm struct {
 
 	renderer *render.Renderer
 
+	// TODO: delete `blankLine`
 	blankLine []render.Char
 
 	// parentSetCursor sets physical host's cursor taking the pane location into account
@@ -111,12 +112,6 @@ func (v *VTerm) Kill() {
 
 // Reshape safely updates a VTerm's width & height
 func (v *VTerm) Reshape(x, y, w, h int) {
-	blankLine := []render.Char{}
-	for i := 0; i < w; i++ {
-		blankLine = append(blankLine, render.Char{Rune: ' ', Style: render.Style{}})
-	}
-
-	v.blankLine = blankLine
 
 	v.x = x
 	v.y = y
@@ -131,6 +126,12 @@ func (v *VTerm) Reshape(x, y, w, h int) {
 				v.Screen[y] = append(v.Screen[y], render.Char{Rune: ' ', Style: render.Style{}})
 			}
 		}
+	}
+
+	if len(v.Screen)-1 > h {
+		diff := len(v.Screen) - h - 1
+		v.Scrollback = append(v.Scrollback, v.Screen[:diff]...)
+		v.Screen = v.Screen[diff:]
 	}
 
 	if v.scrollingRegion.top == 0 && v.scrollingRegion.bottom == v.h-1 {
