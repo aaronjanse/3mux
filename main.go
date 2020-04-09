@@ -118,6 +118,7 @@ func shutdownNow() {
 func fatalShutdownNow(where string) {
 	term.Close()
 	fmt.Println("Error during:", where)
+	fmt.Println("Tiling state:", root.serialize())
 	fmt.Println(string(runtimeDebug.Stack()))
 	fmt.Println()
 	fmt.Println("Please submit a bug report with this stack trace to https://github.com/aaronjanse/3mux/issues")

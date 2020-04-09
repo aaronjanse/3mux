@@ -15,10 +15,6 @@ const demoMode = false
 var demoTextTimer *time.Timer = nil
 var demoTextDuration = 400 * time.Millisecond
 
-func init() {
-	// demoTextTimer = time.NewTimer(10 * time.Millisecond)
-}
-
 // handleInput puts the input through a series of switches and seive functions.
 // When something acts on the event, we stop passing it downstream
 func handleInput(event interface{}, rawData []byte) {
