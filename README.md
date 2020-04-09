@@ -2,7 +2,7 @@
 
 `3mux` is a terminal multiplexer with out-of-the-box support for search, mouse-controlled scrollback, and i3-like keybindings.
 
-<img src="./demo.gif" width="600"/>
+<img src="./demo.gif" width="800"/>
 
 <!--TODO: GIF!-->
 
