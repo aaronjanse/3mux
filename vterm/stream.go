@@ -141,6 +141,13 @@ func (v *VTerm) handleEscapeCode() {
 		}
 	case '=': // Application Keypad
 		// TODO
+	case 'M': // Reverse Linefeed; http://man7.org/linux/man-pages/man4/console_codes.4.html
+		if v.Cursor.Y == 0 {
+			v.scrollDown(1)
+		} else {
+			v.shiftCursorY(-1)
+		}
+		v.RedrawWindow()
 	default:
 		log.Printf("Unrecognized escape code: %v", string(next))
 	}
