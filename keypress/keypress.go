@@ -206,6 +206,8 @@ func handleEscapeCode(data []byte, handle func(parsedData interface{})) {
 					handle(ScrollUp{})
 				case 53:
 					handle(ScrollDown{})
+				default:
+					log.Printf("Unrecognized scroll code': %v", data)
 				}
 			case 48:
 				code := string(data[5:])
