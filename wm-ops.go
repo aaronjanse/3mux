@@ -172,7 +172,7 @@ func moveWindow(d Direction) {
 		}
 	}
 
-	// root.refreshRenderRect()
+	root.refreshRenderRect()
 }
 
 func killWindow() {
