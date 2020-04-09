@@ -5,6 +5,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"unicode/utf8"
 )
 
 // Renderer is our simplified implemention of ncurses
@@ -22,6 +23,8 @@ type Renderer struct {
 
 	Pause  chan bool
 	Resume chan bool
+
+	DemoText string
 }
 
 // A PositionedChar is a Char with a specific location on the screen
@@ -95,6 +98,11 @@ func (r *Renderer) ForceHandleCh(ch PositionedChar) {
 	r.HandleCh(ch)
 }
 
+// DemoKeypress is used for demos of 3mux
+func (r *Renderer) DemoKeypress(str string) {
+
+}
+
 // ListenToQueue is a blocking function that processes data sent to the RenderQueue
 func (r *Renderer) ListenToQueue() {
 	fmt.Print("\033[2J") // clear screen
@@ -128,6 +136,58 @@ func (r *Renderer) ListenToQueue() {
 			fmt.Print("\033[?25l") // hide cursor
 
 			fmt.Print(diff.String())
+
+			if len(r.DemoText) > 0 {
+				var demoTextDiff strings.Builder
+
+				demoTextLen := utf8.RuneCountInString(r.DemoText)
+
+				for x := r.w - 2 - demoTextLen - 1; x <= r.w-2; x++ {
+					for y := r.h - 5; y <= r.h-3; y++ {
+						newCursor := Cursor{
+							X: x, Y: y, Style: Style{
+								Bg: Color{
+									ColorMode: ColorBit3Bright,
+									Code:      6,
+								},
+								Fg: Color{
+									ColorMode: ColorBit3Normal,
+									Code:      0,
+								},
+							},
+						}
+
+						delta := deltaMarkup(r.drawingCursor, newCursor)
+						demoTextDiff.WriteString(delta)
+						demoTextDiff.WriteString(string(' '))
+						newCursor.X++
+						r.drawingCursor = newCursor
+					}
+				}
+
+				for i, c := range r.DemoText {
+					newCursor := Cursor{
+						X: r.w - 2 - demoTextLen + i, Y: r.h - 4, Style: Style{
+							Bg: Color{
+								ColorMode: ColorBit3Bright,
+								Code:      6,
+							},
+							Fg: Color{
+								ColorMode: ColorBit3Normal,
+								Code:      0,
+							},
+						},
+					}
+
+					delta := deltaMarkup(r.drawingCursor, newCursor)
+					demoTextDiff.WriteString(delta)
+					demoTextDiff.WriteString(string(c))
+					newCursor.X++
+					r.drawingCursor = newCursor
+				}
+
+				fmt.Print(demoTextDiff.String())
+			}
 
 			fmt.Print("\033[?25h") // show cursor
 		}

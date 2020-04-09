@@ -1,6 +1,8 @@
 package main
 
 import (
+	"time"
+
 	"github.com/aaronjanse/i3-tmux/keypress"
 )
 
@@ -8,9 +10,61 @@ type inputState struct {
 	mouseDown bool
 }
 
+const demoMode = false
+
+var demoTextTimer *time.Timer = nil
+var demoTextDuration = 400 * time.Millisecond
+
+func init() {
+	// demoTextTimer = time.NewTimer(10 * time.Millisecond)
+}
+
 // handleInput puts the input through a series of switches and seive functions.
 // When something acts on the event, we stop passing it downstream
 func handleInput(event interface{}, rawData []byte) {
+	if demoMode {
+		switch ev := event.(type) {
+		case keypress.AltChar:
+			renderer.DemoText = "Alt + " + string(ev.Char)
+		case keypress.AltShiftChar:
+			renderer.DemoText = "Alt + Shift + " + string(ev.Char)
+		case keypress.AltArrow:
+			switch ev.Direction {
+			case keypress.Up:
+				renderer.DemoText = "Alt + " + string("↑")
+			case keypress.Down:
+				renderer.DemoText = "Alt + " + string("↓")
+			case keypress.Left:
+				renderer.DemoText = "Alt + " + string("←")
+			case keypress.Right:
+				renderer.DemoText = "Alt + " + string("→")
+			}
+		case keypress.AltShiftArrow:
+			switch ev.Direction {
+			case keypress.Up:
+				renderer.DemoText = "Alt + Shift + " + string("↑")
+			case keypress.Down:
+				renderer.DemoText = "Alt + Shift + " + string("↓")
+			case keypress.Left:
+				renderer.DemoText = "Alt + Shift + " + string("←")
+			case keypress.Right:
+				renderer.DemoText = "Alt + Shift + " + string("→")
+			}
+		}
+
+		if demoTextTimer == nil {
+			demoTextTimer = time.NewTimer(demoTextDuration)
+		} else {
+			demoTextTimer.Stop()
+			demoTextTimer.Reset(demoTextDuration)
+		}
+
+		go func() {
+			<-demoTextTimer.C
+			renderer.DemoText = ""
+		}()
+	}
+
 	defer func() {
 		if config.statusBar {
 			debug(root.serialize())
