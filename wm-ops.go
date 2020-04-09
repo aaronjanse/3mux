@@ -1,6 +1,8 @@
 package main
 
-import "github.com/aaronjanse/i3-tmux/keypress"
+import (
+	"github.com/aaronjanse/i3-tmux/keypress"
+)
 
 func search() {
 	getSelection().getContainer().(*Pane).toggleSearch()
@@ -37,28 +39,81 @@ func moveWindow(d Direction) {
 		idx := parent.selectionIdx
 
 		if idx == 0 {
-			return
+			if len(parentPath) < 2 {
+				return
+			}
+
+			grandparent, grandparentPath := parentPath.getParent()
+			tmp := parentPath.popContainer(parent.selectionIdx)
+
+			if len(parentPath) == 2 {
+				root.workspaces[root.selectionIdx].contents = &Split{
+					renderRect:        Rect{w: termW, h: termH},
+					verticallyStacked: vert,
+					selectionIdx:      1,
+					elements: []Node{
+						Node{
+							size:     0.5,
+							contents: tmp,
+						},
+						Node{
+							size:     0.5,
+							contents: grandparent,
+						},
+					},
+				}
+			} else {
+				greatGrandparent, _ := grandparentPath.getParent()
+				greatGrandparent.insertContainer(tmp, greatGrandparent.selectionIdx)
+			}
+		} else {
+			tmp := parent.elements[idx-1]
+			parent.elements[idx-1] = parent.elements[idx]
+			parent.elements[idx] = tmp
+
+			parent.selectionIdx--
 		}
-
-		tmp := parent.elements[idx-1]
-		parent.elements[idx-1] = parent.elements[idx]
-		parent.elements[idx] = tmp
-
-		parent.selectionIdx--
 
 		// root.refreshRenderRect()
 	} else if (!vert && d == Right) || (vert && d == Down) {
 		idx := parent.selectionIdx
 
 		if idx == len(parent.elements)-1 {
-			return
+			if len(parentPath) < 2 {
+				return
+			}
+
+			grandparent, grandparentPath := parentPath.getParent()
+			tmp := parentPath.popContainer(parent.selectionIdx)
+
+			if len(parentPath) == 2 {
+				root.workspaces[root.selectionIdx].contents = &Split{
+					renderRect:        Rect{w: termW, h: termH},
+					verticallyStacked: vert,
+					selectionIdx:      1,
+					elements: []Node{
+						Node{
+							size:     0.5,
+							contents: grandparent,
+						},
+						Node{
+							size:     0.5,
+							contents: tmp,
+						},
+					},
+				}
+			} else {
+				greatGrandparent, _ := grandparentPath.getParent()
+				greatGrandparent.insertContainer(tmp, grandparent.selectionIdx+2)
+				greatGrandparent.selectionIdx++
+			}
+		} else {
+			tmp := parent.elements[idx+1]
+			parent.elements[idx+1] = parent.elements[idx]
+			parent.elements[idx] = tmp
+
+			parent.selectionIdx++
 		}
-
-		tmp := parent.elements[idx+1]
-		parent.elements[idx+1] = parent.elements[idx]
-		parent.elements[idx] = tmp
-
-		parent.selectionIdx++
 
 		// root.refreshRenderRect()
 	} else {
@@ -68,7 +123,7 @@ func moveWindow(d Direction) {
 		for len(p) > 1 {
 			s, _ := p.getParent()
 			if s.verticallyStacked == movingVert {
-				tmp := parentPath.popContainer((*parent).selectionIdx)
+				tmp := parentPath.popContainer(parent.selectionIdx)
 
 				if d == Left || d == Up {
 					s.insertContainer(tmp, s.selectionIdx)
@@ -346,5 +401,5 @@ func resizeWindowImpl(path Path, d Direction, diff float32) {
 		}
 	}
 
-	parent.refreshRenderRect()
+	root.refreshRenderRect()
 }
