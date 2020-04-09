@@ -18,6 +18,9 @@ func (v *VTerm) handleCSISequence() {
 		if !ok {
 			return
 		}
+		if next == 0 {
+			continue
+		}
 
 		if unicode.IsDigit(next) || next == ';' || next == ' ' {
 			parameterCode += string(next)
