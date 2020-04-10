@@ -178,7 +178,7 @@ func doDemo() {
 					},
 				},
 			}
-			renderer.ForceHandleCh(ch)
+			renderer.HandleCh(ch)
 		}
 		time.Sleep(15 * time.Millisecond)
 		copiedText += "\n"

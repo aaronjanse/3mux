@@ -206,7 +206,7 @@ func (t *Pane) doSearch() {
 
 		for i := match.x1; i <= match.x2; i++ {
 			theY := len(fullBuffer) - (bottomOfScreen + match.y1 + 1)
-			renderer.ForceHandleCh(render.PositionedChar{
+			renderer.HandleCh(render.PositionedChar{
 				Rune: fullBuffer[theY][i].Rune,
 				Cursor: render.Cursor{
 					X: t.renderRect.x + i,
@@ -350,7 +350,7 @@ func (t *Pane) displayStatusText(s string) {
 				},
 			},
 		}
-		renderer.ForceHandleCh(ch)
+		renderer.HandleCh(ch)
 	}
 }
 
@@ -373,7 +373,7 @@ func (t *Pane) clearStatusText() {
 				},
 			},
 		}
-		renderer.ForceHandleCh(ch)
+		renderer.HandleCh(ch)
 	}
 }
 

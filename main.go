@@ -170,7 +170,7 @@ func debug(s string) {
 				},
 			},
 		}
-		renderer.ForceHandleCh(ch)
+		renderer.HandleCh(ch)
 	}
 
 	if resizeMode {
@@ -194,7 +194,7 @@ func debug(s string) {
 					},
 				},
 			}
-			renderer.ForceHandleCh(ch)
+			renderer.HandleCh(ch)
 		}
 	}
 }

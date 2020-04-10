@@ -18,9 +18,8 @@ func (v *VTerm) ScrollbackUp() {
 
 	if v.ScrollbackPos-5 >= 0 {
 		v.ScrollbackPos -= 5
+		v.implRedrawWindow(true)
 	}
-
-	v.RedrawWindow()
 }
 
 // ScrollbackDown shifts the screen contents down, with scrollback
@@ -35,7 +34,7 @@ func (v *VTerm) ScrollbackDown() {
 
 	if v.ScrollbackPos+5 < len(v.Scrollback) {
 		v.ScrollbackPos += 5
-		v.RedrawWindow()
+		v.implRedrawWindow(true)
 	}
 }
 
@@ -166,6 +165,10 @@ func (v *VTerm) putChar(ch rune) {
 // RedrawWindow redraws the screen into ncurses from scratch.
 // This should be reserved for operations not yet formalized into a generic, efficient function.
 func (v *VTerm) RedrawWindow() {
+	v.implRedrawWindow(false)
+}
+
+func (v *VTerm) implRedrawWindow(force bool) {
 	if v.ScrollbackPos < v.h {
 		for y := 0; y < v.h-v.ScrollbackPos; y++ {
 			for x := 0; x < v.w; x++ {
@@ -180,7 +183,11 @@ func (v *VTerm) RedrawWindow() {
 					},
 				}
 
-				v.renderer.ForceHandleCh(ch)
+				if force {
+					v.renderer.ForceHandleCh(ch)
+				} else {
+					v.renderer.HandleCh(ch)
+				}
 			}
 		}
 	}
@@ -205,7 +212,11 @@ func (v *VTerm) RedrawWindow() {
 							X: v.x + x, Y: v.y + y, Style: v.Scrollback[idx][x].Style,
 						},
 					}
-					v.renderer.ForceHandleCh(ch)
+					if force {
+						v.renderer.ForceHandleCh(ch)
+					} else {
+						v.renderer.HandleCh(ch)
+					}
 				} else {
 					ch := render.PositionedChar{
 						Rune: ' ',
@@ -213,7 +224,11 @@ func (v *VTerm) RedrawWindow() {
 							X: v.x + x, Y: v.y + y, Style: render.Style{},
 						},
 					}
-					v.renderer.ForceHandleCh(ch)
+					if force {
+						v.renderer.ForceHandleCh(ch)
+					} else {
+						v.renderer.HandleCh(ch)
+					}
 				}
 			}
 		}
