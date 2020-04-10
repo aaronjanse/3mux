@@ -157,6 +157,32 @@ func handleEscapeCode(data []byte, handle func(parsedData interface{})) {
 	switch data[1] {
 	case 13:
 		handle(AltChar{'\n'})
+	case 27:
+		if len(data) == 4 && data[2] == 79 {
+			switch data[3] {
+			case 65:
+				log.Println("Terminal.app!")
+			case 66:
+				log.Println("Terminal.app!")
+			default:
+				log.Println("Unhandled ?arrow?:", data)
+			}
+		} else if len(data) == 4 && data[2] == 91 {
+			switch data[3] {
+			case 65:
+				handle(AltArrow{Direction: Up})
+			case 66:
+				handle(AltArrow{Direction: Down})
+			case 67:
+				handle(AltArrow{Direction: Right})
+			case 68:
+				handle(AltArrow{Direction: Left})
+			default:
+				log.Println("Unhandled ?arrow?:", data)
+			}
+		} else {
+			log.Println("Unhandled double escape:", data)
+		}
 	case 79:
 		direction := directionNames[data[2]]
 		if len(data) == 15 { // scrolling
@@ -173,6 +199,23 @@ func handleEscapeCode(data []byte, handle func(parsedData interface{})) {
 		}
 	case 91:
 		switch data[2] {
+		case 49:
+			if len(data) == 7 && data[3] == 59 && data[4] == 49 && data[5] == 48 {
+				switch data[6] {
+				case 65:
+					handle(AltShiftArrow{Direction: Up})
+				case 66:
+					handle(AltShiftArrow{Direction: Down})
+				case 67:
+					handle(AltShiftArrow{Direction: Right})
+				case 68:
+					handle(AltShiftArrow{Direction: Left})
+				default:
+					log.Println("Unhandled shift arrow:", data)
+				}
+			} else {
+				log.Println("Unhandled almost-shift-arrow:", data)
+			}
 		case 51: // Mouse
 			code := string(data[2:])
 			code = strings.TrimSuffix(code, "M") // NOTE: are there other codes we are forgetting about?
@@ -261,6 +304,8 @@ func handleEscapeCode(data []byte, handle func(parsedData interface{})) {
 				log.Printf("Unrecognized keycode: %v", data)
 			}
 		}
+	case 102:
+		handle(AltChar{Char: 'F'})
 	default:
 		parseAltLetter(data[1], handle)
 	}
