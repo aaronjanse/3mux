@@ -69,13 +69,14 @@ func newTerm(selected bool) *Pane {
 			}
 		}()
 
+		t.shell.cmd.Wait()
+
 		// FIXME: only supports one workspace
 		if t.selected {
 			root.workspaces[root.selectionIdx].doFullscreen = false
 			keypress.ShouldProcessMouse(true)
 		}
 
-		t.shell.cmd.Wait()
 		t.Dead = true
 		removeTheDead([]int{root.selectionIdx})
 
