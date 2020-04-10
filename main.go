@@ -8,8 +8,8 @@ import (
 	runtimeDebug "runtime/debug"
 	"runtime/pprof"
 
-	"github.com/aaronjanse/i3-tmux/keypress"
-	"github.com/aaronjanse/i3-tmux/render"
+	"github.com/aaronjanse/3mux/keypress"
+	"github.com/aaronjanse/3mux/render"
 
 	term "github.com/nsf/termbox-go"
 )

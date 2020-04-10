@@ -8,9 +8,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/aaronjanse/i3-tmux/keypress"
-	"github.com/aaronjanse/i3-tmux/render"
-	"github.com/aaronjanse/i3-tmux/vterm"
+	"github.com/aaronjanse/3mux/keypress"
+	"github.com/aaronjanse/3mux/render"
+	"github.com/aaronjanse/3mux/vterm"
 )
 
 // SearchDirection is which direction we move through search results

@@ -6,7 +6,7 @@ A Char is a character printed using a given cursor (which is stored alongside th
 package vterm
 
 import (
-	"github.com/aaronjanse/i3-tmux/render"
+	"github.com/aaronjanse/3mux/render"
 )
 
 // ScrollingRegion holds the state for an ANSI scrolling region

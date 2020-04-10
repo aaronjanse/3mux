@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/aaronjanse/i3-tmux/render"
+	"github.com/aaronjanse/3mux/render"
 )
 
 func drawSelectionBorder(r Rect) {

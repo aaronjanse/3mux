@@ -3,7 +3,7 @@ package main
 import (
 	"time"
 
-	"github.com/aaronjanse/i3-tmux/keypress"
+	"github.com/aaronjanse/3mux/keypress"
 )
 
 type inputState struct {

@@ -4,7 +4,7 @@ import (
 	"log"
 	"strings"
 
-	"github.com/aaronjanse/i3-tmux/keypress"
+	"github.com/aaronjanse/3mux/keypress"
 )
 
 // Config stores all user configuration values

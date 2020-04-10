@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/aaronjanse/i3-tmux/keypress"
+	"github.com/aaronjanse/3mux/keypress"
 )
 
 func search() {
