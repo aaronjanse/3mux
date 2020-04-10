@@ -31,3 +31,9 @@
 1. Install Golang
 2. `go get github.com/aaronjanse/3mux`
 3. Run `3mux` to launch the terminal multiplexer
+
+#### Terminal.app
+Preferences > Profiles > Keyboard > Use Option as Meta Key
+
+#### iTerm2
+Preferences > Profiles > Keys > Option Key > Esc+
