@@ -38,7 +38,7 @@ func newShell(stdout chan<- rune) Shell {
 		defer func() {
 			if r := recover(); r != nil {
 				if r.(error).Error() != "send on closed channel" {
-					panic(r)
+					fatalShutdownNow("shell.go\n" + r.(error).Error())
 				}
 			}
 		}()
