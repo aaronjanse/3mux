@@ -211,7 +211,33 @@ func handleEscapeCode(data []byte, handle func(parsedData interface{})) {
 				case 68:
 					handle(AltShiftArrow{Direction: Left})
 				default:
-					log.Println("Unhandled shift arrow:", data)
+					log.Println("Unhandled alt shift arrow:", data)
+				}
+			} else if len(data) == 6 && data[3] == 59 && data[4] == 51 {
+				switch data[5] {
+				case 65:
+					handle(AltArrow{Direction: Up})
+				case 66:
+					handle(AltArrow{Direction: Down})
+				case 67:
+					handle(AltArrow{Direction: Right})
+				case 68:
+					handle(AltArrow{Direction: Left})
+				default:
+					log.Println("Unhandled alt arrow:", data)
+				}
+			} else if len(data) == 6 && data[3] == 59 && data[4] == 52 {
+				switch data[5] {
+				case 65:
+					handle(AltShiftArrow{Direction: Up})
+				case 66:
+					handle(AltShiftArrow{Direction: Down})
+				case 67:
+					handle(AltShiftArrow{Direction: Right})
+				case 68:
+					handle(AltShiftArrow{Direction: Left})
+				default:
+					log.Println("Unhandled alt arrow:", data)
 				}
 			} else {
 				log.Println("Unhandled almost-shift-arrow:", data)
