@@ -49,6 +49,8 @@ func newShell(stdout chan<- rune) Shell {
 			if err != nil {
 				if err.Error() == "read /dev/ptmx: input/output error" {
 					break // ^D
+				} else if err.Error() == "EOF" {
+					break
 				} else {
 					panic(err)
 				}
