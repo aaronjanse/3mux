@@ -33,7 +33,7 @@
 3. Run `3mux` to launch the terminal multiplexer
 
 #### Terminal.app
-_**Warning: Arrow-key-controlled window management is currently unsupported on Terminal.app. Please use the default vim-like keybindings instead.**_
+_**Warning: Arrow-key-controlled window management is currently unsupported on Terminal.app. Please use the default vim-like keybindings instead.**_  
 Preferences > Profiles > Keyboard > Use Option as Meta Key  
 
 #### iTerm2
