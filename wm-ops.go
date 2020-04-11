@@ -174,6 +174,12 @@ func moveWindow(d Direction) {
 		}
 	}
 
+	// select the new Term
+	newTerm := getSelection().getContainer().(*Pane)
+	newTerm.selected = true
+	newTerm.softRefresh()
+	newTerm.vterm.RefreshCursor()
+
 	root.refreshRenderRect()
 }
 

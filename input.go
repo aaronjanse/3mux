@@ -15,6 +15,8 @@ const demoMode = false
 var demoTextTimer *time.Timer = nil
 var demoTextDuration = 1000 * time.Millisecond
 
+var tmuxMode = false
+
 // handleInput puts the input through a series of switches and seive functions.
 // When something acts on the event, we stop passing it downstream
 func handleInput(event interface{}, rawData []byte) {
@@ -59,6 +61,62 @@ func handleInput(event interface{}, rawData []byte) {
 			<-demoTextTimer.C
 			renderer.DemoText = ""
 		}()
+	}
+
+	if tmuxMode {
+		switch ev := event.(type) {
+		case keypress.Character:
+			switch ev.Char {
+			case '%':
+				pane := getSelection().getContainer().(*Pane)
+
+				parent, _ := getSelection().getParent()
+				parent.elements[parent.selectionIdx] = Node{
+					size: 1,
+					contents: &Split{
+						verticallyStacked: true,
+						elements: []Node{Node{
+							size:     1,
+							contents: pane,
+						}},
+					},
+				}
+
+				root.refreshRenderRect()
+				newWindow()
+			case '"':
+				pane := getSelection().getContainer().(*Pane)
+
+				parent, _ := getSelection().getParent()
+				parent.elements[parent.selectionIdx] = Node{
+					size: 1,
+					contents: &Split{
+						verticallyStacked: false,
+						elements: []Node{Node{
+							size:     1,
+							contents: pane,
+						}},
+					},
+				}
+
+				root.refreshRenderRect()
+				newWindow()
+			case '{':
+				moveWindow(Left)
+			case '}':
+				moveWindow(Right)
+			}
+		}
+		tmuxMode = false
+		return
+	}
+
+	switch ev := event.(type) {
+	case keypress.CtrlChar:
+		if ev.Char == 'B' {
+			tmuxMode = true
+			return
+		}
 	}
 
 	defer func() {
