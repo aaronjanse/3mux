@@ -99,7 +99,9 @@ var oldState *terminal.State
 // Shutdown cleans up the terminal state
 func Shutdown() {
 	ShouldProcessMouse(false)
-	terminal.Restore(0, oldState)
+	if oldState != nil {
+		terminal.Restore(0, oldState)
+	}
 }
 
 // GetTermSize returns the terminal dimensions w, h, err

@@ -79,7 +79,7 @@ func (p Path) getContainer() Container {
 			cur = val.elements[val.selectionIdx].contents
 			p = p[1:]
 		default:
-			logFatal("bad path")
+			fatalShutdownNow("bad path")
 		}
 	}
 

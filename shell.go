@@ -24,7 +24,7 @@ func newShell(stdout chan<- rune) Shell {
 
 	ptmx, err := pty.Start(cmd)
 	if err != nil {
-		logFatal(err)
+		fatalShutdownNow(err.Error())
 	}
 
 	shell := Shell{
@@ -71,7 +71,7 @@ func (s *Shell) Kill() {
 
 	err := s.ptmx.Close()
 	if err != nil {
-		logFatal("failed to close ptmx", err)
+		fatalShutdownNow("failed to close ptmx; " + err.Error())
 	}
 
 	err = s.cmd.Process.Kill()
@@ -83,7 +83,7 @@ func (s *Shell) Kill() {
 func (s *Shell) handleStdin(data string) {
 	_, err := s.ptmx.Write([]byte(data))
 	if err != nil {
-		logFatal(err)
+		fatalShutdownNow(err.Error())
 	}
 }
 
@@ -98,7 +98,7 @@ func (s *Shell) resize(w, h int) {
 				X: 16 * uint16(w), Y: 16 * uint16(h),
 			})
 			if err != nil {
-				logFatal(err)
+				fatalShutdownNow(err.Error())
 			}
 		}
 	}()
