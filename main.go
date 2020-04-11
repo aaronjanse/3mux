@@ -32,6 +32,8 @@ func main() {
 		}
 	}()
 
+	flag.Parse()
+
 	// setup logging
 	if *writeLogs {
 		f, err := os.OpenFile("logs.txt", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
@@ -45,7 +47,6 @@ func main() {
 	}
 
 	// setup cpu profiling
-	flag.Parse()
 	if *cpuprofile != "" {
 		f, err := os.Create(*cpuprofile)
 		if err != nil {
