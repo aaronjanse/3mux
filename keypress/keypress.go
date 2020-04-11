@@ -250,7 +250,7 @@ func handleEscapeCode(data []byte, handle func(parsedData interface{})) {
 		} else { // arrow
 			handle(direction)
 		}
-	case 91:
+	case 91: // '['
 		switch data[2] {
 		case 49:
 			if len(data) == 7 && data[3] == 59 && data[4] == 49 && data[5] == 48 {
@@ -351,6 +351,14 @@ func handleEscapeCode(data []byte, handle func(parsedData interface{})) {
 					log.Printf("Unrecognzied mouse code: %v", data)
 				}
 			}
+		case 65:
+			handle(Arrow{Direction: Up})
+		case 66:
+			handle(Arrow{Direction: Down})
+		case 67:
+			handle(Arrow{Direction: Right})
+		case 68:
+			handle(Arrow{Direction: Left})
 		case 77:
 			switch data[3] {
 			case 32:
