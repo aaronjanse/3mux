@@ -26,6 +26,16 @@
 |<kbd>Alt+/</kbd> | Enter search mode. Type query, navigate between results with arrow keys or <kbd>n/N</kbd>
 |<kbd>Scroll</kbd> | Move through scrollback
 
+
+### Supported tmux Bindings
+
+| Key(s) | Description
+|-------:|:------------
+|<kbd>Ctrl+b "</kbd> | Split horizontally
+|<kbd>Ctrl+b %</kbd> | Split vertically
+|<kbd>Ctrl+b {</kbd> | Move window left
+|<kbd>Ctrl+b }</kbd> | Move window right
+
 ### Installation Instructions
 
 1. Install Golang
