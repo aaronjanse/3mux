@@ -56,7 +56,7 @@ func main() {
 		defer pprof.StopCPUProfile()
 	}
 
-	termW, termH, _ = getTermSize()
+	termW, termH, _ = keypress.GetTermSize()
 
 	renderer = render.NewRenderer()
 	go renderer.ListenToQueue()

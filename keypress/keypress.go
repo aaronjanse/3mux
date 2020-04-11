@@ -35,8 +35,11 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/exec"
+	"os/signal"
 	"strconv"
 	"strings"
+	"syscall"
 	"unicode"
 
 	"golang.org/x/crypto/ssh/terminal"
@@ -99,6 +102,32 @@ func Shutdown() {
 	terminal.Restore(0, oldState)
 }
 
+// GetTermSize returns the terminal dimensions w, h, err
+func GetTermSize() (int, int, error) {
+	cmd := exec.Command("stty", "size")
+	cmd.Stdin = os.Stdin
+	out, err := cmd.Output()
+	if err != nil {
+		return 0, 0, err
+	}
+
+	outStr := strings.TrimSpace(string(out))
+	parts := strings.Split(outStr, " ")
+
+	h, err := strconv.ParseInt(parts[0], 10, 64)
+	if err != nil {
+		return 0, 0, err
+	}
+	w, err := strconv.ParseInt(parts[1], 10, 64)
+	if err != nil {
+		return 0, 0, err
+	}
+
+	wInt := int(int64(w))
+	hInt := int(int64(h))
+	return wInt, hInt, nil
+}
+
 // Listen is a blocking function that indefinitely listens for keypresses.
 // When it detects a keypress, it passes on to the callback a human-readable interpretation of the event (e.g. Alt+Shift+Up) along with the raw string of text received by the terminal.
 func Listen(callback func(parsedData interface{}, rawData []byte)) {
@@ -108,6 +137,16 @@ func Listen(callback func(parsedData interface{}, rawData []byte)) {
 		panic(err)
 	}
 	defer Shutdown()
+
+	go func() {
+		for {
+			c := make(chan os.Signal, 1)
+			signal.Notify(c, syscall.SIGWINCH)
+			<-c
+			w, h, _ := GetTermSize()
+			callback(Resize{W: w, H: h}, []byte{})
+		}
+	}()
 
 	ShouldProcessMouse(false)
 
