@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
 	runtimeDebug "runtime/debug"
@@ -22,6 +23,7 @@ var termW, termH int
 var renderer *render.Renderer
 
 var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
+var writeLogs = flag.Bool("log", false, "write logs to ./logs.txt")
 
 func main() {
 	defer func() {
@@ -31,12 +33,16 @@ func main() {
 	}()
 
 	// setup logging
-	f, err := os.OpenFile("logs.txt", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
-	if err != nil {
-		log.Fatalf("error opening file: %v", err)
+	if *writeLogs {
+		f, err := os.OpenFile("logs.txt", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+		if err != nil {
+			log.Fatalf("error opening file: %v", err)
+		}
+		defer f.Close()
+		log.SetOutput(f)
+	} else {
+		log.SetOutput(ioutil.Discard)
 	}
-	defer f.Close()
-	log.SetOutput(f)
 
 	// setup cpu profiling
 	flag.Parse()
