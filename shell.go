@@ -20,7 +20,7 @@ type Shell struct {
 }
 
 func newShell(stdout chan<- rune) Shell {
-	cmd := exec.Command("zsh")
+	cmd := exec.Command(os.Getenv("SHELL"))
 
 	ptmx, err := pty.Start(cmd)
 	if err != nil {
