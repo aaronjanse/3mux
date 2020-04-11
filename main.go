@@ -50,7 +50,7 @@ func main() {
 	if *cpuprofile != "" {
 		f, err := os.Create(*cpuprofile)
 		if err != nil {
-			log.Fatal(err)
+			fatalShutdownNow(err.Error())
 		}
 		pprof.StartCPUProfile(f)
 		defer pprof.StopCPUProfile()

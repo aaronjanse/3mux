@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 )
 
 // Direction is the type of Up, Down, Left, and Right
@@ -80,7 +79,7 @@ func (p Path) getContainer() Container {
 			cur = val.elements[val.selectionIdx].contents
 			p = p[1:]
 		default:
-			log.Fatal("bad path")
+			fatalShutdownNow("bad path")
 		}
 	}
 
