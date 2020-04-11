@@ -134,13 +134,13 @@ func seiveMouseEvents(event interface{}) bool {
 		pane := path.getContainer()
 		r := pane.getRenderRect()
 
-		if ev.Y == r.y+r.h+1 {
+		if ev.Y == r.y+r.h {
 			mouseDownPath = path
 			parent, _ := mouseDownPath.getParent()
 			if !parent.verticallyStacked {
 				mouseDownPath = mouseDownPath[:len(mouseDownPath)-1]
 			}
-		} else if ev.X == r.x+r.w+1 {
+		} else if ev.X == r.x+r.w {
 			mouseDownPath = path
 			parent, _ := mouseDownPath.getParent()
 			if parent.verticallyStacked {

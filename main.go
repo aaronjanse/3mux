@@ -10,8 +10,7 @@ import (
 
 	"github.com/aaronjanse/3mux/keypress"
 	"github.com/aaronjanse/3mux/render"
-
-	term "github.com/nsf/termbox-go"
+	term "github.com/gdamore/tcell"
 )
 
 // Rect is a rectangle with an origin x, origin y, width, and height
@@ -53,7 +52,17 @@ func main() {
 
 	termW, termH, _ = getTermSize()
 
-	renderer = render.NewRenderer()
+	scr, err := term.NewScreen()
+	if err != nil {
+		log.Fatal(err)
+	}
+	err = scr.Init()
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer scr.Fini()
+
+	renderer = render.NewRenderer(scr)
 	go renderer.ListenToQueue()
 
 	root = Universe{
@@ -94,7 +103,7 @@ func main() {
 		go doDemo()
 	}
 
-	keypress.Listen(handleInput)
+	keypress.Listen(handleInput, scr)
 }
 
 func resize(w, h int) {
@@ -115,12 +124,14 @@ func resize(w, h int) {
 }
 
 func shutdownNow() {
-	term.Close()
+	keypress.Scr.Fini()
+	// term.Close()
 	os.Exit(0)
 }
 
 func fatalShutdownNow(where string) {
-	term.Close()
+	keypress.Scr.Fini()
+	// term.Close()
 	fmt.Println("Error during:", where)
 	fmt.Println("Tiling state:", root.serialize())
 	fmt.Println(string(runtimeDebug.Stack()))

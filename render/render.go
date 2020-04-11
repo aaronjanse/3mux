@@ -2,10 +2,10 @@ package render
 
 import (
 	"fmt"
-	"strings"
 	"sync"
 	"time"
-	"unicode/utf8"
+
+	term "github.com/gdamore/tcell"
 )
 
 // Renderer is our simplified implemention of ncurses
@@ -25,6 +25,7 @@ type Renderer struct {
 	Resume chan bool
 
 	DemoText string
+	scr      term.Screen
 }
 
 // A PositionedChar is a Char with a specific location on the screen
@@ -40,13 +41,14 @@ type Char struct {
 }
 
 // NewRenderer returns an initialized Renderer
-func NewRenderer() *Renderer {
+func NewRenderer(scr term.Screen) *Renderer {
 	return &Renderer{
 		writingMutex:  &sync.Mutex{},
 		currentScreen: [][]Char{},
 		pendingScreen: [][]Char{},
 		Pause:         make(chan bool),
 		Resume:        make(chan bool),
+		scr:           scr,
 	}
 }
 
@@ -78,16 +80,18 @@ func expandBuffer(buffer [][]Char, w, h int) [][]Char {
 
 // HandleCh places a PositionedChar in the pending screen buffer
 func (r *Renderer) HandleCh(ch PositionedChar) {
-	r.writingMutex.Lock()
-	if ch.Rune == 0 {
-		ch.Rune = ' '
-	}
+	// r.writingMutex.Lock()
+	// if ch.Rune == 0 {
+	// 	ch.Rune = ' '
+	// }
 
-	r.pendingScreen[ch.Y][ch.X] = Char{
-		Rune:  ch.Rune,
-		Style: ch.Cursor.Style,
-	}
-	r.writingMutex.Unlock()
+	// r.pendingScreen[ch.Y][ch.X] = Char{
+	// 	Rune:  ch.Rune,
+	// 	Style: ch.Cursor.Style,
+	// }
+	// r.writingMutex.Unlock()
+
+	r.scr.SetCell(ch.X, ch.Y, term.StyleDefault, ch.Rune)
 }
 
 // ForceHandleCh places a PositionedChar in the pending screen buffer, ignoring cache buffering
@@ -105,98 +109,100 @@ func (r *Renderer) DemoKeypress(str string) {
 
 // ListenToQueue is a blocking function that processes data sent to the RenderQueue
 func (r *Renderer) ListenToQueue() {
+	r.scr.Clear()
 	for {
-		var diff strings.Builder
-		for y := 0; y <= r.h; y++ {
-			for x := 0; x < r.w; x++ {
-				r.writingMutex.Lock()
-				current := r.currentScreen[y][x]
-				pending := r.pendingScreen[y][x]
-				if current != pending {
-					r.currentScreen[y][x] = pending
+		r.scr.Show()
+		// 	var diff strings.Builder
+		// 	for y := 0; y <= r.h; y++ {
+		// 		for x := 0; x < r.w; x++ {
+		// 			r.writingMutex.Lock()
+		// 			current := r.currentScreen[y][x]
+		// 			pending := r.pendingScreen[y][x]
+		// 			if current != pending {
+		// 				r.currentScreen[y][x] = pending
 
-					newCursor := Cursor{
-						X: x, Y: y, Style: pending.Style,
-					}
+		// 				newCursor := Cursor{
+		// 					X: x, Y: y, Style: pending.Style,
+		// 				}
 
-					delta := deltaMarkup(r.drawingCursor, newCursor)
-					diff.WriteString(delta)
-					diff.WriteString(string(pending.Rune))
-					newCursor.X++
-					r.drawingCursor = newCursor
-				}
-				r.writingMutex.Unlock()
-			}
-		}
+		// 				delta := deltaMarkup(r.drawingCursor, newCursor)
+		// 				diff.WriteString(delta)
+		// 				diff.WriteString(string(pending.Rune))
+		// 				newCursor.X++
+		// 				r.drawingCursor = newCursor
+		// 			}
+		// 			r.writingMutex.Unlock()
+		// 		}
+		// 	}
 
-		diffStr := diff.String()
-		if len(diffStr) > 0 {
-			fmt.Print("\033[?25l") // hide cursor
+		// 	diffStr := diff.String()
+		// 	if len(diffStr) > 0 {
+		// 		fmt.Print("\033[?25l") // hide cursor
 
-			fmt.Print(diffStr)
+		// 		fmt.Print(diffStr)
 
-			if len(r.DemoText) > 0 {
-				var demoTextDiff strings.Builder
+		// 		if len(r.DemoText) > 0 {
+		// 			var demoTextDiff strings.Builder
 
-				demoTextLen := utf8.RuneCountInString(r.DemoText)
+		// 			demoTextLen := utf8.RuneCountInString(r.DemoText)
 
-				for x := r.w - 2 - demoTextLen - 1; x <= r.w-2; x++ {
-					for y := r.h - 5; y <= r.h-3; y++ {
-						newCursor := Cursor{
-							X: x, Y: y, Style: Style{
-								Bg: Color{
-									ColorMode: ColorBit3Bright,
-									Code:      6,
-								},
-								Fg: Color{
-									ColorMode: ColorBit3Normal,
-									Code:      0,
-								},
-							},
-						}
+		// 			for x := r.w - 2 - demoTextLen - 1; x <= r.w-2; x++ {
+		// 				for y := r.h - 5; y <= r.h-3; y++ {
+		// 					newCursor := Cursor{
+		// 						X: x, Y: y, Style: Style{
+		// 							Bg: Color{
+		// 								ColorMode: ColorBit3Bright,
+		// 								Code:      6,
+		// 							},
+		// 							Fg: Color{
+		// 								ColorMode: ColorBit3Normal,
+		// 								Code:      0,
+		// 							},
+		// 						},
+		// 					}
 
-						delta := deltaMarkup(r.drawingCursor, newCursor)
-						demoTextDiff.WriteString(delta)
-						demoTextDiff.WriteString(string(' '))
-						newCursor.X++
-						r.drawingCursor = newCursor
-					}
-				}
+		// 					delta := deltaMarkup(r.drawingCursor, newCursor)
+		// 					demoTextDiff.WriteString(delta)
+		// 					demoTextDiff.WriteString(string(' '))
+		// 					newCursor.X++
+		// 					r.drawingCursor = newCursor
+		// 				}
+		// 			}
 
-				for i, c := range r.DemoText {
-					newCursor := Cursor{
-						X: r.w - 2 - demoTextLen + i, Y: r.h - 4, Style: Style{
-							Bg: Color{
-								ColorMode: ColorBit3Bright,
-								Code:      6,
-							},
-							Fg: Color{
-								ColorMode: ColorBit3Normal,
-								Code:      0,
-							},
-						},
-					}
+		// 			for i, c := range r.DemoText {
+		// 				newCursor := Cursor{
+		// 					X: r.w - 2 - demoTextLen + i, Y: r.h - 4, Style: Style{
+		// 						Bg: Color{
+		// 							ColorMode: ColorBit3Bright,
+		// 							Code:      6,
+		// 						},
+		// 						Fg: Color{
+		// 							ColorMode: ColorBit3Normal,
+		// 							Code:      0,
+		// 						},
+		// 					},
+		// 				}
 
-					delta := deltaMarkup(r.drawingCursor, newCursor)
-					demoTextDiff.WriteString(delta)
-					demoTextDiff.WriteString(string(c))
-					newCursor.X++
-					r.drawingCursor = newCursor
-				}
+		// 				delta := deltaMarkup(r.drawingCursor, newCursor)
+		// 				demoTextDiff.WriteString(delta)
+		// 				demoTextDiff.WriteString(string(c))
+		// 				newCursor.X++
+		// 				r.drawingCursor = newCursor
+		// 			}
 
-				fmt.Print(demoTextDiff.String())
-			}
+		// 			fmt.Print(demoTextDiff.String())
+		// 		}
 
-			fmt.Print("\033[?25h") // show cursor
-		}
+		// 		fmt.Print("\033[?25h") // show cursor
+		// 	}
 
-		if r.drawingCursor != r.restingCursor {
-			delta := deltaMarkup(r.drawingCursor, r.restingCursor)
-			fmt.Print(delta)
-			r.drawingCursor = r.restingCursor
-		}
+		// 	if r.drawingCursor != r.restingCursor {
+		// 		delta := deltaMarkup(r.drawingCursor, r.restingCursor)
+		// 		fmt.Print(delta)
+		// 		r.drawingCursor = r.restingCursor
+		// 	}
 
-		// thr delay frees up the CPU for an arbitrary amount of time
+		// 	// thr delay frees up the CPU for an arbitrary amount of time
 		timer := time.NewTimer(time.Millisecond * 25)
 
 		select {

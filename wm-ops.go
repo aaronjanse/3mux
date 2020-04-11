@@ -182,6 +182,11 @@ func killWindow() {
 	t := parentPath.popContainer(parent.selectionIdx)
 	t.(*Pane).kill()
 
+	if len(parent.elements) == 0 {
+		gp, gpPath := parentPath.getParent()
+		gpPath.popContainer(gp.selectionIdx)
+	}
+
 	// FIXME: allows for only one workspace
 	if len(root.workspaces[root.selectionIdx].contents.elements) == 0 {
 		shutdownNow()

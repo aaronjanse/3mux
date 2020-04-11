@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/aaronjanse/3mux/render"
 )
@@ -67,11 +68,18 @@ func (s *Split) setPause(pause bool) {
 // A pane declares itself dead when its shell dies.
 func removeTheDead(path Path) {
 	s := path.getContainer().(*Split)
+	log.Println("??", s.serialize())
 	for idx := len(s.elements) - 1; idx >= 0; idx-- {
 		element := s.elements[idx]
+		log.Println("SPECIAL", element.contents.serialize())
 		switch c := element.contents.(type) {
 		case *Split:
-			removeTheDead(append(path, idx))
+			if len(c.elements) == 1 { // if we have only one element, it must be a pane
+				c.elements[0].contents.(*Pane).kill()
+				path.popContainer(idx)
+			} else {
+				removeTheDead(append(path, idx))
+			}
 		case *Pane:
 			if c.Dead {
 				t := path.popContainer(idx)
