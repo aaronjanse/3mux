@@ -74,13 +74,12 @@ func newTerm(selected bool) *Pane {
 		// FIXME: only supports one workspace
 		if t.selected {
 			root.workspaces[root.selectionIdx].doFullscreen = false
+			root.workspaces[root.selectionIdx].contents.setPause(false)
 			keypress.ShouldProcessMouse(true)
 		}
 
 		t.Dead = true
 		removeTheDead([]int{root.selectionIdx})
-
-		root.workspaces[root.selectionIdx].contents.setPause(false)
 
 		if len(root.workspaces[root.selectionIdx].contents.elements) == 0 {
 			shutdownNow()
