@@ -10,8 +10,6 @@ import (
 
 	"github.com/aaronjanse/3mux/keypress"
 	"github.com/aaronjanse/3mux/render"
-
-	term "github.com/nsf/termbox-go"
 )
 
 // Rect is a rectangle with an origin x, origin y, width, and height
@@ -115,18 +113,18 @@ func resize(w, h int) {
 }
 
 func shutdownNow() {
-	term.Close()
+	fmt.Print("\033[2J")
+	keypress.Shutdown()
 	os.Exit(0)
 }
 
 func fatalShutdownNow(where string) {
-	term.Close()
 	fmt.Println("Error during:", where)
 	fmt.Println("Tiling state:", root.serialize())
 	fmt.Println(string(runtimeDebug.Stack()))
 	fmt.Println()
 	fmt.Println("Please submit a bug report with this stack trace to https://github.com/aaronjanse/3mux/issues")
-	os.Exit(0)
+	shutdownNow()
 }
 
 var resizeMode bool
