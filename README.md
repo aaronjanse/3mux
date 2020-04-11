@@ -35,6 +35,8 @@
 |<kbd>Ctrl+b %</kbd> | Split vertically
 |<kbd>Ctrl+b {</kbd> | Move window left
 |<kbd>Ctrl+b }</kbd> | Move window right
+|<kbd>Ctrl+b o</kbd> | Next window
+|<kbd>Ctrl+b ;</kbd> | Previous window
 
 ### Installation Instructions
 

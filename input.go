@@ -105,6 +105,102 @@ func handleInput(event interface{}, rawData []byte) {
 				moveWindow(Left)
 			case '}':
 				moveWindow(Right)
+			case 'o': // next pane
+				path := getSelection()
+				oldTerm := path.getContainer().(*Pane)
+				oldTerm.selected = false
+				for {
+					if len(path) == 1 {
+						// select the first terminal
+						for {
+							done := false
+							switch c := path.getContainer().(type) {
+							case *Pane:
+								done = true
+							case *Split:
+								c.selectionIdx = 0
+								path = append(path, 0)
+							}
+							if done {
+								break
+							}
+						}
+						break
+					}
+					parent, _ := path.getParent()
+					if parent.selectionIdx == len(parent.elements)-1 {
+						path = path[:len(path)-1]
+					} else {
+						parent.selectionIdx++
+						for {
+							done := false
+							switch c := path.getContainer().(type) {
+							case *Pane:
+								done = true
+							case *Split:
+								c.selectionIdx = 0
+								path = append(path, 0)
+							}
+							if done {
+								break
+							}
+						}
+						break
+					}
+				}
+				// select the new Term
+				newTerm := getSelection().getContainer().(*Pane)
+				newTerm.selected = true
+				newTerm.vterm.RefreshCursor()
+				root.refreshRenderRect()
+			case ';': // prev pane
+				path := getSelection()
+				oldTerm := path.getContainer().(*Pane)
+				oldTerm.selected = false
+				for {
+					if len(path) == 1 {
+						// select the first terminal
+						for {
+							done := false
+							switch c := path.getContainer().(type) {
+							case *Pane:
+								done = true
+							case *Split:
+								c.selectionIdx = len(c.elements) - 1
+								path = append(path, 0)
+							}
+							if done {
+								break
+							}
+						}
+						break
+					}
+					parent, _ := path.getParent()
+					if parent.selectionIdx == 0 {
+						path = path[:len(path)-1]
+					} else {
+						parent.selectionIdx--
+						for {
+							done := false
+							switch c := path.getContainer().(type) {
+							case *Pane:
+								done = true
+							case *Split:
+								c.selectionIdx = len(c.elements) - 1
+								path = append(path, len(c.elements)-1)
+							}
+							if done {
+								break
+							}
+						}
+						break
+					}
+				}
+				// select the new Term
+				newTerm := getSelection().getContainer().(*Pane)
+				newTerm.selected = true
+				newTerm.vterm.RefreshCursor()
+				root.refreshRenderRect()
 			}
 		}
 		tmuxMode = false
