@@ -1,6 +1,6 @@
 `3mux` is a terminal multiplexer with out-of-the-box support for search, mouse-controlled scrollback, and i3-like keybindings. Imagine `tmux` with a smaller learning curve and more sane defaults.
 
-<img src="./demo.gif" width="800"/>
+[<img src="./demo.gif" width="800"/>](https://streamable.com/m2r57p)
 
 <!--TODO: GIF!-->
 
