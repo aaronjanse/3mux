@@ -74,14 +74,6 @@ func main() {
 
 	defer root.kill()
 
-	// enable mouse reporting
-	fmt.Print("\033[?1000h")
-	defer fmt.Print("\033[?1000l")
-	fmt.Print("\033[?1005h")
-	defer fmt.Print("\033[?1005l")
-	fmt.Print("\033[?1015h")
-	defer fmt.Print("\033[?1015l")
-
 	resize(termW, termH)
 
 	if config.statusBar {

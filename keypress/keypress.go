@@ -95,6 +95,7 @@ var oldState *terminal.State
 
 // Shutdown cleans up the terminal state
 func Shutdown() {
+	ShouldProcessMouse(false)
 	terminal.Restore(0, oldState)
 }
 
@@ -107,6 +108,8 @@ func Listen(callback func(parsedData interface{}, rawData []byte)) {
 		panic(err)
 	}
 	defer Shutdown()
+
+	ShouldProcessMouse(false)
 
 	// show cursor, make it blink
 	fmt.Print("\033[?25h\033[?12h") // EXPLAIN: do we need this?

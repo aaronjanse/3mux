@@ -94,6 +94,10 @@ func newTerm(selected bool) *Pane {
 			root.simplify()
 			root.refreshRenderRect()
 		}
+
+		if len(root.workspaces[root.selectionIdx].contents.elements) == 1 {
+			keypress.ShouldProcessMouse(false)
+		}
 	}()
 
 	parentSetCursor := func(x, y int) {
