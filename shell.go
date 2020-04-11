@@ -88,16 +88,14 @@ func (s *Shell) handleStdin(data string) {
 }
 
 func (s *Shell) resize(w, h int) {
-	w--
-	h--
 	// Handle pty size.
 	ch := make(chan os.Signal, 1)
 	signal.Notify(ch, syscall.SIGWINCH)
 	go func() {
 		for range ch {
 			err := pty.Setsize(s.ptmx, &pty.Winsize{
-				Rows: uint16(h + 1), Cols: uint16(w),
-				X: 16 * uint16(w), Y: 16 * uint16(h+1),
+				Rows: uint16(h), Cols: uint16(w),
+				X: 16 * uint16(w), Y: 16 * uint16(h),
 			})
 			if err != nil {
 				log.Fatal(err)

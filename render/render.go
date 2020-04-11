@@ -2,6 +2,7 @@ package render
 
 import (
 	"fmt"
+	"log"
 	"strings"
 	"sync"
 	"time"
@@ -90,14 +91,6 @@ func (r *Renderer) HandleCh(ch PositionedChar) {
 	r.writingMutex.Unlock()
 }
 
-// ForceHandleCh places a PositionedChar in the pending screen buffer, ignoring cache buffering
-func (r *Renderer) ForceHandleCh(ch PositionedChar) {
-	r.currentScreen[ch.Y][ch.X] = Char{
-		Rune: 0,
-	}
-	r.HandleCh(ch)
-}
-
 // DemoKeypress is used for demos of 3mux
 func (r *Renderer) DemoKeypress(str string) {
 
@@ -131,7 +124,7 @@ func (r *Renderer) ListenToQueue() {
 
 		diffStr := diff.String()
 		if len(diffStr) > 0 {
-			fmt.Print("\033[?25l") // hide cursor
+			// fmt.Print("\033[?25l") // hide cursor
 
 			fmt.Print(diffStr)
 
@@ -187,7 +180,7 @@ func (r *Renderer) ListenToQueue() {
 				fmt.Print(demoTextDiff.String())
 			}
 
-			fmt.Print("\033[?25h") // show cursor
+			// fmt.Print("\033[?25h") // show cursor
 		}
 
 		if r.drawingCursor != r.restingCursor {
@@ -204,8 +197,8 @@ func (r *Renderer) ListenToQueue() {
 			timer.Stop()
 		case <-r.Pause:
 			<-r.Resume
-			fmt.Print("\033[0;0H\033[0m") // reset real cursor
-			r.drawingCursor = Cursor{}    // reset virtual cursor
+			// fmt.Print("\033[0;0H\033[0m") // reset real cursor
+			// r.drawingCursor = Cursor{}    // reset virtual cursor
 		}
 	}
 }
@@ -236,7 +229,11 @@ func (r *Renderer) GetRune(x, y int) rune {
 
 // HardRefresh force clears all cached chars
 func (r *Renderer) HardRefresh() {
+	log.Println("HARD REFRESH")
 	fmt.Print("\033[2J")
+	fmt.Print("\033[0m")
+	fmt.Print("\033[H")
+	r.drawingCursor = Cursor{}
 	for y := range r.currentScreen {
 		for x := range r.currentScreen[y] {
 			r.currentScreen[y][x].Rune = ' '

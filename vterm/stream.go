@@ -102,7 +102,7 @@ func (v *VTerm) ProcessStream() {
 					v.setCursorY(0)
 				}
 
-				if v.Cursor.X >= v.w-1 {
+				if v.Cursor.X > v.w-1 {
 					v.setCursorX(0)
 					if v.Cursor.Y == v.scrollingRegion.bottom {
 						v.scrollUp(1)

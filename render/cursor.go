@@ -39,7 +39,7 @@ func deltaMarkup(fromCur, toCur Cursor) string {
 	yDiff := toCur.Y - fromCur.Y
 
 	if xDiff == 0 && yDiff == 1 {
-		out += "\n"
+		out += "\033[1B"
 	} else if xDiff != 0 || yDiff != 0 {
 		out += fmt.Sprintf("\033[%d;%dH", toCur.Y+1, toCur.X+1)
 	}
@@ -57,10 +57,10 @@ func deltaMarkup(fromCur, toCur Cursor) string {
 		out += to.Fg.ToANSI(false)
 	}
 
-	// Without this, text randomly gets randomly underlined for some reason.
-	if !to.Underline && !from.Underline {
-		out += "\033[24m"
-	}
+	// // Without this, text randomly gets randomly underlined for some reason.
+	// if !to.Underline && !from.Underline {
+	// 	out += "\033[24m"
+	// }
 
 	/* remove effects */
 
