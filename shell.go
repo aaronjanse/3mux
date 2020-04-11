@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"os/exec"
@@ -25,8 +24,7 @@ func newShell(stdout chan<- rune) Shell {
 
 	ptmx, err := pty.Start(cmd)
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		logFatal(err)
 	}
 
 	shell := Shell{
