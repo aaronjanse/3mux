@@ -50,7 +50,7 @@ func main() {
 	if *cpuprofile != "" {
 		f, err := os.Create(*cpuprofile)
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 		pprof.StartCPUProfile(f)
 		defer pprof.StopCPUProfile()
@@ -124,6 +124,12 @@ func fatalShutdownNow(where string) {
 	fmt.Println()
 	fmt.Println("Please submit a bug report with this stack trace to https://github.com/aaronjanse/3mux/issues")
 	shutdownNow()
+}
+
+// logFatal takes the place of log.Fatal, but makes sure we print to stderr
+func logFatal(v ...interface{}) {
+	log.SetOutput(os.Stderr)
+	log.Fatal(v...)
 }
 
 var resizeMode bool

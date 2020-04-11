@@ -73,7 +73,7 @@ func (s *Shell) Kill() {
 
 	err := s.ptmx.Close()
 	if err != nil {
-		log.Fatal("failed to close ptmx", err)
+		logFatal("failed to close ptmx", err)
 	}
 
 	err = s.cmd.Process.Kill()
@@ -85,7 +85,7 @@ func (s *Shell) Kill() {
 func (s *Shell) handleStdin(data string) {
 	_, err := s.ptmx.Write([]byte(data))
 	if err != nil {
-		log.Fatal(err)
+		logFatal(err)
 	}
 }
 
@@ -100,7 +100,7 @@ func (s *Shell) resize(w, h int) {
 				X: 16 * uint16(w), Y: 16 * uint16(h),
 			})
 			if err != nil {
-				log.Fatal(err)
+				logFatal(err)
 			}
 		}
 	}()
