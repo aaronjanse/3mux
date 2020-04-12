@@ -298,20 +298,24 @@ func handleEscapeCode(data []byte, handle func(parsedData interface{})) {
 				log.Println("Unhandled almost-shift-arrow:", data)
 			}
 		case 51: // Mouse
-			code := string(data[2:])
-			code = strings.TrimSuffix(code, "M") // NOTE: are there other codes we are forgetting about?
-			pieces := strings.Split(code, ";")
-			switch pieces[0] {
-			case "32":
-				x, _ := strconv.Atoi(pieces[1])
-				y, _ := strconv.Atoi(strings.TrimSuffix(pieces[2], "M"))
-				handle(MouseDown{X: x, Y: y})
-			case "35":
-				x, _ := strconv.Atoi(pieces[1])
-				y, _ := strconv.Atoi(strings.TrimSuffix(pieces[2], "M"))
-				handle(MouseUp{X: x, Y: y})
-			default:
-				log.Printf("Unrecognized keycode: %v", data)
+			if data[3] == 126 { // Delete
+				handle(Character{Char: 127})
+			} else {
+				code := string(data[2:])
+				code = strings.TrimSuffix(code, "M") // NOTE: are there other codes we are forgetting about?
+				pieces := strings.Split(code, ";")
+				switch pieces[0] {
+				case "32":
+					x, _ := strconv.Atoi(pieces[1])
+					y, _ := strconv.Atoi(strings.TrimSuffix(pieces[2], "M"))
+					handle(MouseDown{X: x, Y: y})
+				case "35":
+					x, _ := strconv.Atoi(pieces[1])
+					y, _ := strconv.Atoi(strings.TrimSuffix(pieces[2], "M"))
+					handle(MouseUp{X: x, Y: y})
+				default:
+					log.Printf("Unrecognized keycode: %v", data)
+				}
 			}
 		case 57: // Scrolling
 			switch data[3] {
