@@ -1,5 +1,7 @@
 package wm
 
+import "log"
+
 // import (
 // 	"github.com/aaronjanse/3mux/keypress"
 // )
@@ -31,157 +33,150 @@ package wm
 // 	root.refreshRenderRect()
 // }
 
-// func moveWindow(d Direction) {
-// 	path := getSelection()
-// 	parent, parentPath := path.getParent()
+func (u *Universe) MoveWindow(d Direction) {
+	path := u.getSelection()
+	parent, parentPath := path.getParent(u)
 
-// 	vert := parent.verticallyStacked
+	root := u
 
-// 	if (!vert && d == Left) || (vert && d == Up) {
-// 		idx := parent.selectionIdx
+	vert := parent.verticallyStacked
 
-// 		if idx == 0 {
-// 			if len(parentPath) < 2 {
-// 				return
-// 			}
+	rootRect := root.workspaces[root.selectionIdx].contents.renderRect
 
-// 			grandparent, grandparentPath := parentPath.getParent()
-// 			tmp := parentPath.popContainer(parent.selectionIdx)
+	if (!vert && d == Left) || (vert && d == Up) {
+		idx := parent.selectionIdx
 
-// 			if len(parentPath) == 2 {
-// 				root.workspaces[root.selectionIdx].contents = &Split{
-// 					renderRect:        Rect{w: termW, h: termH},
-// 					verticallyStacked: vert,
-// 					selectionIdx:      1,
-// 					elements: []Node{
-// 						Node{
-// 							size:     0.5,
-// 							contents: tmp,
-// 						},
-// 						Node{
-// 							size:     0.5,
-// 							contents: grandparent,
-// 						},
-// 					},
-// 				}
-// 			} else {
-// 				greatGrandparent, _ := grandparentPath.getParent()
-// 				greatGrandparent.insertContainer(tmp, greatGrandparent.selectionIdx)
-// 			}
-// 		} else {
-// 			tmp := parent.elements[idx-1]
-// 			parent.elements[idx-1] = parent.elements[idx]
-// 			parent.elements[idx] = tmp
+		if idx == 0 {
+			if len(parentPath) < 2 {
+				return
+			}
 
-// 			parent.selectionIdx--
-// 		}
+			grandparent, grandparentPath := parentPath.getParent(u)
+			tmp := parentPath.popContainer(u, parent.selectionIdx)
 
-// 		// root.refreshRenderRect()
-// 	} else if (!vert && d == Right) || (vert && d == Down) {
-// 		idx := parent.selectionIdx
+			if len(parentPath) == 2 {
+				root.workspaces[root.selectionIdx].contents = &Split{
+					renderRect:        Rect{w: rootRect.w, h: rootRect.h},
+					verticallyStacked: vert,
+					selectionIdx:      1,
+					elements: []Node{
+						Node{
+							size:     0.5,
+							contents: tmp,
+						},
+						Node{
+							size:     0.5,
+							contents: grandparent,
+						},
+					},
+				}
+			} else {
+				greatGrandparent, _ := grandparentPath.getParent(u)
+				greatGrandparent.insertContainer(tmp, greatGrandparent.selectionIdx)
+			}
+		} else {
+			tmp := parent.elements[idx-1]
+			parent.elements[idx-1] = parent.elements[idx]
+			parent.elements[idx] = tmp
 
-// 		if idx == len(parent.elements)-1 {
-// 			if len(parentPath) < 2 {
-// 				return
-// 			}
+			parent.selectionIdx--
+		}
 
-// 			grandparent, grandparentPath := parentPath.getParent()
-// 			tmp := parentPath.popContainer(parent.selectionIdx)
+		// root.refreshRenderRect()
+	} else if (!vert && d == Right) || (vert && d == Down) {
+		idx := parent.selectionIdx
 
-// 			if len(parentPath) == 2 {
-// 				root.workspaces[root.selectionIdx].contents = &Split{
-// 					renderRect:        Rect{w: termW, h: termH},
-// 					verticallyStacked: vert,
-// 					selectionIdx:      1,
-// 					elements: []Node{
-// 						Node{
-// 							size:     0.5,
-// 							contents: grandparent,
-// 						},
-// 						Node{
-// 							size:     0.5,
-// 							contents: tmp,
-// 						},
-// 					},
-// 				}
-// 			} else {
-// 				greatGrandparent, _ := grandparentPath.getParent()
-// 				greatGrandparent.insertContainer(tmp, grandparent.selectionIdx+2)
-// 				greatGrandparent.selectionIdx++
-// 			}
-// 		} else {
-// 			tmp := parent.elements[idx+1]
-// 			parent.elements[idx+1] = parent.elements[idx]
-// 			parent.elements[idx] = tmp
+		if idx == len(parent.elements)-1 {
+			if len(parentPath) < 2 {
+				return
+			}
 
-// 			parent.selectionIdx++
-// 		}
+			grandparent, grandparentPath := parentPath.getParent(u)
+			tmp := parentPath.popContainer(u, parent.selectionIdx)
 
-// 		// root.refreshRenderRect()
-// 	} else {
-// 		movingVert := d == Up || d == Down
+			if len(parentPath) == 2 {
+				root.workspaces[root.selectionIdx].contents = &Split{
+					renderRect:        Rect{w: rootRect.w, h: rootRect.h},
+					verticallyStacked: vert,
+					selectionIdx:      1,
+					elements: []Node{
+						Node{
+							size:     0.5,
+							contents: grandparent,
+						},
+						Node{
+							size:     0.5,
+							contents: tmp,
+						},
+					},
+				}
+			} else {
+				greatGrandparent, _ := grandparentPath.getParent(u)
+				greatGrandparent.insertContainer(tmp, grandparent.selectionIdx+2)
+				greatGrandparent.selectionIdx++
+			}
+		} else {
+			tmp := parent.elements[idx+1]
+			parent.elements[idx+1] = parent.elements[idx]
+			parent.elements[idx] = tmp
 
-// 		p := path
-// 		for len(p) > 1 {
-// 			s, _ := p.getParent()
-// 			if s.verticallyStacked == movingVert {
-// 				tmp := parentPath.popContainer(parent.selectionIdx)
+			parent.selectionIdx++
+		}
 
-// 				if d == Left || d == Up {
-// 					s.insertContainer(tmp, s.selectionIdx)
-// 				} else {
-// 					s.insertContainer(tmp, s.selectionIdx+1)
-// 					s.selectionIdx++
-// 				}
+		// root.refreshRenderRect()
+	} else {
+		movingVert := d == Up || d == Down
 
-// 				// root.refreshRenderRect()
-// 				break
-// 			}
-// 			p = p[:len(p)-1]
-// 		}
+		p := path
+		for len(p) > 1 {
+			s, _ := p.getParent(u)
+			if s.verticallyStacked == movingVert {
+				tmp := parentPath.popContainer(u, parent.selectionIdx)
 
-// 		if len(p) == 1 && len(parent.elements) > 1 {
-// 			tmp := parentPath.popContainer(parent.selectionIdx)
-// 			tmpRoot := root.workspaces[root.selectionIdx].contents
+				if d == Left || d == Up {
+					s.insertContainer(tmp, s.selectionIdx)
+				} else {
+					s.insertContainer(tmp, s.selectionIdx+1)
+					s.selectionIdx++
+				}
 
-// 			var h int
-// 			if config.statusBar {
-// 				h = termH - 1
-// 			} else {
-// 				h = termH
-// 			}
+				// root.refreshRenderRect()
+				break
+			}
+			p = p[:len(p)-1]
+		}
 
-// 			root.workspaces[root.selectionIdx].contents = &Split{
-// 				renderRect:        Rect{w: termW, h: h},
-// 				verticallyStacked: movingVert,
-// 				selectionIdx:      0,
-// 				elements: []Node{
-// 					Node{
-// 						size:     1,
-// 						contents: tmpRoot,
-// 					},
-// 				},
-// 			}
+		if len(p) == 1 && len(parent.elements) > 1 {
+			tmp := parentPath.popContainer(u, parent.selectionIdx)
+			tmpRoot := root.workspaces[root.selectionIdx].contents
 
-// 			insertIdx := 0
-// 			if d == Down || d == Right {
-// 				insertIdx = 1
-// 			}
-// 			root.workspaces[root.selectionIdx].contents.insertContainer(tmp, insertIdx)
-// 			root.workspaces[root.selectionIdx].contents.selectionIdx = insertIdx
+			root.workspaces[root.selectionIdx].contents = &Split{
+				renderRect:        Rect{w: rootRect.w, h: rootRect.h},
+				verticallyStacked: movingVert,
+				selectionIdx:      0,
+				elements: []Node{
+					Node{
+						size:     1,
+						contents: tmpRoot,
+					},
+				},
+			}
 
-// 			// root.refreshRenderRect()
-// 		}
-// 	}
+			insertIdx := 0
+			if d == Down || d == Right {
+				insertIdx = 1
+			}
+			root.workspaces[root.selectionIdx].contents.insertContainer(tmp, insertIdx)
+			root.workspaces[root.selectionIdx].contents.selectionIdx = insertIdx
 
-// 	// select the new Term
-// 	newTerm := getSelection().getContainer().(*Pane)
-// 	newTerm.selected = true
-// 	newTerm.softRefresh()
-// 	newTerm.vterm.RefreshCursor()
+			// root.refreshRenderRect()
+		}
+	}
 
-// 	root.refreshRenderRect()
-// }
+	u.UpdateFocus()
+	parent.refreshChildShapes()
+	log.Println(u.Serialize())
+}
 
 // func killWindow() {
 // 	parent, parentPath := getSelection().getParent()
@@ -249,58 +244,49 @@ package wm
 // 	}
 // }
 
-// func moveSelection(d Direction) {
-// 	path := getSelection()
+func (u *Universe) MoveSelection(d Direction) {
+	path := u.getSelection()
 
-// 	// deselect the old Term
-// 	oldTerm := path.getContainer().(*Pane)
-// 	oldTerm.selected = false
-// 	oldTerm.softRefresh()
+	parent, _ := path.getParent(u)
 
-// 	parent, _ := path.getParent()
+	vert := parent.verticallyStacked
 
-// 	vert := parent.verticallyStacked
+	if (d == Left && !vert) || (d == Up && vert) {
+		parent.selectionIdx--
+		if parent.selectionIdx < 0 {
+			parent.selectionIdx = 0
+		}
+	} else if (d == Right && !vert) || (d == Down && vert) {
+		parent.selectionIdx++
+		if parent.selectionIdx > len(parent.elements)-1 {
+			parent.selectionIdx = len(parent.elements) - 1
+		}
+	} else {
+		movingVert := d == Up || d == Down
 
-// 	if (d == Left && !vert) || (d == Up && vert) {
-// 		parent.selectionIdx--
-// 		if parent.selectionIdx < 0 {
-// 			parent.selectionIdx = 0
-// 		}
-// 	} else if (d == Right && !vert) || (d == Down && vert) {
-// 		parent.selectionIdx++
-// 		if parent.selectionIdx > len(parent.elements)-1 {
-// 			parent.selectionIdx = len(parent.elements) - 1
-// 		}
-// 	} else {
-// 		movingVert := d == Up || d == Down
+		p := path
+		for len(p) > 1 {
+			s, _ := p.getParent(u)
+			if s.verticallyStacked == movingVert {
+				if d == Up || d == Left {
+					s.selectionIdx--
+					if s.selectionIdx < 0 {
+						s.selectionIdx = 0
+					}
+				} else {
+					s.selectionIdx++
+					if s.selectionIdx > len(s.elements)-1 {
+						s.selectionIdx = len(s.elements) - 1
+					}
+				}
+				break
+			}
+			p = p[:len(p)-1]
+		}
+	}
 
-// 		p := path
-// 		for len(p) > 1 {
-// 			s, _ := p.getParent()
-// 			if s.verticallyStacked == movingVert {
-// 				if d == Up || d == Left {
-// 					s.selectionIdx--
-// 					if s.selectionIdx < 0 {
-// 						s.selectionIdx = 0
-// 					}
-// 				} else {
-// 					s.selectionIdx++
-// 					if s.selectionIdx > len(s.elements)-1 {
-// 						s.selectionIdx = len(s.elements) - 1
-// 					}
-// 				}
-// 				break
-// 			}
-// 			p = p[:len(p)-1]
-// 		}
-// 	}
-
-// 	// select the new Term
-// 	newTerm := getSelection().getContainer().(*Pane)
-// 	newTerm.selected = true
-// 	newTerm.softRefresh()
-// 	newTerm.vterm.RefreshCursor()
-// }
+	u.UpdateFocus()
+}
 
 // func resizeWindow(d Direction, diff float32) {
 // 	resizeWindowImpl(getSelection(), d, diff)

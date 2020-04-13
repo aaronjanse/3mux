@@ -39,7 +39,8 @@ func (v *VTerm) RefreshCursor() {
 	if v.IsPaused {
 		return
 	}
-	v.parentSetCursor(v.Cursor.X, v.Cursor.Y)
+	// v.parentSetCursor(v.Cursor.X, v.Cursor.Y)
+	v.renderer.SetCursor(v.Cursor.X, v.Cursor.Y)
 }
 
 // scrollUp shifts screen contents up and adds blank lines to the bottom of the screen.

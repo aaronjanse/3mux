@@ -111,53 +111,53 @@ func (p Path) getContainer(root *Universe) Container {
 // 	return panes
 // }
 
-// func (p Path) popContainer(idx int) Container {
-// 	s := p.getContainer().(*Split)
+func (p Path) popContainer(u *Universe, idx int) Container {
+	s := p.getContainer(u).(*Split)
 
-// 	tmp := s.elements[idx]
+	tmp := s.elements[idx]
 
-// 	s.elements = append(s.elements[:idx], s.elements[idx+1:]...)
+	s.elements = append(s.elements[:idx], s.elements[idx+1:]...)
 
-// 	// resize nodes
-// 	scaleFactor := float32(1.0 / (1.0 - tmp.size))
-// 	for i := range s.elements {
-// 		s.elements[i].size *= scaleFactor
-// 	}
+	// resize nodes
+	scaleFactor := float32(1.0 / (1.0 - tmp.size))
+	for i := range s.elements {
+		s.elements[i].size *= scaleFactor
+	}
 
-// 	if idx > len(s.elements)-1 {
-// 		s.selectionIdx--
-// 	}
+	if idx > len(s.elements)-1 {
+		s.selectionIdx--
+	}
 
-// 	if len(s.elements) == 1 && len(p) > 1 {
-// 		switch val := (*s).elements[0].contents.(type) {
-// 		case *Pane:
-// 			parent, _ := p.getParent()
-// 			parent.elements[p[len(p)-1]].contents = val
-// 		case *Split:
-// 			s.verticallyStacked = val.verticallyStacked
-// 			s.elements = val.elements
-// 			s.selectionIdx = val.selectionIdx
-// 		}
-// 	}
+	if len(s.elements) == 1 && len(p) > 1 {
+		switch val := (*s).elements[0].contents.(type) {
+		case *pane.Pane:
+			parent, _ := p.getParent(u)
+			parent.elements[p[len(p)-1]].contents = val
+		case *Split:
+			s.verticallyStacked = val.verticallyStacked
+			s.elements = val.elements
+			s.selectionIdx = val.selectionIdx
+		}
+	}
 
-// 	return tmp.contents
-// }
+	return tmp.contents
+}
 
-// func (s *Split) insertContainer(c Container, idx int) {
-// 	newNodeSize := float32(1) / float32(len(s.elements)+1)
+func (s *Split) insertContainer(c Container, idx int) {
+	newNodeSize := float32(1) / float32(len(s.elements)+1)
 
-// 	// resize siblings
-// 	scaleFactor := float32(1) - newNodeSize
-// 	for i := range s.elements {
-// 		s.elements[i].size *= scaleFactor
-// 	}
+	// resize siblings
+	scaleFactor := float32(1) - newNodeSize
+	for i := range s.elements {
+		s.elements[i].size *= scaleFactor
+	}
 
-// 	newNode := Node{
-// 		size:     newNodeSize,
-// 		contents: c,
-// 	}
-// 	s.elements = append(s.elements[:idx], append([]Node{newNode}, s.elements[idx:]...)...)
-// }
+	newNode := Node{
+		size:     newNodeSize,
+		contents: c,
+	}
+	s.elements = append(s.elements[:idx], append([]Node{newNode}, s.elements[idx:]...)...)
+}
 
 func removeTheDead() {
 	implRemoveTheDead([]int{0})

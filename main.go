@@ -154,21 +154,6 @@ func main() {
 
 // var resizeMode bool
 
-// func getDirectionFromString(s string) Direction {
-// 	switch s {
-// 	case "Up":
-// 		return Up
-// 	case "Down":
-// 		return Down
-// 	case "Left":
-// 		return Left
-// 	case "Right":
-// 		return Right
-// 	default:
-// 		panic(fmt.Errorf("invalid direction: %v", s))
-// 	}
-// }
-
 // func debug(s string) {
 // 	for i := 0; i < termW; i++ {
 // 		r := ' '

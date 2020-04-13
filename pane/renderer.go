@@ -32,3 +32,14 @@ func (r *renderer) Refresh() {
 	r.gcWin.Refresh()
 	// log.Println(time.Now())
 }
+
+func (r *renderer) RefreshCursor() {
+	y, x := r.gcWin.CursorYX()
+	r.gcWin.Move(y, x)
+	r.gcWin.Refresh()
+}
+
+func (r *renderer) SetCursor(x, y int) {
+	r.gcWin.Move(y, x)
+	r.gcWin.Refresh()
+}

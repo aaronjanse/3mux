@@ -107,9 +107,11 @@ func NewPane(x, y, w, h int, onDeath func()) (*Pane, error) {
 }
 
 func (p *Pane) Reshape(x, y, w, h int) {
-	log.Println("Reshaping", x, y, w, h)
-	p.renderer.gcWin.MoveWindow(y, x)
+	log.Println("Reshape", x, y, w, h)
 	p.renderer.gcWin.Resize(h, w)
+	p.renderer.gcWin.MoveWindow(y, x)
+	p.renderer.gcWin.Refresh()
+	log.Printf(p.Serialize())
 }
 
 func (p *Pane) resizeShell(w, h int) {
@@ -159,10 +161,15 @@ func (p *Pane) Serialize() string {
 }
 
 func (p *Pane) HandleStdin(in string) {
+	log.Println("IN", []byte(in))
 	p.vt.ScrollbackReset()
 	_, err := p.ptmx.Write([]byte(in))
 	if err != nil {
 		p.freezeWithError(err)
 	}
 	p.vt.RefreshCursor()
+}
+
+func (p *Pane) RefreshCursor() {
+	p.renderer.RefreshCursor()
 }

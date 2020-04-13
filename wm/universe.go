@@ -95,7 +95,8 @@ func (u *Universe) AddPane() {
 }
 
 func (u *Universe) HandleStdin(in string) {
-	log.Println("sel", u.getSelection())
+	// log.Println("IN", []byte(in))
+	// log.Println("sel", u.getSelection())
 	u.getSelection().getContainer(u).(*pane.Pane).HandleStdin(in)
 }
 
@@ -104,3 +105,7 @@ func (u *Universe) HandleStdin(in string) {
 // 		n.contents.setPause(pause)
 // 	}
 // }
+
+func (u *Universe) UpdateFocus() {
+	u.getSelection().getContainer(u).(*pane.Pane).RefreshCursor()
+}

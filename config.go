@@ -1,9 +1,12 @@
 package main
 
 import (
+	"fmt"
+	"log"
 	"strings"
 
 	"github.com/aaronjanse/3mux/keypress"
+	"github.com/aaronjanse/3mux/wm"
 )
 
 // Config stores all user configuration values
@@ -67,23 +70,16 @@ func executeOperationCode(s string) {
 
 	funcName := sections[0]
 
-	switch funcName {
-	case "newWindow":
-		universe.AddPane()
-	default:
-		panic("Unrecognized: " + funcName)
+	var parametersText string
+	if len(sections) < 2 {
+		parametersText = ""
+	} else {
+		parametersText = strings.TrimRight(sections[1], ")")
 	}
-
-	// var parametersText string
-	// if len(sections) < 2 {
-	// 	parametersText = ""
-	// } else {
-	// 	parametersText = strings.TrimRight(sections[1], ")")
-	// }
-	// params := strings.Split(parametersText, ",")
-	// for idx, param := range params {
-	// 	params[idx] = strings.TrimSpace(param)
-	// }
+	params := strings.Split(parametersText, ",")
+	for idx, param := range params {
+		params[idx] = strings.TrimSpace(param)
+	}
 
 	// if root.workspaces[root.selectionIdx].doFullscreen {
 	// 	switch funcName {
@@ -96,19 +92,22 @@ func executeOperationCode(s string) {
 	// 		search()
 	// 	}
 	// } else {
-	// 	switch funcName {
+	log.Println("func:", funcName)
+	switch funcName {
 	// 	case "search":
 	// 		search()
 	// 	case "fullscreen":
 	// 		fullscreen()
-	// 	case "newWindow":
-	// 		newWindow()
-	// 	case "moveWindow":
-	// 		d := getDirectionFromString(params[0])
-	// 		moveWindow(d)
-	// 	case "moveSelection":
-	// 		d := getDirectionFromString(params[0])
-	// 		moveSelection(d)
+	case "newWindow":
+		log.Println("NewWin")
+		universe.AddPane()
+		log.Println("Dpne")
+	case "moveWindow":
+		d := getDirectionFromString(params[0])
+		universe.MoveWindow(d)
+	case "moveSelection":
+		d := getDirectionFromString(params[0])
+		universe.MoveSelection(d)
 	// 	case "killWindow":
 	// 		killWindow()
 	// 	case "resize":
@@ -130,9 +129,24 @@ func executeOperationCode(s string) {
 	// 		} else {
 	// 			getSelection().getContainer().(*Pane).vterm.DebugSlowMode = true
 	// 		}
-	// 	default:
-	// 		panic(funcName)
-	// 	}
+	default:
+		panic("unrecognized func: " + funcName)
+	}
 
 	// }
+}
+
+func getDirectionFromString(s string) wm.Direction {
+	switch s {
+	case "Up":
+		return wm.Up
+	case "Down":
+		return wm.Down
+	case "Left":
+		return wm.Left
+	case "Right":
+		return wm.Right
+	default:
+		panic(fmt.Errorf("invalid direction: %v", s))
+	}
 }

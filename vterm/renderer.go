@@ -4,6 +4,7 @@ package vterm
 type Renderer interface {
 	SetChar(ch Char, x, y int)
 	Refresh()
+	SetCursor(x, y int)
 }
 
 type Char struct {

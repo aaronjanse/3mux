@@ -115,7 +115,7 @@ func Listen(s *gc.Window, callback func(parsedData interface{}, rawData []byte))
 		case 195: // Alt
 			parseAltLetter(data[1]-64, handle)
 		case 27: // Escape code
-			handleEscapeCode(handle)
+			handleEscapeCode(handle, callback)
 		default:
 			if key <= 26 { // Ctrl
 				letter := rune('A' + key - 1)
@@ -130,12 +130,13 @@ func Listen(s *gc.Window, callback func(parsedData interface{}, rawData []byte))
 	}
 }
 
-func handleEscapeCode(handle func(parsedData interface{})) {
+func handleEscapeCode(handle func(parsedData interface{}), callback func(parsedData interface{}, rawData []byte)) {
 	b := pullByte()
 	switch b {
 	case 0:
 		handle(Esc{})
 	case 13:
+		log.Println("AltChar{'\\n'}")
 		handle(AltChar{'\n'})
 	case 27:
 		switch pullByte() {
@@ -224,13 +225,13 @@ func handleEscapeCode(handle func(parsedData interface{})) {
 				log.Println("unhandled: ", data)
 			}
 		case 65:
-			handle(Arrow{Direction: Up})
+			callback(Arrow{Direction: Up}, []byte{27, 79, 65})
 		case 66:
-			handle(Arrow{Direction: Down})
+			callback(Arrow{Direction: Down}, []byte{27, 79, 66})
 		case 67:
-			handle(Arrow{Direction: Right})
+			callback(Arrow{Direction: Right}, []byte{27, 79, 67})
 		case 68:
-			handle(Arrow{Direction: Left})
+			callback(Arrow{Direction: Left}, []byte{27, 79, 68})
 		case 77:
 			switch pullByte() {
 			// case 32:
