@@ -1,4 +1,4 @@
-package main
+package pane
 
 // import (
 // 	"log"
@@ -102,5 +102,5 @@ package main
 // 			}
 // 		}
 // 	}()
-// 	ch <- syscall.SIGWINCH // Initial resize.
+// 	ch <- syscall.SIGWINCH
 // }

@@ -1,48 +1,10 @@
-/*
-Package keypress is a library for advanced keypress detection and parsing.
-
-It provides a callback with both a human-readable name for the event detected, along with the raw data behind it.
-
-The following are supported human-readable names:
-	Enter
-	Esc
-
-	Mouse Moved
-	Mouse Down
-	Mouse Up
-
-	Scroll Up
-	Scroll Down
-
-	[letter]
-	Alt+[letter]
-	Alt+Shift+[letter]
-	Ctrl+[letter]
-
-	Up
-	Down
-	Left
-	Right
-
-	Shift+[arrow]
-	Alt+[arrow]
-	Alt+Shift+[arrow]
-	Ctrl+[arrow]
-*/
 package keypress
 
 import (
-	"fmt"
 	"log"
-	"os"
-	"os/exec"
-	"os/signal"
-	"strconv"
-	"strings"
-	"syscall"
 	"unicode"
 
-	"golang.org/x/crypto/ssh/terminal"
+	gc "github.com/rthornton128/goncurses"
 )
 
 var isProcessingMouse = true
@@ -71,15 +33,11 @@ func ShouldProcessMouse(should bool) {
 		return
 	}
 
-	if should {
-		fmt.Print("\033[?1000h")
-		fmt.Print("\033[?1005h")
-		fmt.Print("\033[?1015h")
-	} else {
-		fmt.Print("\033[?1000l")
-		fmt.Print("\033[?1005l")
-		fmt.Print("\033[?1015l")
-	}
+	// if should {
+	// 	fmt.Print("\033[?1006h")
+	// } else {
+	// 	fmt.Print("\033[?1006l")
+	// }
 
 	isProcessingMouse = should
 }
@@ -87,143 +45,97 @@ func ShouldProcessMouse(should bool) {
 // this is a regularly reset buffer of what we've collected so far
 var data []byte
 
+// // GetTermSize returns the terminal dimensions w, h, err
+// func GetTermSize() (int, int, error) {
+// 	cmd := exec.Command("stty", "size")
+// 	cmd.Stdin = os.Stdin
+// 	out, err := cmd.Output()
+// 	if err != nil {
+// 		return 0, 0, err
+// 	}
+
+// 	outStr := strings.TrimSpace(string(out))
+// 	parts := strings.Split(outStr, " ")
+
+// 	h, err := strconv.ParseInt(parts[0], 10, 64)
+// 	if err != nil {
+// 		return 0, 0, err
+// 	}
+// 	w, err := strconv.ParseInt(parts[1], 10, 64)
+// 	if err != nil {
+// 		return 0, 0, err
+// 	}
+
+// 	wInt := int(int64(w))
+// 	hInt := int(int64(h))
+// 	return wInt, hInt, nil
+// }
+
 func pullByte() byte {
-	var b = make([]byte, 1)
-	os.Stdin.Read(b)
-	data = append(data, b[0])
-	return b[0]
+	b := byte(stdscr.GetChar())
+	data = append(data, b)
+	return b
 }
 
-var oldState *terminal.State
-
-// Shutdown cleans up the terminal state
-func Shutdown() {
-	ShouldProcessMouse(false)
-	if oldState != nil {
-		terminal.Restore(0, oldState)
-	}
-}
-
-// GetTermSize returns the terminal dimensions w, h, err
-func GetTermSize() (int, int, error) {
-	cmd := exec.Command("stty", "size")
-	cmd.Stdin = os.Stdin
-	out, err := cmd.Output()
-	if err != nil {
-		return 0, 0, err
-	}
-
-	outStr := strings.TrimSpace(string(out))
-	parts := strings.Split(outStr, " ")
-
-	h, err := strconv.ParseInt(parts[0], 10, 64)
-	if err != nil {
-		return 0, 0, err
-	}
-	w, err := strconv.ParseInt(parts[1], 10, 64)
-	if err != nil {
-		return 0, 0, err
-	}
-
-	wInt := int(int64(w))
-	hInt := int(int64(h))
-	return wInt, hInt, nil
-}
+var stdscr *gc.Window
 
 // Listen is a blocking function that indefinitely listens for keypresses.
 // When it detects a keypress, it passes on to the callback a human-readable interpretation of the event (e.g. Alt+Shift+Up) along with the raw string of text received by the terminal.
-func Listen(callback func(parsedData interface{}, rawData []byte)) {
-	var err error
-	oldState, err = terminal.MakeRaw(0)
-	if err != nil {
-		panic(err)
-	}
-	defer Shutdown()
+func Listen(s *gc.Window, callback func(parsedData interface{}, rawData []byte)) {
+	stdscr = s
+	// go func() {
+	// 	for {
+	// 		c := make(chan os.Signal, 1)
+	// 		signal.Notify(c, syscall.SIGWINCH)
+	// 		<-c
+	// 		w, h, _ := GetTermSize()
+	// 		callback(Resize{W: w, H: h}, []byte{})
+	// 	}
+	// }()
 
-	go func() {
-		for {
-			c := make(chan os.Signal, 1)
-			signal.Notify(c, syscall.SIGWINCH)
-			<-c
-			w, h, _ := GetTermSize()
-			callback(Resize{W: w, H: h}, []byte{})
-		}
-	}()
-
-	ShouldProcessMouse(false)
-
-	// show cursor, make it blink
-	fmt.Print("\033[?25h\033[?12h") // EXPLAIN: do we need this?
+	stdscr.Timeout(5)
 
 	for {
-		data := make([]byte, 30)
-		os.Stdin.Read(data)
+		data = []byte{}
+		key := pullByte()
 
-		for i, b := range data {
-			if b == 0 {
-				data = data[:i]
-				break
-			}
+		handle := func(x interface{}) {
+			callback(x, data)
 		}
 
-		handle := func(parsedData interface{}) {
-			callback(parsedData, data)
-			data = []byte{}
-		}
-
-		switch data[0] {
+		switch key {
+		case 0:
 		case 13:
 			handle(Enter{})
 		case 195: // Alt
 			parseAltLetter(data[1]-64, handle)
 		case 27: // Escape code
-			handleEscapeCode(data, handle)
+			handleEscapeCode(handle)
 		default:
-			// log.Println("uncaught:", data)
-			if len(data) == 1 {
-				if data[0] <= 26 { // Ctrl
-					letter := rune('A' + data[0] - 1)
-					if letter == 'Q' { // exit upon Ctrl+Q
-						return
-					}
-					handle(CtrlChar{letter})
-				} else {
-					letter := rune(data[0])
-					handle(Character{letter})
+			if key <= 26 { // Ctrl
+				letter := rune('A' + key - 1)
+				if letter == 'Q' { // exit upon Ctrl+Q
+					return
 				}
+				handle(CtrlChar{letter})
 			} else {
-				for _, b := range data {
-					if b == 0 {
-						break
-					}
-					callback(Character{rune(b)}, []byte{b})
-				}
+				handle(Character{Char: rune(key)})
 			}
 		}
 	}
 }
 
-func handleEscapeCode(data []byte, handle func(parsedData interface{})) {
-	if len(data) == 1 { // Lone Esc Key
-		handle("Esc")
-		return
-	}
-
-	switch data[1] {
+func handleEscapeCode(handle func(parsedData interface{})) {
+	b := pullByte()
+	switch b {
+	case 0:
+		handle(Esc{})
 	case 13:
 		handle(AltChar{'\n'})
 	case 27:
-		if len(data) == 4 && data[2] == 79 {
-			switch data[3] {
-			case 65:
-				log.Println("Terminal.app!")
-			case 66:
-				log.Println("Terminal.app!")
-			default:
-				log.Println("Unhandled ?arrow?:", data)
-			}
-		} else if len(data) == 4 && data[2] == 91 {
-			switch data[3] {
+		switch pullByte() {
+		case 91:
+			switch pullByte() {
 			case 65:
 				handle(AltArrow{Direction: Up})
 			case 66:
@@ -235,87 +147,53 @@ func handleEscapeCode(data []byte, handle func(parsedData interface{})) {
 			default:
 				log.Println("Unhandled ?arrow?:", data)
 			}
-		} else {
+		default:
 			log.Println("Unhandled double escape:", data)
 		}
 	case 79:
-		direction := directionNames[data[2]]
-		if len(data) == 15 { // scrolling
-			switch data[2] {
-			case 65:
-				handle(ScrollUp{})
-			case 66:
-				handle(ScrollDown{})
-			default:
-				log.Printf("Unrecognized scroll code: %v", data)
-			}
-		} else { // arrow
-			handle(direction)
-		}
+		log.Println("79!?!?")
+		// direction := directionNames[data[2]]
+		// if len(data) == 15 { // scrolling
+		// 	switch data[2] {
+		// 	case 65:
+		// 		handle(ScrollUp{})
+		// 	case 66:
+		// 		handle(ScrollDown{})
+		// 	default:
+		// 		log.Printf("Unrecognized scroll code: %v", data)
+		// 	}
+		// } else { // arrow
+		// 	handle(direction)
+		// }
 	case 91: // '['
-		switch data[2] {
+		switch pullByte() {
 		case 49:
-			if len(data) == 7 && data[3] == 59 && data[4] == 49 && data[5] == 48 {
-				switch data[6] {
-				case 65:
-					handle(AltShiftArrow{Direction: Up})
-				case 66:
-					handle(AltShiftArrow{Direction: Down})
-				case 67:
-					handle(AltShiftArrow{Direction: Right})
-				case 68:
-					handle(AltShiftArrow{Direction: Left})
+			switch pullByte() {
+			case 59:
+				switch pullByte() {
+				case 49:
+					switch pullByte() {
+					case 48:
+						handle(AltShiftArrow{Direction: directionNames[pullByte()]})
+					default:
+						log.Println("unhandled: ", data)
+					}
+				case 51:
+					handle(AltArrow{Direction: directionNames[pullByte()]})
+				case 52:
+					handle(AltShiftArrow{Direction: directionNames[pullByte()]})
 				default:
-					log.Println("Unhandled alt shift arrow:", data)
+					log.Println("unhandled: ", data)
 				}
-			} else if len(data) == 6 && data[3] == 59 && data[4] == 51 {
-				switch data[5] {
-				case 65:
-					handle(AltArrow{Direction: Up})
-				case 66:
-					handle(AltArrow{Direction: Down})
-				case 67:
-					handle(AltArrow{Direction: Right})
-				case 68:
-					handle(AltArrow{Direction: Left})
-				default:
-					log.Println("Unhandled alt arrow:", data)
-				}
-			} else if len(data) == 6 && data[3] == 59 && data[4] == 52 {
-				switch data[5] {
-				case 65:
-					handle(AltShiftArrow{Direction: Up})
-				case 66:
-					handle(AltShiftArrow{Direction: Down})
-				case 67:
-					handle(AltShiftArrow{Direction: Right})
-				case 68:
-					handle(AltShiftArrow{Direction: Left})
-				default:
-					log.Println("Unhandled alt arrow:", data)
-				}
-			} else {
-				log.Println("Unhandled almost-shift-arrow:", data)
+			default:
+				log.Println("unhandled: ", data)
 			}
-		case 51: // Mouse
-			if data[3] == 126 { // Delete
+		case 51: // Mouse??
+			switch pullByte() {
+			case 126:
 				handle(Character{Char: 127})
-			} else {
-				code := string(data[2:])
-				code = strings.TrimSuffix(code, "M") // NOTE: are there other codes we are forgetting about?
-				pieces := strings.Split(code, ";")
-				switch pieces[0] {
-				case "32":
-					x, _ := strconv.Atoi(pieces[1])
-					y, _ := strconv.Atoi(strings.TrimSuffix(pieces[2], "M"))
-					handle(MouseDown{X: x, Y: y})
-				case "35":
-					x, _ := strconv.Atoi(pieces[1])
-					y, _ := strconv.Atoi(strings.TrimSuffix(pieces[2], "M"))
-					handle(MouseUp{X: x, Y: y})
-				default:
-					log.Printf("Unrecognized keycode: %v", data)
-				}
+			default:
+				log.Println("unhandled: ", data)
 			}
 		case 57: // Scrolling
 			switch data[3] {
@@ -327,9 +205,9 @@ func handleEscapeCode(data []byte, handle func(parsedData interface{})) {
 				log.Printf("Unrecognized keycode: %v", data)
 			}
 		case 60:
-			switch data[3] {
+			switch pullByte() {
 			case 54:
-				switch data[4] {
+				switch pullByte() {
 				case 52:
 					handle(ScrollUp{})
 				case 53:
@@ -337,25 +215,8 @@ func handleEscapeCode(data []byte, handle func(parsedData interface{})) {
 				default:
 					log.Printf("Unrecognized scroll code': %v", data)
 				}
-			case 48:
-				code := string(data[5:])
-				mode := data[len(data)-1]
-				pieces := strings.Split(code[:len(code)-1], ";")
-				var x int
-				if len(pieces[0]) == 0 {
-					x = 1
-				} else {
-					x, _ = strconv.Atoi(pieces[0])
-				}
-				y, _ := strconv.Atoi(pieces[1])
-				switch mode {
-				case 'M':
-					handle(MouseDown{X: x, Y: y})
-				case 'm':
-					handle(MouseUp{X: x, Y: y})
-				default:
-					log.Printf("Unrecognzied mouse code: %v", data)
-				}
+			default:
+				log.Println("unhandled: ", data)
 			}
 		case 65:
 			handle(Arrow{Direction: Up})
@@ -366,11 +227,11 @@ func handleEscapeCode(data []byte, handle func(parsedData interface{})) {
 		case 68:
 			handle(Arrow{Direction: Left})
 		case 77:
-			switch data[3] {
-			case 32:
-				handle(MouseDown{X: int(data[4] - 32), Y: int(data[5] - 32)})
-			case 35:
-				handle(MouseUp{X: int(data[4] - 32), Y: int(data[5] - 32)})
+			switch pullByte() {
+			// case 32:
+			// 	handle(MouseDown{X: int(data[4] - 32), Y: int(data[5] - 32)})
+			// case 35:
+			// 	handle(MouseUp{X: int(data[4] - 32), Y: int(data[5] - 32)})
 			case 96:
 				handle(ScrollUp{})
 			case 97:
@@ -379,20 +240,15 @@ func handleEscapeCode(data []byte, handle func(parsedData interface{})) {
 				log.Printf("Unrecognized keycode: %v", data)
 			}
 		default:
-			if len(data) < 6 {
-				log.Printf("Unrecognized arrow %v", data)
-				return
-			}
-			arrow := directionNames[data[5]]
-			switch data[4] {
+			switch pullByte() {
 			case 50:
-				handle(ShiftArrow{arrow})
+				handle(ShiftArrow{directionNames[pullByte()]})
 			case 51:
-				handle(AltArrow{arrow})
+				handle(AltArrow{directionNames[pullByte()]})
 			case 52:
-				handle(AltShiftArrow{arrow})
+				handle(AltShiftArrow{directionNames[pullByte()]})
 			case 53:
-				handle(CtrlArrow{arrow})
+				handle(CtrlArrow{directionNames[pullByte()]})
 			default:
 				log.Printf("Unrecognized keycode: %v", data)
 			}
@@ -400,7 +256,7 @@ func handleEscapeCode(data []byte, handle func(parsedData interface{})) {
 	case 102:
 		handle(AltChar{Char: 'F'})
 	default:
-		parseAltLetter(data[1], handle)
+		parseAltLetter(pullByte(), handle)
 	}
 }
 

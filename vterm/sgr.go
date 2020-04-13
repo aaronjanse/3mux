@@ -2,16 +2,14 @@ package vterm
 
 import (
 	"log"
-
-	"github.com/aaronjanse/3mux/render"
 )
 
 func (v *VTerm) handleSGR(parameterCode string) {
 	seq := parseSemicolonNumSeq(parameterCode, 0)
 
 	if parameterCode == "39;49" {
-		v.Cursor.Style.Fg.ColorMode = render.ColorNone
-		v.Cursor.Style.Bg.ColorMode = render.ColorNone
+		v.Cursor.Style.Fg.ColorMode = ColorNone
+		v.Cursor.Style.Bg.ColorMode = ColorNone
 		return
 	}
 
@@ -20,7 +18,7 @@ func (v *VTerm) handleSGR(parameterCode string) {
 
 		switch c {
 		case 0:
-			v.Cursor.Style.Reset()
+			v.Cursor.Style = Style{}
 			seq = seq[1:]
 		case 1:
 			v.Cursor.Style.Bold = true
@@ -72,40 +70,40 @@ func (v *VTerm) handleSGR(parameterCode string) {
 
 		case 38: // set foreground color
 			if seq[1] == 5 {
-				v.Cursor.Style.Fg = render.Color{
-					ColorMode: render.ColorBit8,
+				v.Cursor.Style.Fg = Color{
+					ColorMode: ColorBit8,
 					Code:      int32(seq[2]),
 				}
 				seq = seq[3:]
 			} else if seq[1] == 2 {
-				v.Cursor.Style.Fg = render.Color{
-					ColorMode: render.ColorBit24,
+				v.Cursor.Style.Fg = Color{
+					ColorMode: ColorBit24,
 					Code:      int32(seq[2]<<16 + seq[3]<<8 + seq[4]),
 				}
 				seq = seq[5:]
 			}
 		case 39: // default foreground color
-			v.Cursor.Style.Fg.ColorMode = render.ColorNone
+			v.Cursor.Style.Fg.ColorMode = ColorNone
 			seq = seq[1:]
 		case 48: // set background color
 			if seq[1] == 5 {
-				v.Cursor.Style.Bg = render.Color{
-					ColorMode: render.ColorBit8,
+				v.Cursor.Style.Bg = Color{
+					ColorMode: ColorBit8,
 					Code:      int32(seq[2]),
 				}
 				seq = seq[3:]
 			} else if seq[1] == 2 {
-				v.Cursor.Style.Bg = render.Color{
-					ColorMode: render.ColorBit24,
+				v.Cursor.Style.Bg = Color{
+					ColorMode: ColorBit24,
 					Code:      int32(seq[2]<<16 + seq[3]<<8 + seq[4]),
 				}
 				seq = seq[5:]
 			}
 		case 49: // default background color
-			v.Cursor.Style.Bg.ColorMode = render.ColorNone
+			v.Cursor.Style.Bg.ColorMode = ColorNone
 			seq = seq[1:]
 		default:
-			var colorMode render.ColorMode
+			var colorMode ColorMode
 			var code int32
 			var bg bool
 
@@ -113,35 +111,35 @@ func (v *VTerm) handleSGR(parameterCode string) {
 				bg = false
 				code = int32(c - 30)
 				if len(seq) > 1 && seq[1] == 1 {
-					colorMode = render.ColorBit3Bright
+					colorMode = ColorBit3Bright
 				} else {
-					colorMode = render.ColorBit3Normal
+					colorMode = ColorBit3Normal
 				}
 				seq = seq[1:]
 			} else if c >= 40 && c <= 47 {
 				bg = true
 				code = int32(c - 40)
 				if len(seq) > 1 && seq[1] == 1 {
-					colorMode = render.ColorBit3Bright
+					colorMode = ColorBit3Bright
 				} else {
-					colorMode = render.ColorBit3Normal
+					colorMode = ColorBit3Normal
 				}
 				seq = seq[1:]
 			} else if c >= 90 && c <= 97 {
 				bg = false
 				code = int32(c - 90)
-				colorMode = render.ColorBit3Bright
+				colorMode = ColorBit3Bright
 				seq = seq[1:]
 			} else if c >= 100 && c <= 107 {
 				bg = true
 				code = int32(c - 100)
-				colorMode = render.ColorBit3Bright
+				colorMode = ColorBit3Bright
 				seq = seq[1:]
 			} else {
 				log.Printf("Unrecognized SGR code: %v", parameterCode)
 			}
 
-			color := render.Color{ColorMode: colorMode, Code: code}
+			color := Color{ColorMode: colorMode, Code: code}
 			if bg {
 				v.Cursor.Style.Bg = color
 			} else {

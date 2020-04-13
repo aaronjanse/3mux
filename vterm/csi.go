@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"log"
 	"unicode"
-
-	"github.com/aaronjanse/3mux/render"
 )
 
 func (v *VTerm) handleCSISequence() {
@@ -90,9 +88,9 @@ func (v *VTerm) handleCSISequence() {
 		case 'M': // Delete Lines; https://vt100.net/docs/vt510-rm/DL.html
 			n := parseSemicolonNumSeq(parameterCode, 1)[0]
 
-			newLines := make([][]render.Char, n)
+			newLines := make([][]Char, n)
 			for i := range newLines {
-				newLines[i] = make([]render.Char, v.w)
+				newLines[i] = make([]Char, v.w)
 			}
 
 			v.Screen = append(append(append(
@@ -137,9 +135,9 @@ func (v *VTerm) handleCSISequence() {
 			v.setCursorX(0)
 
 			n := seq[0]
-			newLines := make([][]render.Char, n)
+			newLines := make([][]Char, n)
 			for i := range newLines {
-				newLines[i] = make([]render.Char, v.w)
+				newLines[i] = make([]Char, v.w)
 			}
 
 			v.Screen = append(append(
@@ -192,7 +190,7 @@ func (v *VTerm) handleEraseInDisplay(parameterCode string) {
 		v.setCursorPos(0, 0)
 		v.RedrawWindow()
 	case 3: // clear entire screen and delete all lines saved in scrollback buffer
-		v.Scrollback = [][]render.Char{}
+		v.Scrollback = [][]Char{}
 		for i := range v.Screen {
 			for j := range v.Screen[i] {
 				v.Screen[i][j].Rune = ' '

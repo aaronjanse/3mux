@@ -5,10 +5,6 @@ A Char is a character printed using a given cursor (which is stored alongside th
 */
 package vterm
 
-import (
-	"github.com/aaronjanse/3mux/render"
-)
-
 // ScrollingRegion holds the state for an ANSI scrolling region
 type ScrollingRegion struct {
 	top    int
@@ -24,14 +20,14 @@ type VTerm struct {
 	x, y, w, h int
 
 	// visible screen; char cursor coords are ignored
-	Screen [][]render.Char
+	Screen [][]Char
 
 	// Scrollback[0] is the line farthest from the screen
-	Scrollback    [][]render.Char // disabled when using alt screen; char cursor coords are ignored
-	ScrollbackPos int             // ScrollbackPos is the number of lines of scrollback visible
+	Scrollback    [][]Char // disabled when using alt screen; char cursor coords are ignored
+	ScrollbackPos int      // ScrollbackPos is the number of lines of scrollback visible
 
 	usingAltScreen bool
-	screenBackup   [][]render.Char
+	screenBackup   [][]Char
 
 	NeedsRedraw bool
 
@@ -40,12 +36,9 @@ type VTerm struct {
 	internalByteCounter uint64
 	usingSlowRefresh    bool
 
-	Cursor render.Cursor
+	Cursor Cursor
 
-	renderer *render.Renderer
-
-	// TODO: delete `blankLine`
-	blankLine []render.Char
+	renderer Renderer
 
 	// parentSetCursor sets physical host's cursor taking the pane location into account
 	parentSetCursor func(x, y int)
@@ -63,17 +56,17 @@ type VTerm struct {
 }
 
 // NewVTerm returns a VTerm ready to be used by its exported methods
-func NewVTerm(shellByteCounter *uint64, renderer *render.Renderer, parentSetCursor func(x, y int), in <-chan rune, out chan<- rune) *VTerm {
+func NewVTerm(shellByteCounter *uint64, renderer Renderer, parentSetCursor func(x, y int), in <-chan rune, out chan<- rune) *VTerm {
 	w := 10
 	h := 10
 
-	screen := [][]render.Char{}
+	screen := [][]Char{}
 	for j := 0; j < h; j++ {
-		row := []render.Char{}
+		row := []Char{}
 		for i := 0; i < w; i++ {
-			row = append(row, render.Char{
+			row = append(row, Char{
 				Rune:  ' ',
-				Style: render.Style{},
+				Style: Style{},
 			})
 		}
 		screen = append(screen, row)
@@ -83,11 +76,10 @@ func NewVTerm(shellByteCounter *uint64, renderer *render.Renderer, parentSetCurs
 		x: 0, y: 0,
 		w:                w,
 		h:                h,
-		blankLine:        []render.Char{},
 		Screen:           screen,
-		Scrollback:       [][]render.Char{},
+		Scrollback:       [][]Char{},
 		usingAltScreen:   false,
-		Cursor:           render.Cursor{},
+		Cursor:           Cursor{},
 		in:               in,
 		out:              out,
 		shellByteCounter: shellByteCounter,
@@ -118,12 +110,12 @@ func (v *VTerm) Reshape(x, y, w, h int) {
 
 	for y := 0; y <= h; y++ {
 		if y >= len(v.Screen) {
-			v.Screen = append(v.Screen, []render.Char{})
+			v.Screen = append(v.Screen, []Char{})
 		}
 
 		for x := 0; x <= w; x++ {
 			if x >= len(v.Screen[y]) {
-				v.Screen[y] = append(v.Screen[y], render.Char{Rune: ' ', Style: render.Style{}})
+				v.Screen[y] = append(v.Screen[y], Char{Rune: ' ', Style: Style{}})
 			}
 		}
 	}

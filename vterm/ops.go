@@ -1,9 +1,5 @@
 package vterm
 
-import (
-	"github.com/aaronjanse/3mux/render"
-)
-
 func (v *VTerm) ScrollbackReset() {
 	v.ScrollbackPos = 0
 
@@ -54,9 +50,9 @@ func (v *VTerm) scrollUp(n int) {
 		v.Scrollback = append(v.Scrollback, rows...)
 	}
 
-	newLines := make([][]render.Char, n)
+	newLines := make([][]Char, n)
 	for i := range newLines {
-		newLines[i] = make([]render.Char, v.w)
+		newLines[i] = make([]Char, v.w)
 	}
 
 	v.Screen = append(append(append(
@@ -73,9 +69,9 @@ func (v *VTerm) scrollUp(n int) {
 // scrollDown shifts the screen content down and adds blank lines to the top.
 // It does neither modifies nor reads scrollback
 func (v *VTerm) scrollDown(n int) {
-	newLines := make([][]render.Char, n)
+	newLines := make([][]Char, n)
 	for i := range newLines {
-		newLines[i] = make([]render.Char, v.w)
+		newLines[i] = make([]Char, v.w)
 	}
 
 	v.Screen =
@@ -128,32 +124,23 @@ func (v *VTerm) shiftCursorY(diff int) {
 }
 
 // putChar renders as given character using the cursor stored in vterm
-func (v *VTerm) putChar(ch rune) {
+func (v *VTerm) putChar(r rune) {
 	if v.Cursor.Y >= v.h || v.Cursor.Y < 0 || v.Cursor.X > v.w || v.Cursor.X < 0 {
 		return
 	}
 
-	char := render.Char{
-		Rune:  ch,
+	ch := Char{
+		Rune:  r,
 		Style: v.Cursor.Style,
 	}
 
 	if v.Cursor.Y >= 0 && v.Cursor.Y < len(v.Screen) {
 		if v.Cursor.X >= 0 && v.Cursor.X < len(v.Screen[v.Cursor.Y]) {
-			v.Screen[v.Cursor.Y][v.Cursor.X] = char
+			v.Screen[v.Cursor.Y][v.Cursor.X] = ch
 		}
 	}
 
-	positionedChar := render.PositionedChar{
-		Rune:   ch,
-		Cursor: v.Cursor,
-	}
-
-	positionedChar.Cursor.X += v.x
-	positionedChar.Cursor.Y += v.y
-
-	// TODO: print to the window based on scrolling position
-	v.renderer.HandleCh(positionedChar)
+	v.renderer.SetChar(ch, v.Cursor.X, v.Cursor.Y)
 
 	if v.Cursor.X < v.w {
 		v.Cursor.X++
@@ -172,14 +159,7 @@ func (v *VTerm) RedrawWindow() {
 					continue
 				}
 
-				ch := render.PositionedChar{
-					Rune: v.Screen[y][x].Rune,
-					Cursor: render.Cursor{
-						X: v.x + x, Y: v.y + y + v.ScrollbackPos, Style: v.Screen[y][x].Style,
-					},
-				}
-
-				v.renderer.HandleCh(ch)
+				v.renderer.SetChar(v.Screen[y][x], x, y+v.ScrollbackPos)
 			}
 		}
 	}
@@ -198,21 +178,9 @@ func (v *VTerm) RedrawWindow() {
 				idx := len(v.Scrollback) - v.ScrollbackPos + y - 1
 
 				if x < len(v.Scrollback[idx]) {
-					ch := render.PositionedChar{
-						Rune: v.Scrollback[idx][x].Rune,
-						Cursor: render.Cursor{
-							X: v.x + x, Y: v.y + y, Style: v.Scrollback[idx][x].Style,
-						},
-					}
-					v.renderer.HandleCh(ch)
+					v.renderer.SetChar(v.Scrollback[idx][x], x, y)
 				} else {
-					ch := render.PositionedChar{
-						Rune: ' ',
-						Cursor: render.Cursor{
-							X: v.x + x, Y: v.y + y, Style: render.Style{},
-						},
-					}
-					v.renderer.HandleCh(ch)
+					v.renderer.SetChar(Char{}, x, y)
 				}
 			}
 		}
