@@ -27,8 +27,8 @@ func (v *VTerm) pullRune() (rune, bool) {
 					log.Printf("rune: %v (%s)", r, string(r))
 					time.Sleep(100 * time.Millisecond)
 				}
+				return r, ok
 			}
-			return r, ok
 		case p := <-v.ChangePause:
 			for {
 				v.IsPaused = p
@@ -149,6 +149,6 @@ func (v *VTerm) handleEscapeCode() {
 		}
 		v.RedrawWindow()
 	default:
-		log.Printf("Unrecognized escape code: %v", string(next))
+		log.Printf("Unrecognized escape code: %v (%d)", string(next), next)
 	}
 }
