@@ -3,7 +3,6 @@ package vterm
 import (
 	"log"
 	"sync/atomic"
-	"time"
 	"unicode"
 	"unicode/utf8"
 )
@@ -23,9 +22,9 @@ func (v *VTerm) pullRune() (rune, bool) {
 		select {
 		case r, ok := <-v.in:
 			if r != 0 {
-				if v.DebugSlowMode {
+				if v.DebugSlowMode || true {
 					log.Printf("rune: %v (%s)", r, string(r))
-					time.Sleep(100 * time.Millisecond)
+					// time.Sleep(100 * time.Millisecond)
 				}
 			}
 			return r, ok

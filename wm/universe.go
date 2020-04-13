@@ -3,6 +3,7 @@ package wm
 import (
 	"fmt"
 	"log"
+	"sync"
 
 	"github.com/aaronjanse/3mux/pane"
 	gc "github.com/rthornton128/goncurses"
@@ -12,19 +13,25 @@ import (
 type Universe struct {
 	workspaces   []*Workspace
 	selectionIdx int
+	stdscr       *gc.Window
+	lock         *sync.Mutex
 
 	renderRect Rect
 }
 
 func NewUniverse(stdscr *gc.Window, w, h int) *Universe {
-	pane, err := pane.NewPane(0, 0, w, h, func() {})
+	lock := &sync.Mutex{}
+	pane, err := pane.NewPane(lock, 0, 0, w, h, func() {})
 	if err != nil {
 		log.Fatal(err)
 	}
 	return &Universe{
+		stdscr: stdscr,
+		lock:   lock,
 		workspaces: []*Workspace{
 			&Workspace{
 				contents: &Split{
+					lock: lock,
 					renderRect: Rect{
 						x: 0,
 						y: 0,
@@ -89,9 +96,7 @@ func (u *Universe) Kill() {
 }
 
 func (u *Universe) AddPane() {
-	log.Println("ADDING")
 	u.workspaces[u.selectionIdx].AddPane()
-	log.Println(u.Serialize())
 }
 
 func (u *Universe) HandleStdin(in string) {

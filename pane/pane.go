@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
+	"sync"
 	"sync/atomic"
 	"syscall"
 
@@ -30,7 +31,7 @@ type Pane struct {
 }
 
 // NewPane creates a new Pane using an initialized goncurses Window, launching $SHELL
-func NewPane(x, y, w, h int, onDeath func()) (*Pane, error) {
+func NewPane(lock *sync.Mutex, x, y, w, h int, onDeath func()) (*Pane, error) {
 	gcWin, err := gc.NewWindow(h, w, y, x)
 	if err != nil {
 		log.Println(err)
@@ -39,7 +40,8 @@ func NewPane(x, y, w, h int, onDeath func()) (*Pane, error) {
 
 	p := &Pane{
 		renderer: &renderer{
-			gcWin,
+			gcWin: gcWin,
+			lock:  lock,
 		},
 		stdin:       make(chan rune, 3200000),
 		stdout:      make(chan rune, 3200000),
@@ -108,10 +110,14 @@ func NewPane(x, y, w, h int, onDeath func()) (*Pane, error) {
 
 func (p *Pane) Reshape(x, y, w, h int) {
 	log.Println("Reshape", x, y, w, h)
+	p.renderer.lock.Lock()
 	p.renderer.gcWin.Resize(h, w)
 	p.renderer.gcWin.MoveWindow(y, x)
 	p.renderer.gcWin.Refresh()
+	p.renderer.lock.Unlock()
 	log.Printf(p.Serialize())
+	p.vt.Reshape(x, y, w, h)
+	p.resizeShell(w, h)
 }
 
 func (p *Pane) resizeShell(w, h int) {
@@ -161,7 +167,6 @@ func (p *Pane) Serialize() string {
 }
 
 func (p *Pane) HandleStdin(in string) {
-	log.Println("IN", []byte(in))
 	p.vt.ScrollbackReset()
 	_, err := p.ptmx.Write([]byte(in))
 	if err != nil {
@@ -171,5 +176,5 @@ func (p *Pane) HandleStdin(in string) {
 }
 
 func (p *Pane) RefreshCursor() {
-	p.renderer.RefreshCursor()
+	p.renderer.SetCursor(p.vt.Cursor.X, p.vt.Cursor.Y)
 }

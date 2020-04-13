@@ -1,7 +1,5 @@
 package wm
 
-import "log"
-
 // import (
 // 	"github.com/aaronjanse/3mux/keypress"
 // )
@@ -56,8 +54,10 @@ func (u *Universe) MoveWindow(d Direction) {
 
 			if len(parentPath) == 2 {
 				root.workspaces[root.selectionIdx].contents = &Split{
+					lock:              u.lock,
 					renderRect:        Rect{w: rootRect.w, h: rootRect.h},
 					verticallyStacked: vert,
+					stdscr:            u.stdscr,
 					selectionIdx:      1,
 					elements: []Node{
 						Node{
@@ -74,6 +74,8 @@ func (u *Universe) MoveWindow(d Direction) {
 				greatGrandparent, _ := grandparentPath.getParent(u)
 				greatGrandparent.insertContainer(tmp, greatGrandparent.selectionIdx)
 			}
+
+			// root.workspaces[root.selectionIdx].contents.refreshChildShapes()
 		} else {
 			tmp := parent.elements[idx-1]
 			parent.elements[idx-1] = parent.elements[idx]
@@ -96,9 +98,11 @@ func (u *Universe) MoveWindow(d Direction) {
 
 			if len(parentPath) == 2 {
 				root.workspaces[root.selectionIdx].contents = &Split{
+					lock:              u.lock,
 					renderRect:        Rect{w: rootRect.w, h: rootRect.h},
 					verticallyStacked: vert,
 					selectionIdx:      1,
+					stdscr:            u.stdscr,
 					elements: []Node{
 						Node{
 							size:     0.5,
@@ -115,6 +119,8 @@ func (u *Universe) MoveWindow(d Direction) {
 				greatGrandparent.insertContainer(tmp, grandparent.selectionIdx+2)
 				greatGrandparent.selectionIdx++
 			}
+
+			// root.workspaces[root.selectionIdx].contents.refreshChildShapes()
 		} else {
 			tmp := parent.elements[idx+1]
 			parent.elements[idx+1] = parent.elements[idx]
@@ -151,8 +157,10 @@ func (u *Universe) MoveWindow(d Direction) {
 			tmpRoot := root.workspaces[root.selectionIdx].contents
 
 			root.workspaces[root.selectionIdx].contents = &Split{
+				lock:              u.lock,
 				renderRect:        Rect{w: rootRect.w, h: rootRect.h},
 				verticallyStacked: movingVert,
+				stdscr:            u.stdscr,
 				selectionIdx:      0,
 				elements: []Node{
 					Node{
@@ -173,9 +181,9 @@ func (u *Universe) MoveWindow(d Direction) {
 		}
 	}
 
+	// parent.refreshChildShapes()
+	u.workspaces[root.selectionIdx].contents.refreshChildShapes()
 	u.UpdateFocus()
-	parent.refreshChildShapes()
-	log.Println(u.Serialize())
 }
 
 // func killWindow() {

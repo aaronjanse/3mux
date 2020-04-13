@@ -2,6 +2,8 @@ package wm
 
 import (
 	"fmt"
+	"log"
+	"sync"
 
 	"github.com/aaronjanse/3mux/pane"
 	gc "github.com/rthornton128/goncurses"
@@ -13,6 +15,7 @@ type Split struct {
 	selectionIdx      int
 	verticallyStacked bool
 	stdscr            *gc.Window
+	lock              *sync.Mutex
 
 	renderRect Rect
 }
@@ -21,6 +24,8 @@ type Split struct {
 // this for when a split is reshaped
 func (s *Split) Reshape(x, y, w, h int) {
 	s.renderRect = Rect{x, y, w, h}
+
+	s.refreshChildShapes()
 
 	// NOTE: should we clear the screen?
 
@@ -69,6 +74,7 @@ func (s *Split) AddPane() {
 	var err error
 	if s.verticallyStacked {
 		p, err = pane.NewPane(
+			s.lock,
 			s.renderRect.x,
 			s.renderRect.y+int(size*length)+1,
 			s.renderRect.w,
@@ -77,6 +83,7 @@ func (s *Split) AddPane() {
 		)
 	} else {
 		p, err = pane.NewPane(
+			s.lock,
 			s.renderRect.x+int(size*length)+1,
 			s.renderRect.y,
 			int(float32(s.renderRect.w)*size)-1,
@@ -95,6 +102,8 @@ func (s *Split) AddPane() {
 
 	// update selection to new child
 	s.selectionIdx = len(s.elements) - 1
+
+	log.Println("PANE ADDED", s.elements)
 
 	s.refreshChildShapes()
 	s.drawLines()
@@ -142,7 +151,9 @@ func (s *Split) refreshChildShapes() {
 		}
 	}
 
-	s.drawLines()
+	if len(s.elements) > 1 {
+		s.drawLines()
+	}
 }
 
 func (s *Split) drawLines() {
