@@ -22,6 +22,10 @@ type Shell struct {
 func newShell(stdout chan<- rune) Shell {
 	cmd := exec.Command(os.Getenv("SHELL"))
 
+	cmd.Env = append(os.Environ(),
+		"THREEMUX=1",
+	)
+
 	ptmx, err := pty.Start(cmd)
 	if err != nil {
 		fatalShutdownNow(err.Error())
