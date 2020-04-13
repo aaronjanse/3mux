@@ -9,16 +9,14 @@ import (
 	"runtime/pprof"
 
 	"github.com/aaronjanse/3mux/keypress"
-	"github.com/aaronjanse/3mux/pane"
+	"github.com/aaronjanse/3mux/wm"
+	"github.com/famz/SetLocale"
 	gc "github.com/rthornton128/goncurses"
 )
 
-// Rect is a rectangle with an origin x, origin y, width, and height
-type Rect struct {
-	x, y, w, h int
-}
-
 var termW, termH int
+
+var universe *wm.Universe
 
 // var renderer *render.Renderer
 
@@ -56,6 +54,8 @@ func main() {
 		defer pprof.StopCPUProfile()
 	}
 
+	SetLocale.SetLocale(SetLocale.LC_ALL, "")
+
 	stdscr, err := gc.Init()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
@@ -72,19 +72,12 @@ func main() {
 	gc.Echo(false)
 	gc.Raw(true)
 
-	pane, err := pane.NewPane(0, 0, 100, 20, func() {})
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	keypress.Listen(stdscr, handleInput)
-
-	// termW, termH, _ = keypress.GetTermSize()
+	termW, termH, _ = keypress.GetTermSize()
 
 	// // renderer = render.NewRenderer()
 	// // go renderer.ListenToQueue()
 
-	// root = Universe{
+	// root = wm.Universe{
 	// 	workspaces: []*Workspace{
 	// 		&Workspace{
 	// 			contents: &Split{
@@ -101,8 +94,13 @@ func main() {
 	// 	},
 	// 	selectionIdx: 0,
 	// }
+	// pane.NewPane(0, 0, 100, 20, func() {})
 
-	// stdscr.Refresh()
+	universe = wm.NewUniverse(stdscr, termW, termH)
+	universe.AddPane()
+	log.Println(universe.Serialize())
+
+	keypress.Listen(stdscr, handleInput)
 
 	// defer root.kill()
 
@@ -117,7 +115,7 @@ func main() {
 	// }
 
 	// time.Sleep(time.Second * 3)
-	pane.Kill()
+	// pane.Kill()
 
 	// keypress.Listen(handleInput)
 }

@@ -266,13 +266,15 @@ func handleInput(event interface{}, rawData []byte) {
 	// 		return
 	// 	}
 
-	// 	if seiveConfigEvents(event) {
-	// 		return
-	// 	}
+	if seiveConfigEvents(event) {
+		return
+	}
 
 	// 	// if we didn't find anything special, just pass the raw data to the selected terminal
 
 	// 	t := getSelection().getContainer().(*Pane)
+
+	universe.HandleStdin(string(rawData))
 
 	// 	t.handleStdin(string(rawData))
 }

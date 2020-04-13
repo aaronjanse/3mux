@@ -2,6 +2,10 @@ package keypress
 
 import (
 	"log"
+	"os"
+	"os/exec"
+	"strconv"
+	"strings"
 	"unicode"
 
 	gc "github.com/rthornton128/goncurses"
@@ -45,31 +49,31 @@ func ShouldProcessMouse(should bool) {
 // this is a regularly reset buffer of what we've collected so far
 var data []byte
 
-// // GetTermSize returns the terminal dimensions w, h, err
-// func GetTermSize() (int, int, error) {
-// 	cmd := exec.Command("stty", "size")
-// 	cmd.Stdin = os.Stdin
-// 	out, err := cmd.Output()
-// 	if err != nil {
-// 		return 0, 0, err
-// 	}
+// GetTermSize returns the terminal dimensions w, h, err
+func GetTermSize() (int, int, error) {
+	cmd := exec.Command("stty", "size")
+	cmd.Stdin = os.Stdin
+	out, err := cmd.Output()
+	if err != nil {
+		return 0, 0, err
+	}
 
-// 	outStr := strings.TrimSpace(string(out))
-// 	parts := strings.Split(outStr, " ")
+	outStr := strings.TrimSpace(string(out))
+	parts := strings.Split(outStr, " ")
 
-// 	h, err := strconv.ParseInt(parts[0], 10, 64)
-// 	if err != nil {
-// 		return 0, 0, err
-// 	}
-// 	w, err := strconv.ParseInt(parts[1], 10, 64)
-// 	if err != nil {
-// 		return 0, 0, err
-// 	}
+	h, err := strconv.ParseInt(parts[0], 10, 64)
+	if err != nil {
+		return 0, 0, err
+	}
+	w, err := strconv.ParseInt(parts[1], 10, 64)
+	if err != nil {
+		return 0, 0, err
+	}
 
-// 	wInt := int(int64(w))
-// 	hInt := int(int64(h))
-// 	return wInt, hInt, nil
-// }
+	wInt := int(int64(w))
+	hInt := int(int64(h))
+	return wInt, hInt, nil
+}
 
 func pullByte() byte {
 	b := byte(stdscr.GetChar())
@@ -93,11 +97,12 @@ func Listen(s *gc.Window, callback func(parsedData interface{}, rawData []byte))
 	// 	}
 	// }()
 
-	stdscr.Timeout(5)
-
 	for {
+		stdscr.Timeout(-1)
 		data = []byte{}
 		key := pullByte()
+
+		stdscr.Timeout(5)
 
 		handle := func(x interface{}) {
 			callback(x, data)

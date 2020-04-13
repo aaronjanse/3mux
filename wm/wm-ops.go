@@ -1,4 +1,4 @@
-package main
+package wm
 
 // import (
 // 	"github.com/aaronjanse/3mux/keypress"
@@ -300,42 +300,6 @@ package main
 // 	newTerm.selected = true
 // 	newTerm.softRefresh()
 // 	newTerm.vterm.RefreshCursor()
-// }
-
-// func newWindow() {
-// 	keypress.ShouldProcessMouse(true)
-
-// 	path := getSelection()
-
-// 	// deselect the old Term
-// 	oldTerm := path.getContainer().(*Pane)
-// 	oldTerm.selected = false
-// 	// the parent is going to be redrawn so we don't need to redraw the old term right now
-
-// 	parent, _ := path.getParent()
-
-// 	if len(parent.elements) > 8 {
-// 		return
-// 	}
-
-// 	size := float32(1) / float32(len(parent.elements)+1)
-
-// 	// resize siblings
-// 	scaleFactor := float32(1) - size
-// 	for i := range parent.elements {
-// 		parent.elements[i].size *= scaleFactor
-// 	}
-
-// 	// add new child
-// 	createdTerm := newPane(true)
-// 	parent.elements = append(parent.elements, Node{
-// 		size:     size,
-// 		contents: createdTerm,
-// 	})
-
-// 	// update selection to new child
-// 	parent.selectionIdx = len(parent.elements) - 1
-// 	parent.refreshRenderRect()
 // }
 
 // func resizeWindow(d Direction, diff float32) {

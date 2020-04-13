@@ -141,12 +141,13 @@ func (v *VTerm) putChar(r rune) {
 	}
 
 	v.renderer.SetChar(ch, v.Cursor.X, v.Cursor.Y)
+	v.renderer.Refresh()
 
 	if v.Cursor.X < v.w {
 		v.Cursor.X++
 	}
 
-	v.RefreshCursor()
+	// v.RefreshCursor()
 }
 
 // RedrawWindow redraws the screen into ncurses from scratch.
@@ -185,4 +186,5 @@ func (v *VTerm) RedrawWindow() {
 			}
 		}
 	}
+	v.renderer.Refresh()
 }

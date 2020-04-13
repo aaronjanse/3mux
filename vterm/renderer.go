@@ -3,6 +3,7 @@ package vterm
 // Renderer is how vterm displays its output
 type Renderer interface {
 	SetChar(ch Char, x, y int)
+	Refresh()
 }
 
 type Char struct {

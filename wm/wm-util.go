@@ -1,43 +1,50 @@
-package main
+package wm
+
+import (
+	"fmt"
+	"log"
+
+	"github.com/aaronjanse/3mux/pane"
+)
 
 // import (
 // 	"fmt"
 // )
 
-// // Direction is the type of Up, Down, Left, and Right
-// type Direction int
+// Direction is the type of Up, Down, Left, and Right
+type Direction int
 
-// // directions
-// const (
-// 	_ Direction = iota
-// 	Up
-// 	Down
-// 	Left
-// 	Right
-// )
+// directions
+const (
+	_ Direction = iota
+	Up
+	Down
+	Left
+	Right
+)
 
-// // A Path is a series of indicies leading from the root to a Container
-// type Path []int
+// A Path is a series of indicies leading from the root to a Container
+type Path []int
 
-// func getSelection() Path {
-// 	path := Path{root.selectionIdx}
-// 	wsSplit := root.workspaces[root.selectionIdx].contents
+func (u *Universe) getSelection() Path {
+	path := Path{u.selectionIdx}
+	wsSplit := u.workspaces[root.selectionIdx].contents
 
-// 	path = append(path, wsSplit.selectionIdx)
-// 	selection := wsSplit.elements[wsSplit.selectionIdx].contents
+	path = append(path, wsSplit.selectionIdx)
+	selection := wsSplit.elements[wsSplit.selectionIdx].contents
 
-// 	for {
-// 		switch val := selection.(type) {
-// 		case *Pane:
-// 			return path
-// 		case *Split:
-// 			path = append(path, val.selectionIdx)
-// 			selection = val.elements[val.selectionIdx].contents
-// 		default:
-// 			panic(fmt.Sprintf("Unexpected type %T", selection))
-// 		}
-// 	}
-// }
+	for {
+		switch val := selection.(type) {
+		case *pane.Pane:
+			return path
+		case *Split:
+			path = append(path, val.selectionIdx)
+			selection = val.elements[val.selectionIdx].contents
+		default:
+			panic(fmt.Sprintf("Unexpected type %T", selection))
+		}
+	}
+}
 
 // func setSelection(path Path) {
 // 	root.selectionIdx = path[0]
@@ -55,36 +62,36 @@ package main
 // 	}
 // }
 
-// func (p Path) getParent() (*Split, Path) {
-// 	parentPath := p[:len(p)-1]
-// 	return parentPath.getContainer().(*Split), parentPath
-// }
+func (p Path) getParent(root *Universe) (*Split, Path) {
+	parentPath := p[:len(p)-1]
+	return parentPath.getContainer(root).(*Split), parentPath
+}
 
-// func (p Path) getContainer() Container {
-// 	if len(p) == 0 {
-// 		return &root
-// 	}
+func (p Path) getContainer(root *Universe) Container {
+	if len(p) == 0 {
+		return root
+	}
 
-// 	wsSplit := root.workspaces[p[0]].contents
+	wsSplit := root.workspaces[p[0]].contents
 
-// 	if len(p) == 1 {
-// 		return wsSplit
-// 	}
+	if len(p) == 1 {
+		return wsSplit
+	}
 
-// 	cur := wsSplit.elements[p[1]].contents
-// 	p = p[2:]
-// 	for len(p) > 0 {
-// 		switch val := cur.(type) {
-// 		case *Split:
-// 			cur = val.elements[val.selectionIdx].contents
-// 			p = p[1:]
-// 		default:
-// 			fatalShutdownNow("bad path")
-// 		}
-// 	}
+	cur := wsSplit.elements[p[1]].contents
+	p = p[2:]
+	for len(p) > 0 {
+		switch val := cur.(type) {
+		case *Split:
+			cur = val.elements[val.selectionIdx].contents
+			p = p[1:]
+		default:
+			panic("bad path")
+		}
+	}
 
-// 	return cur
-// }
+	return cur
+}
 
 // func getPanes() []*Pane {
 // 	return getPanesOfSplit(root.workspaces[root.selectionIdx].contents)
@@ -151,3 +158,26 @@ package main
 // 	}
 // 	s.elements = append(s.elements[:idx], append([]Node{newNode}, s.elements[idx:]...)...)
 // }
+
+func removeTheDead() {
+	implRemoveTheDead([]int{0})
+}
+
+// removeTheDead recursively searches the tree and removes panes with Dead == true.
+// A pane declares itself dead when its shell dies.
+func implRemoveTheDead(path Path) {
+	log.Println("REMOVING THE DEAD")
+	// 	s := path.getContainer().(*Split)
+	// 	for idx := len(s.elements) - 1; idx >= 0; idx-- {
+	// 		element := s.elements[idx]
+	// 		switch c := element.contents.(type) {
+	// 		case *Split:
+	// 			removeTheDead(append(path, idx))
+	// 		case *Pane:
+	// 			if c.Dead {
+	// 				t := path.popContainer(idx)
+	// 				t.(*Pane).kill()
+	// 			}
+	// 		}
+	// 	}
+}

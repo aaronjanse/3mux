@@ -4,6 +4,8 @@ Package pane manages one goncurses window displaying a shell.
 package pane
 
 import (
+	"fmt"
+	"log"
 	"os"
 	"os/exec"
 	"os/signal"
@@ -31,6 +33,7 @@ type Pane struct {
 func NewPane(x, y, w, h int, onDeath func()) (*Pane, error) {
 	gcWin, err := gc.NewWindow(h, w, y, x)
 	if err != nil {
+		log.Println(err)
 		return nil, err
 	}
 
@@ -42,6 +45,7 @@ func NewPane(x, y, w, h int, onDeath func()) (*Pane, error) {
 		stdout:      make(chan rune, 3200000),
 		cmd:         exec.Command(os.Getenv("SHELL")),
 		byteCounter: 0,
+		onDeath:     onDeath,
 	}
 
 	ptmx, err := pty.Start(p.cmd)
@@ -80,9 +84,6 @@ func NewPane(x, y, w, h int, onDeath func()) (*Pane, error) {
 		}
 	}()
 
-	p.renderer.gcWin.Print("HEY HEY")
-	p.renderer.gcWin.Refresh()
-
 	go func() {
 		p.cmd.Wait()
 		p.Kill()
@@ -105,12 +106,10 @@ func NewPane(x, y, w, h int, onDeath func()) (*Pane, error) {
 	return p, nil
 }
 
-func (p *Pane) Move(x, y int) {
-	// p.renderer.Move(x, y)
-}
-
-func (p *Pane) Resize(w, h int) {
-	// p.renderer.Resize(w, h)
+func (p *Pane) Reshape(x, y, w, h int) {
+	log.Println("Reshaping", x, y, w, h)
+	p.renderer.gcWin.MoveWindow(y, x)
+	p.renderer.gcWin.Resize(h, w)
 }
 
 func (p *Pane) resizeShell(w, h int) {
@@ -131,6 +130,12 @@ func (p *Pane) resizeShell(w, h int) {
 }
 
 func (p *Pane) Kill() {
+	defer func() {
+		if r := recover(); r != nil {
+			log.Println("ahhhh", r.(error).Error())
+		}
+	}()
+
 	p.Dead = true
 
 	close(p.stdin)
@@ -145,4 +150,19 @@ func (p *Pane) Kill() {
 func (p *Pane) freezeWithError(err error) {
 	p.Kill()
 	p.renderer.FreezeWithError(err)
+}
+
+func (p *Pane) Serialize() string {
+	y, x := p.renderer.gcWin.YX()
+	h, w := p.renderer.gcWin.MaxYX()
+	return fmt.Sprintf("Pane[%d %d %d %d]", x, y, w, h)
+}
+
+func (p *Pane) HandleStdin(in string) {
+	p.vt.ScrollbackReset()
+	_, err := p.ptmx.Write([]byte(in))
+	if err != nil {
+		p.freezeWithError(err)
+	}
+	p.vt.RefreshCursor()
 }
