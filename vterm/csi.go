@@ -142,10 +142,12 @@ func (v *VTerm) handleCSISequence() {
 				newLines[i] = make([]render.Char, v.w)
 			}
 
-			v.Screen = append(append(
+			newLines = append(append(
 				newLines,
 				v.Screen[v.Cursor.Y:v.scrollingRegion.bottom-n+1]...),
 				v.Screen[v.scrollingRegion.bottom+1:]...)
+
+			copy(v.Screen[v.Cursor.Y:], newLines)
 
 			v.RedrawWindow()
 		case 'm': // Select Graphic Rendition
