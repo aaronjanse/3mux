@@ -10,19 +10,19 @@
 * search
 * scrollback
 * mouse support
-  * drag to resize windows
-  * click to select window
+  * drag to resize panes
+  * click to select pane
   * scrollwheel
 
 ### Key Bindings
 
 | Key(s) | Description
 |-------:|:------------
-|<kbd>Alt+Enter</kbd><br><kbd>Alt+N</kbd> | Create a new window
-|<kbd>Alt+Shift+F</kbd> | Make the selected window fullscreen. Useful for copying text
-|<kbd>Alt+&larr;/&darr;/&uarr;/&rarr;</kbd><br><kbd>Alt+h/j/k/l</kbd> | Select an adjacent window
-|<kbd>Alt+Shift+&larr;/&darr;/&uarr;/&rarr;</kbd><br><kbd>Alt+Shift+h/j/k/l</kbd> | Move the selected window
-|<kbd>Alt+R</kbd> | Enter resize mode. Resize selected window with arrow keys or <kbd>h/j/k/l</kbd>. Exit using any other key(s)
+|<kbd>Alt+Enter</kbd><br><kbd>Alt+N</kbd> | Create a new pane
+|<kbd>Alt+Shift+F</kbd> | Make the selected pane fullscreen. Useful for copying text
+|<kbd>Alt+&larr;/&darr;/&uarr;/&rarr;</kbd><br><kbd>Alt+h/j/k/l</kbd> | Select an adjacent pane
+|<kbd>Alt+Shift+&larr;/&darr;/&uarr;/&rarr;</kbd><br><kbd>Alt+Shift+h/j/k/l</kbd> | Move the selected pane
+|<kbd>Alt+R</kbd> | Enter resize mode. Resize selected pane with arrow keys or <kbd>h/j/k/l</kbd>. Exit using any other key(s)
 |<kbd>Alt+/</kbd> | Enter search mode. Type query, navigate between results with arrow keys or <kbd>n/N</kbd>
 |<kbd>Scroll</kbd> | Move through scrollback
 
@@ -33,10 +33,10 @@
 |-------:|:------------
 |<kbd>Ctrl+b "</kbd> | Split horizontally
 |<kbd>Ctrl+b %</kbd> | Split vertically
-|<kbd>Ctrl+b {</kbd> | Move window left
-|<kbd>Ctrl+b }</kbd> | Move window right
-|<kbd>Ctrl+b o</kbd> | Next window
-|<kbd>Ctrl+b ;</kbd> | Previous window
+|<kbd>Ctrl+b {</kbd> | Move pane left
+|<kbd>Ctrl+b }</kbd> | Move pane right
+|<kbd>Ctrl+b o</kbd> | Next pane
+|<kbd>Ctrl+b ;</kbd> | Previous pane
 
 ### Installation Instructions
 
@@ -45,7 +45,7 @@
 3. Run `3mux` to launch the terminal multiplexer
 
 #### Terminal.app
-_**Warning: Arrow-key-controlled window management is currently unsupported on Terminal.app. Please use the default vim-like keybindings instead.**_  
+_**Warning: Arrow-key-controlled pane management is currently unsupported on Terminal.app. Please use the default vim-like keybindings instead.**_  
 Preferences > Profiles > Keyboard > Use Option as Meta Key  
 
 #### iTerm2
