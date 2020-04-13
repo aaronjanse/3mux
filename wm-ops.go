@@ -174,6 +174,12 @@ func moveWindow(d Direction) {
 		}
 	}
 
+	// select the new Term
+	newTerm := getSelection().getContainer().(*Pane)
+	newTerm.selected = true
+	newTerm.softRefresh()
+	newTerm.vterm.RefreshCursor()
+
 	root.refreshRenderRect()
 }
 
@@ -193,6 +199,10 @@ func killWindow() {
 	newTerm.selected = true
 	newTerm.softRefresh()
 	newTerm.vterm.RefreshCursor()
+
+	if len(root.workspaces[root.selectionIdx].contents.elements) == 1 {
+		keypress.ShouldProcessMouse(false)
+	}
 }
 
 // stuff like h(h(x), y) -> h(x, y)
@@ -293,6 +303,8 @@ func moveSelection(d Direction) {
 }
 
 func newWindow() {
+	keypress.ShouldProcessMouse(true)
+
 	path := getSelection()
 
 	// deselect the old Term

@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
 	runtimeDebug "runtime/debug"
@@ -24,6 +25,7 @@ var termW, termH int
 var renderer *render.Renderer
 
 var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
+var writeLogs = flag.Bool("log", false, "write logs to ./logs.txt")
 
 func main() {
 	defer func() {
@@ -32,26 +34,31 @@ func main() {
 		}
 	}()
 
+	flag.Parse()
+
 	// setup logging
-	f, err := os.OpenFile("logs.txt", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
-	if err != nil {
-		log.Fatalf("error opening file: %v", err)
+	if *writeLogs {
+		f, err := os.OpenFile("logs.txt", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+		if err != nil {
+			log.Fatalf("error opening file: %v", err)
+		}
+		defer f.Close()
+		log.SetOutput(f)
+	} else {
+		log.SetOutput(ioutil.Discard)
 	}
-	defer f.Close()
-	log.SetOutput(f)
 
 	// setup cpu profiling
-	flag.Parse()
 	if *cpuprofile != "" {
 		f, err := os.Create(*cpuprofile)
 		if err != nil {
-			log.Fatal(err)
+			fatalShutdownNow(err.Error())
 		}
 		pprof.StartCPUProfile(f)
 		defer pprof.StopCPUProfile()
 	}
 
-	termW, termH, _ = getTermSize()
+	termW, termH, _ = keypress.GetTermSize()
 
 	renderer = render.NewRenderer()
 	go renderer.ListenToQueue()
@@ -75,14 +82,6 @@ func main() {
 	}
 
 	defer root.kill()
-
-	// enable mouse reporting
-	fmt.Print("\033[?1000h")
-	defer fmt.Print("\033[?1000l")
-	fmt.Print("\033[?1005h")
-	defer fmt.Print("\033[?1005l")
-	fmt.Print("\033[?1015h")
-	defer fmt.Print("\033[?1015l")
 
 	resize(termW, termH)
 

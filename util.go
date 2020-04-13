@@ -1,11 +1,6 @@
 package main
 
 import (
-	"os"
-	"os/exec"
-	"strconv"
-	"strings"
-
 	"github.com/aaronjanse/3mux/render"
 )
 
@@ -129,30 +124,4 @@ func drawSelectionBorder(r Rect) {
 
 		renderer.HandleCh(ch)
 	}
-}
-
-// getTermSize returns the wusth
-func getTermSize() (int, int, error) {
-	cmd := exec.Command("stty", "size")
-	cmd.Stdin = os.Stdin
-	out, err := cmd.Output()
-	if err != nil {
-		return 0, 0, err
-	}
-
-	outStr := strings.TrimSpace(string(out))
-	parts := strings.Split(outStr, " ")
-
-	h, err := strconv.ParseInt(parts[0], 10, 64)
-	if err != nil {
-		return 0, 0, err
-	}
-	w, err := strconv.ParseInt(parts[1], 10, 64)
-	if err != nil {
-		return 0, 0, err
-	}
-
-	wInt := int(int64(w))
-	hInt := int(int64(h))
-	return wInt, hInt, nil
 }

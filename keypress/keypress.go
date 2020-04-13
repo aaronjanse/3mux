@@ -34,11 +34,16 @@ package keypress
 import (
 	"fmt"
 	"log"
+	"os"
+	"os/exec"
+	"os/signal"
 	"strconv"
 	"strings"
+	"syscall"
 	"unicode"
 
 	term "github.com/nsf/termbox-go"
+	"golang.org/x/crypto/ssh/terminal"
 )
 
 const debugKeycodes = false
@@ -78,6 +83,50 @@ func ShouldProcessMouse(should bool) {
 	isProcessingMouse = should
 }
 
+// this is a regularly reset buffer of what we've collected so far
+var data []byte
+
+func pullByte() byte {
+	var b = make([]byte, 1)
+	os.Stdin.Read(b)
+	data = append(data, b[0])
+	return b[0]
+}
+
+var oldState *terminal.State
+
+// Shutdown cleans up the terminal state
+func Shutdown() {
+	ShouldProcessMouse(false)
+	term.Close()
+}
+
+// GetTermSize returns the terminal dimensions w, h, err
+func GetTermSize() (int, int, error) {
+	cmd := exec.Command("stty", "size")
+	cmd.Stdin = os.Stdin
+	out, err := cmd.Output()
+	if err != nil {
+		return 0, 0, err
+	}
+
+	outStr := strings.TrimSpace(string(out))
+	parts := strings.Split(outStr, " ")
+
+	h, err := strconv.ParseInt(parts[0], 10, 64)
+	if err != nil {
+		return 0, 0, err
+	}
+	w, err := strconv.ParseInt(parts[1], 10, 64)
+	if err != nil {
+		return 0, 0, err
+	}
+
+	wInt := int(int64(w))
+	hInt := int(int64(h))
+	return wInt, hInt, nil
+}
+
 // Listen is a blocking function that indefinitely listens for keypresses.
 // When it detects a keypress, it passes on to the callback a human-readable interpretation of the event (e.g. Alt+Shift+Up) along with the raw string of text received by the terminal.
 func Listen(callback func(parsedData interface{}, rawData []byte)) {
@@ -88,6 +137,18 @@ func Listen(callback func(parsedData interface{}, rawData []byte)) {
 	defer term.Close()
 
 	ShouldProcessMouse(true)
+
+	go func() {
+		for {
+			c := make(chan os.Signal, 1)
+			signal.Notify(c, syscall.SIGWINCH)
+			<-c
+			w, h, _ := GetTermSize()
+			callback(Resize{W: w, H: h}, []byte{})
+		}
+	}()
+
+	ShouldProcessMouse(false)
 
 	// show cursor, make it blink
 	fmt.Print("\033[?25h\033[?12h") // EXPLAIN: do we need this?
@@ -197,7 +258,7 @@ func handleEscapeCode(data []byte, handle func(parsedData interface{})) {
 		} else { // arrow
 			handle(direction)
 		}
-	case 91:
+	case 91: // '['
 		switch data[2] {
 		case 49:
 			if len(data) == 7 && data[3] == 59 && data[4] == 49 && data[5] == 48 {
@@ -243,20 +304,24 @@ func handleEscapeCode(data []byte, handle func(parsedData interface{})) {
 				log.Println("Unhandled almost-shift-arrow:", data)
 			}
 		case 51: // Mouse
-			code := string(data[2:])
-			code = strings.TrimSuffix(code, "M") // NOTE: are there other codes we are forgetting about?
-			pieces := strings.Split(code, ";")
-			switch pieces[0] {
-			case "32":
-				x, _ := strconv.Atoi(pieces[1])
-				y, _ := strconv.Atoi(strings.TrimSuffix(pieces[2], "M"))
-				handle(MouseDown{X: x, Y: y})
-			case "35":
-				x, _ := strconv.Atoi(pieces[1])
-				y, _ := strconv.Atoi(strings.TrimSuffix(pieces[2], "M"))
-				handle(MouseUp{X: x, Y: y})
-			default:
-				log.Printf("Unrecognized keycode: %v", data)
+			if data[3] == 126 { // Delete
+				handle(Character{Char: 127})
+			} else {
+				code := string(data[2:])
+				code = strings.TrimSuffix(code, "M") // NOTE: are there other codes we are forgetting about?
+				pieces := strings.Split(code, ";")
+				switch pieces[0] {
+				case "32":
+					x, _ := strconv.Atoi(pieces[1])
+					y, _ := strconv.Atoi(strings.TrimSuffix(pieces[2], "M"))
+					handle(MouseDown{X: x, Y: y})
+				case "35":
+					x, _ := strconv.Atoi(pieces[1])
+					y, _ := strconv.Atoi(strings.TrimSuffix(pieces[2], "M"))
+					handle(MouseUp{X: x, Y: y})
+				default:
+					log.Printf("Unrecognized keycode: %v", data)
+				}
 			}
 		case 57: // Scrolling
 			switch data[3] {
@@ -298,6 +363,14 @@ func handleEscapeCode(data []byte, handle func(parsedData interface{})) {
 					log.Printf("Unrecognzied mouse code: %v", data)
 				}
 			}
+		case 65:
+			handle(Arrow{Direction: Up})
+		case 66:
+			handle(Arrow{Direction: Down})
+		case 67:
+			handle(Arrow{Direction: Right})
+		case 68:
+			handle(Arrow{Direction: Left})
 		case 77:
 			switch data[3] {
 			case 32:

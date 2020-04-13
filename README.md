@@ -1,6 +1,6 @@
 `3mux` is a terminal multiplexer with out-of-the-box support for search, mouse-controlled scrollback, and i3-like keybindings. Imagine `tmux` with a smaller learning curve and more sane defaults.
 
-<img src="./demo.gif" width="800"/>
+[<img src="./demo.gif" width="800"/>](https://streamable.com/m2r57p)
 
 <!--TODO: GIF!-->
 
@@ -25,6 +25,18 @@
 |<kbd>Alt+R</kbd> | Enter resize mode. Resize selected window with arrow keys or <kbd>h/j/k/l</kbd>. Exit using any other key(s)
 |<kbd>Alt+/</kbd> | Enter search mode. Type query, navigate between results with arrow keys or <kbd>n/N</kbd>
 |<kbd>Scroll</kbd> | Move through scrollback
+
+
+### Supported tmux Bindings
+
+| Key(s) | Description
+|-------:|:------------
+|<kbd>Ctrl+b "</kbd> | Split horizontally
+|<kbd>Ctrl+b %</kbd> | Split vertically
+|<kbd>Ctrl+b {</kbd> | Move window left
+|<kbd>Ctrl+b }</kbd> | Move window right
+|<kbd>Ctrl+b o</kbd> | Next window
+|<kbd>Ctrl+b ;</kbd> | Previous window
 
 ### Installation Instructions
 

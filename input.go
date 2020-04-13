@@ -15,6 +15,8 @@ const demoMode = false
 var demoTextTimer *time.Timer = nil
 var demoTextDuration = 1000 * time.Millisecond
 
+var tmuxMode = false
+
 // handleInput puts the input through a series of switches and seive functions.
 // When something acts on the event, we stop passing it downstream
 func handleInput(event interface{}, rawData []byte) {
@@ -61,6 +63,158 @@ func handleInput(event interface{}, rawData []byte) {
 		}()
 	}
 
+	if tmuxMode {
+		switch ev := event.(type) {
+		case keypress.Character:
+			switch ev.Char {
+			case '%':
+				pane := getSelection().getContainer().(*Pane)
+
+				parent, _ := getSelection().getParent()
+				parent.elements[parent.selectionIdx] = Node{
+					size: 1,
+					contents: &Split{
+						verticallyStacked: true,
+						elements: []Node{Node{
+							size:     1,
+							contents: pane,
+						}},
+					},
+				}
+
+				root.refreshRenderRect()
+				newWindow()
+			case '"':
+				pane := getSelection().getContainer().(*Pane)
+
+				parent, _ := getSelection().getParent()
+				parent.elements[parent.selectionIdx] = Node{
+					size: 1,
+					contents: &Split{
+						verticallyStacked: false,
+						elements: []Node{Node{
+							size:     1,
+							contents: pane,
+						}},
+					},
+				}
+
+				root.refreshRenderRect()
+				newWindow()
+			case '{':
+				moveWindow(Left)
+			case '}':
+				moveWindow(Right)
+			case 'o': // next pane
+				path := getSelection()
+				oldTerm := path.getContainer().(*Pane)
+				oldTerm.selected = false
+				for {
+					if len(path) == 1 {
+						// select the first terminal
+						for {
+							done := false
+							switch c := path.getContainer().(type) {
+							case *Pane:
+								done = true
+							case *Split:
+								c.selectionIdx = 0
+								path = append(path, 0)
+							}
+							if done {
+								break
+							}
+						}
+						break
+					}
+					parent, _ := path.getParent()
+					if parent.selectionIdx == len(parent.elements)-1 {
+						path = path[:len(path)-1]
+					} else {
+						parent.selectionIdx++
+						for {
+							done := false
+							switch c := path.getContainer().(type) {
+							case *Pane:
+								done = true
+							case *Split:
+								c.selectionIdx = 0
+								path = append(path, 0)
+							}
+							if done {
+								break
+							}
+						}
+						break
+					}
+				}
+				// select the new Term
+				newTerm := getSelection().getContainer().(*Pane)
+				newTerm.selected = true
+				newTerm.vterm.RefreshCursor()
+				root.refreshRenderRect()
+			case ';': // prev pane
+				path := getSelection()
+				oldTerm := path.getContainer().(*Pane)
+				oldTerm.selected = false
+				for {
+					if len(path) == 1 {
+						// select the first terminal
+						for {
+							done := false
+							switch c := path.getContainer().(type) {
+							case *Pane:
+								done = true
+							case *Split:
+								c.selectionIdx = len(c.elements) - 1
+								path = append(path, 0)
+							}
+							if done {
+								break
+							}
+						}
+						break
+					}
+					parent, _ := path.getParent()
+					if parent.selectionIdx == 0 {
+						path = path[:len(path)-1]
+					} else {
+						parent.selectionIdx--
+						for {
+							done := false
+							switch c := path.getContainer().(type) {
+							case *Pane:
+								done = true
+							case *Split:
+								c.selectionIdx = len(c.elements) - 1
+								path = append(path, len(c.elements)-1)
+							}
+							if done {
+								break
+							}
+						}
+						break
+					}
+				}
+				// select the new Term
+				newTerm := getSelection().getContainer().(*Pane)
+				newTerm.selected = true
+				newTerm.vterm.RefreshCursor()
+				root.refreshRenderRect()
+			}
+		}
+		tmuxMode = false
+		return
+	}
+
+	switch ev := event.(type) {
+	case keypress.CtrlChar:
+		if ev.Char == 'B' {
+			tmuxMode = true
+			return
+		}
+	}
+
 	defer func() {
 		if config.statusBar {
 			debug(root.serialize())
@@ -69,9 +223,9 @@ func handleInput(event interface{}, rawData []byte) {
 
 	if resizeMode {
 		switch ev := event.(type) {
-		case keypress.Direction:
+		case keypress.Arrow:
 			// we can get rid of this if keypress and everything else have a common Direction enum
-			switch ev {
+			switch ev.Direction {
 			case keypress.Up:
 				resizeWindow(Up, 0.1)
 			case keypress.Down:
