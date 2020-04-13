@@ -147,6 +147,10 @@ func (t *Pane) handleStdin(in string) {
 			t.searchResultsMode = false
 			t.searchText = t.searchText[:len(t.searchText)-1]
 			t.displayStatusText(t.searchText)
+		case 3:
+			fallthrough
+		case 4:
+			fallthrough
 		case 13:
 			fallthrough
 		case 10: // enter
@@ -156,7 +160,10 @@ func (t *Pane) handleStdin(in string) {
 		}
 	} else if t.searchMode {
 		for _, c := range in {
-			if c == 8 || c == 127 { // backspace
+			if c == 3 || c == 4 || c == 27 {
+				t.toggleSearch()
+				return
+			} else if c == 8 || c == 127 { // backspace
 				if len(t.searchText) > 0 {
 					t.searchText = t.searchText[:len(t.searchText)-1]
 				}
