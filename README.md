@@ -51,5 +51,8 @@ Preferences > Profiles > Keyboard > Use Option as Meta Key
 #### iTerm2
 Preferences > Profiles > Keys > Option Key > Esc+
 
+### Contributing
+All help is welcome! You can help the project by filing issues recording what works well, what doesn't work well, and/or a feature you want. Pull Requests would be very much appreciated.
+
 ### Related Projects
 * [tmux-tilish](https://github.com/jabirali/tmux-tilish)
