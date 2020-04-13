@@ -34,13 +34,14 @@ package keypress
 import (
 	"fmt"
 	"log"
-	"os"
 	"strconv"
 	"strings"
 	"unicode"
 
-	"golang.org/x/crypto/ssh/terminal"
+	term "github.com/nsf/termbox-go"
 )
+
+const debugKeycodes = false
 
 var isProcessingMouse = true
 
@@ -69,92 +70,80 @@ func ShouldProcessMouse(should bool) {
 	}
 
 	if should {
-		fmt.Print("\033[?1000h")
-		fmt.Print("\033[?1005h")
-		fmt.Print("\033[?1015h")
+		term.SetInputMode(term.InputEsc | term.InputAlt | term.InputMouse)
 	} else {
-		fmt.Print("\033[?1000l")
-		fmt.Print("\033[?1005l")
-		fmt.Print("\033[?1015l")
+		term.SetInputMode(term.InputEsc | term.InputAlt)
 	}
 
 	isProcessingMouse = should
 }
 
-// this is a regularly reset buffer of what we've collected so far
-var data []byte
-
-func pullByte() byte {
-	var b = make([]byte, 1)
-	os.Stdin.Read(b)
-	data = append(data, b[0])
-	return b[0]
-}
-
-var oldState *terminal.State
-
-// Shutdown cleans up the terminal state
-func Shutdown() {
-	terminal.Restore(0, oldState)
-}
-
 // Listen is a blocking function that indefinitely listens for keypresses.
 // When it detects a keypress, it passes on to the callback a human-readable interpretation of the event (e.g. Alt+Shift+Up) along with the raw string of text received by the terminal.
 func Listen(callback func(parsedData interface{}, rawData []byte)) {
-	var err error
-	oldState, err = terminal.MakeRaw(0)
+	err := term.Init()
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
-	defer Shutdown()
+	defer term.Close()
+
+	ShouldProcessMouse(true)
 
 	// show cursor, make it blink
 	fmt.Print("\033[?25h\033[?12h") // EXPLAIN: do we need this?
 
 	for {
-		data := make([]byte, 30)
-		os.Stdin.Read(data)
+		raw := make([]byte, 16) // EXPLAIN: why 16?
+		ev := term.PollRawEvent(raw)
 
-		for i, b := range data {
-			if b == 0 {
-				data = data[:i]
-				break
-			}
-		}
+		data := raw[:ev.N]
 
 		handle := func(parsedData interface{}) {
 			callback(parsedData, data)
-			data = []byte{}
 		}
 
-		switch data[0] {
-		case 13:
-			handle(Enter{})
-		case 195: // Alt
-			parseAltLetter(data[1]-64, handle)
-		case 27: // Escape code
-			handleEscapeCode(data, handle)
-		default:
-			// log.Println("uncaught:", data)
-			if len(data) == 1 {
-				if data[0] <= 26 { // Ctrl
-					letter := rune('A' + data[0] - 1)
-					if letter == 'Q' { // exit upon Ctrl+Q
-						return
+		if ev.N == 0 && ev.Type == term.EventResize {
+			handle(Resize{W: ev.Width, H: ev.Height})
+		} else {
+			switch data[0] {
+			case 13:
+				handle(Enter{})
+			case 195: // Alt
+				parseAltLetter(data[1]-64, handle)
+			case 27: // Escape code
+				handleEscapeCode(data, handle)
+			default:
+				// log.Println("uncaught:", data)
+				if len(data) == 1 {
+					if data[0] <= 26 { // Ctrl
+						letter := rune('A' + data[0] - 1)
+						if letter == 'Q' { // exit upon Ctrl+Q
+							return
+						}
+						handle(CtrlChar{letter})
+					} else {
+						letter := rune(data[0])
+						handle(Character{letter})
 					}
-					handle(CtrlChar{letter})
 				} else {
-					letter := rune(data[0])
-					handle(Character{letter})
-				}
-			} else {
-				for _, b := range data {
-					if b == 0 {
-						break
+					for _, b := range data {
+						if b == 0 {
+							break
+						}
+						callback(Character{rune(b)}, []byte{b})
 					}
-					callback(Character{rune(b)}, []byte{b})
 				}
 			}
+		}
+
+		if debugKeycodes {
+			log.Print(data)
+			str := ""
+			for _, b := range data {
+				str += string(b)
+			}
+			log.Println(str)
+			log.Println()
 		}
 	}
 }
