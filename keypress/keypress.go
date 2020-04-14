@@ -246,7 +246,7 @@ func handleEscapeCode(data []byte, handle func(parsedData interface{})) {
 		}
 	case 79:
 		direction := directionNames[data[2]]
-		if len(data) == 15 { // scrolling
+		if len(data) > 3 { // scrolling
 			switch data[2] {
 			case 65:
 				handle(ScrollUp{})
