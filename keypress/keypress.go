@@ -154,7 +154,7 @@ func Listen(callback func(parsedData interface{}, rawData []byte)) {
 	fmt.Print("\033[?25h\033[?12h") // EXPLAIN: do we need this?
 
 	for {
-		raw := make([]byte, 16) // EXPLAIN: why 16?
+		raw := make([]byte, 32) // EXPLAIN: why 16?
 		ev := term.PollRawEvent(raw)
 
 		data := raw[:ev.N]
