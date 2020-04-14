@@ -38,8 +38,8 @@ func (v *VTerm) handleEraseInDisplay(parameterCode string) {
 		for i := range v.Screen {
 			for j := range v.Screen[i] {
 				v.Screen[i][j].Rune = ' '
-				v.Screen[j][i].IsWide = false
-				v.Screen[j][i].PrevWide = false
+				v.Screen[i][j].IsWide = false
+				v.Screen[i][j].PrevWide = false
 			}
 		}
 		v.setCursorPos(0, 0)
@@ -49,8 +49,8 @@ func (v *VTerm) handleEraseInDisplay(parameterCode string) {
 		for i := range v.Screen {
 			for j := range v.Screen[i] {
 				v.Screen[i][j].Rune = ' '
-				v.Screen[j][i].IsWide = false
-				v.Screen[j][i].PrevWide = false
+				v.Screen[i][j].IsWide = false
+				v.Screen[i][j].PrevWide = false
 			}
 		}
 		v.setCursorPos(0, 0)
