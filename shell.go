@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
+	runtimeDebug "runtime/debug"
 	"sync/atomic"
 	"syscall"
 
@@ -106,7 +107,11 @@ func (s *Shell) resize(w, h int) {
 				X: 16 * uint16(w), Y: 16 * uint16(h),
 			})
 			if err != nil {
-				fatalShutdownNow(err.Error())
+				log.Printf("Error during: shell.go:resize(%d, %d)", w, h)
+				log.Println("Tiling state:", root.serialize())
+				log.Println(string(runtimeDebug.Stack()))
+				log.Println()
+				log.Println("Please submit a bug report with this stack trace to https://github.com/aaronjanse/3mux/issues")
 			}
 		}
 	}()
