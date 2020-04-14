@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bufio"
+	"io"
 	"log"
 	"os"
 	"os/exec"
@@ -41,27 +43,29 @@ func newShell(stdout chan<- rune) Shell {
 	go (func() {
 		defer func() {
 			if r := recover(); r != nil {
-				if r.(error).Error() != "send on closed channel" {
+				// FIXME: bad practice
+				if r.(error).Error() != "send on closed channel" &&
+					r.(error).Error() != "read /dev/ptmx: file already closed" {
 					fatalShutdownNow("shell.go\n" + r.(error).Error())
 				}
 			}
 		}()
 
 		for {
-			bs := make([]byte, 1000)
-			_, err := ptmx.Read(bs)
-			if err != nil {
-				if err.Error() == "read /dev/ptmx: input/output error" {
-					break // ^D
-				} else if err.Error() == "EOF" {
-					break
+			scanner := bufio.NewReader(ptmx)
+			for {
+				if r, _, err := scanner.ReadRune(); err != nil {
+					if err.Error() == "read /dev/ptmx: input/output error" {
+						break // ^D
+					} else if err == io.EOF {
+						break
+					} else {
+						panic(err)
+					}
 				} else {
-					panic(err)
+					atomic.AddUint64(&shell.byteCounter, 1)
+					stdout <- r
 				}
-			}
-			for _, b := range bs {
-				atomic.AddUint64(&shell.byteCounter, 1)
-				stdout <- rune(b)
 			}
 		}
 	})()

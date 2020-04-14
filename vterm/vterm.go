@@ -60,6 +60,8 @@ type VTerm struct {
 	ChangePause   chan bool
 	IsPaused      bool
 	DebugSlowMode bool
+
+	parser *Parser
 }
 
 // NewVTerm returns a VTerm ready to be used by its exported methods
@@ -99,6 +101,13 @@ func NewVTerm(shellByteCounter *uint64, renderer *render.Renderer, parentSetCurs
 		ChangePause:      make(chan bool, 1),
 		IsPaused:         false,
 		DebugSlowMode:    false,
+		parser: &Parser{
+			state:        StateGround,
+			private:      nil,
+			intermediate: "",
+			params:       "",
+			final:        nil,
+		},
 	}
 
 	return v
