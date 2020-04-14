@@ -19,8 +19,8 @@ func (v *VTerm) handleEraseInDisplay(parameterCode string) {
 			for j := v.Cursor.Y; j < len(v.Screen); j++ {
 				for i := 0; i < len(v.Screen[j]); i++ {
 					v.Screen[j][i].Rune = ' '
-					v.Screen[v.Cursor.Y][i].IsWide = false
-					v.Screen[v.Cursor.Y][i].PrevWide = false
+					v.Screen[j][i].IsWide = false
+					v.Screen[j][i].PrevWide = false
 				}
 			}
 		}
@@ -29,8 +29,8 @@ func (v *VTerm) handleEraseInDisplay(parameterCode string) {
 		for j := 0; j < v.Cursor.Y; j++ {
 			for i := 0; i < len(v.Screen[j]); j++ {
 				v.Screen[j][i].Rune = ' '
-				v.Screen[v.Cursor.Y][i].IsWide = false
-				v.Screen[v.Cursor.Y][i].PrevWide = false
+				v.Screen[j][i].IsWide = false
+				v.Screen[j][i].PrevWide = false
 			}
 		}
 		v.RedrawWindow()
@@ -38,8 +38,8 @@ func (v *VTerm) handleEraseInDisplay(parameterCode string) {
 		for i := range v.Screen {
 			for j := range v.Screen[i] {
 				v.Screen[i][j].Rune = ' '
-				v.Screen[v.Cursor.Y][i].IsWide = false
-				v.Screen[v.Cursor.Y][i].PrevWide = false
+				v.Screen[j][i].IsWide = false
+				v.Screen[j][i].PrevWide = false
 			}
 		}
 		v.setCursorPos(0, 0)
@@ -49,8 +49,8 @@ func (v *VTerm) handleEraseInDisplay(parameterCode string) {
 		for i := range v.Screen {
 			for j := range v.Screen[i] {
 				v.Screen[i][j].Rune = ' '
-				v.Screen[v.Cursor.Y][i].IsWide = false
-				v.Screen[v.Cursor.Y][i].PrevWide = false
+				v.Screen[j][i].IsWide = false
+				v.Screen[j][i].PrevWide = false
 			}
 		}
 		v.setCursorPos(0, 0)
