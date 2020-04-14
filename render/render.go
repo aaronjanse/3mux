@@ -242,7 +242,7 @@ func (r *Renderer) GetRune(x, y int) rune {
 	return r.currentScreen[y][x].Rune
 }
 
-// HardRefresh force clears all cached chars
+// HardRefresh force clears all cached chars. Used for handling terminal resize
 func (r *Renderer) HardRefresh() {
 	log.Println("HARD REFRESH")
 	fmt.Print("\033[2J")
@@ -251,7 +251,7 @@ func (r *Renderer) HardRefresh() {
 	r.drawingCursor = Cursor{}
 	for y := range r.currentScreen {
 		for x := range r.currentScreen[y] {
-			r.currentScreen[y][x].Rune = ' '
+			r.currentScreen[y][x] = Char{Rune: ' '}
 		}
 	}
 }
