@@ -302,7 +302,7 @@ func moveSelection(d Direction) {
 	newTerm.vterm.RefreshCursor()
 }
 
-func newWindow() {
+func (s *Split) addPane() {
 	keypress.ShouldProcessMouse(true)
 
 	path := getSelection()
@@ -312,30 +312,28 @@ func newWindow() {
 	oldTerm.selected = false
 	// the parent is going to be redrawn so we don't need to redraw the old term right now
 
-	parent, _ := path.getParent()
-
-	if len(parent.elements) > 8 {
+	if len(s.elements) > 8 {
 		return
 	}
 
-	size := float32(1) / float32(len(parent.elements)+1)
+	size := float32(1) / float32(len(s.elements)+1)
 
 	// resize siblings
 	scaleFactor := float32(1) - size
-	for i := range parent.elements {
-		parent.elements[i].size *= scaleFactor
+	for i := range s.elements {
+		s.elements[i].size *= scaleFactor
 	}
 
 	// add new child
 	createdTerm := newTerm(true)
-	parent.elements = append(parent.elements, Node{
+	s.elements = append(s.elements, Node{
 		size:     size,
 		contents: createdTerm,
 	})
 
 	// update selection to new child
-	parent.selectionIdx = len(parent.elements) - 1
-	parent.refreshRenderRect()
+	s.selectionIdx = len(s.elements) - 1
+	s.refreshRenderRect()
 }
 
 func resizeWindow(d Direction, diff float32) {

@@ -83,7 +83,7 @@ func handleInput(event interface{}, rawData []byte) {
 				}
 
 				root.refreshRenderRect()
-				newWindow()
+				root.AddPane()
 			case '"':
 				pane := getSelection().getContainer().(*Pane)
 
@@ -100,7 +100,7 @@ func handleInput(event interface{}, rawData []byte) {
 				}
 
 				root.refreshRenderRect()
-				newWindow()
+				root.AddPane()
 			case '{':
 				moveWindow(Left)
 			case '}':

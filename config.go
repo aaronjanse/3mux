@@ -96,7 +96,7 @@ func executeOperationCode(s string) {
 		case "fullscreen":
 			fullscreen()
 		case "newWindow":
-			newWindow()
+			root.AddPane()
 		case "moveWindow":
 			d := getDirectionFromString(params[0])
 			moveWindow(d)

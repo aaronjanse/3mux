@@ -21,3 +21,7 @@ func (s *Workspace) setRenderRect(x, y, w, h int) {
 		s.contents.setRenderRect(x, y, w, h)
 	}
 }
+
+func (s *Workspace) addPane() {
+	s.contents.addPane()
+}

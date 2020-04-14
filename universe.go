@@ -71,3 +71,7 @@ func (u *Universe) refreshRenderRect() {
 		child.setRenderRect(x, y, w, h)
 	}
 }
+
+func (u *Universe) AddPane() {
+	u.workspaces[u.selectionIdx].addPane()
+}
