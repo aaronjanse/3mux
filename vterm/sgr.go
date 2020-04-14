@@ -114,19 +114,21 @@ func (v *VTerm) handleSGR(parameterCode string) {
 				code = int32(c - 30)
 				if len(seq) > 1 && seq[1] == 1 {
 					colorMode = render.ColorBit3Bright
+					seq = seq[2:]
 				} else {
 					colorMode = render.ColorBit3Normal
+					seq = seq[1:]
 				}
-				seq = seq[1:]
 			} else if c >= 40 && c <= 47 {
 				bg = true
 				code = int32(c - 40)
 				if len(seq) > 1 && seq[1] == 1 {
 					colorMode = render.ColorBit3Bright
+					seq = seq[2:]
 				} else {
 					colorMode = render.ColorBit3Normal
+					seq = seq[1:]
 				}
-				seq = seq[1:]
 			} else if c >= 90 && c <= 97 {
 				bg = false
 				code = int32(c - 90)
