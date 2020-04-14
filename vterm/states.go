@@ -32,7 +32,7 @@ func (v *VTerm) ProcessStream() {
 	v.useSlowRefresh()
 	for {
 		r, ok := v.pullRune()
-		// log.Printf("# %s (%d)", string(r), r)
+		// log.Printf("# %q (%d)", string(r), r)
 		if !ok {
 			return
 		}

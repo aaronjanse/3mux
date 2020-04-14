@@ -14,7 +14,7 @@ func (v *VTerm) handleEraseInDisplay(parameterCode string) {
 			v.Screen[v.Cursor.Y][i] = render.Char{Rune: ' '}
 		}
 		if v.Cursor.Y+1 < len(v.Screen) {
-			for j := v.Cursor.Y; j < len(v.Screen); j++ {
+			for j := v.Cursor.Y + 1; j < len(v.Screen); j++ {
 				for i := 0; i < len(v.Screen[j]); i++ {
 					v.Screen[j][i] = render.Char{Rune: ' '}
 				}
