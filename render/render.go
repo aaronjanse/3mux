@@ -30,13 +30,17 @@ type Renderer struct {
 
 // A PositionedChar is a Char with a specific location on the screen
 type PositionedChar struct {
-	Rune rune
+	Rune     rune
+	IsWide   bool
+	PrevWide bool
 	Cursor
 }
 
 // A Char is a rune with a visual style associated with it
 type Char struct {
-	Rune rune
+	Rune     rune
+	IsWide   bool
+	PrevWide bool
 	Style
 }
 
@@ -85,8 +89,10 @@ func (r *Renderer) HandleCh(ch PositionedChar) {
 	}
 
 	r.pendingScreen[ch.Y][ch.X] = Char{
-		Rune:  ch.Rune,
-		Style: ch.Cursor.Style,
+		Rune:     ch.Rune,
+		IsWide:   ch.IsWide,
+		PrevWide: ch.PrevWide,
+		Style:    ch.Cursor.Style,
 	}
 	r.writingMutex.Unlock()
 }
@@ -108,15 +114,23 @@ func (r *Renderer) ListenToQueue() {
 				if current != pending {
 					r.currentScreen[y][x] = pending
 
-					newCursor := Cursor{
-						X: x, Y: y, Style: pending.Style,
-					}
+					if !pending.PrevWide {
+						newCursor := Cursor{
+							X: x, Y: y, Style: pending.Style,
+						}
 
-					delta := deltaMarkup(r.drawingCursor, newCursor)
-					diff.WriteString(delta)
-					diff.WriteString(string(pending.Rune))
-					newCursor.X++
-					r.drawingCursor = newCursor
+						delta := deltaMarkup(r.drawingCursor, newCursor)
+						diff.WriteString(delta)
+						diff.WriteString(string(pending.Rune))
+
+						if pending.IsWide {
+							newCursor.X += 2
+						} else {
+							newCursor.X++
+						}
+
+						r.drawingCursor = newCursor
+					}
 				}
 				r.writingMutex.Unlock()
 			}
@@ -127,6 +141,7 @@ func (r *Renderer) ListenToQueue() {
 			// fmt.Print("\033[?25l") // hide cursor
 
 			fmt.Print(diffStr)
+			// log.Printf("RENDER: %+q\n", diffStr)
 
 			if len(r.DemoText) > 0 {
 				var demoTextDiff strings.Builder

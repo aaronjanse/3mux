@@ -12,11 +12,15 @@ func (v *VTerm) handleEraseInDisplay(parameterCode string) {
 	case 0: // clear from Cursor to end of screen
 		for i := v.Cursor.X; i < len(v.Screen[v.Cursor.Y]); i++ {
 			v.Screen[v.Cursor.Y][i].Rune = ' '
+			v.Screen[v.Cursor.Y][i].IsWide = false
+			v.Screen[v.Cursor.Y][i].PrevWide = false
 		}
 		if v.Cursor.Y+1 < len(v.Screen) {
 			for j := v.Cursor.Y; j < len(v.Screen); j++ {
 				for i := 0; i < len(v.Screen[j]); i++ {
 					v.Screen[j][i].Rune = ' '
+					v.Screen[v.Cursor.Y][i].IsWide = false
+					v.Screen[v.Cursor.Y][i].PrevWide = false
 				}
 			}
 		}
@@ -25,6 +29,8 @@ func (v *VTerm) handleEraseInDisplay(parameterCode string) {
 		for j := 0; j < v.Cursor.Y; j++ {
 			for i := 0; i < len(v.Screen[j]); j++ {
 				v.Screen[j][i].Rune = ' '
+				v.Screen[v.Cursor.Y][i].IsWide = false
+				v.Screen[v.Cursor.Y][i].PrevWide = false
 			}
 		}
 		v.RedrawWindow()
@@ -32,6 +38,8 @@ func (v *VTerm) handleEraseInDisplay(parameterCode string) {
 		for i := range v.Screen {
 			for j := range v.Screen[i] {
 				v.Screen[i][j].Rune = ' '
+				v.Screen[v.Cursor.Y][i].IsWide = false
+				v.Screen[v.Cursor.Y][i].PrevWide = false
 			}
 		}
 		v.setCursorPos(0, 0)
@@ -41,6 +49,8 @@ func (v *VTerm) handleEraseInDisplay(parameterCode string) {
 		for i := range v.Screen {
 			for j := range v.Screen[i] {
 				v.Screen[i][j].Rune = ' '
+				v.Screen[v.Cursor.Y][i].IsWide = false
+				v.Screen[v.Cursor.Y][i].PrevWide = false
 			}
 		}
 		v.setCursorPos(0, 0)
@@ -56,14 +66,20 @@ func (v *VTerm) handleEraseInLine(parameterCode string) {
 	case 0: // clear from Cursor to end of line
 		for i := v.Cursor.X; i < len(v.Screen[v.Cursor.Y]); i++ {
 			v.Screen[v.Cursor.Y][i].Rune = ' '
+			v.Screen[v.Cursor.Y][i].IsWide = false
+			v.Screen[v.Cursor.Y][i].PrevWide = false
 		}
 	case 1: // clear from Cursor to beginning of line
 		for i := 0; i < v.Cursor.X; i++ {
 			v.Screen[v.Cursor.Y][i].Rune = ' '
+			v.Screen[v.Cursor.Y][i].IsWide = false
+			v.Screen[v.Cursor.Y][i].PrevWide = false
 		}
 	case 2: // clear entire line; Cursor position remains the same
 		for i := 0; i < len(v.Screen[v.Cursor.Y]); i++ {
 			v.Screen[v.Cursor.Y][i].Rune = ' '
+			v.Screen[v.Cursor.Y][i].IsWide = false
+			v.Screen[v.Cursor.Y][i].PrevWide = false
 		}
 	default:
 		log.Printf("Unrecognized erase in line directive: %v", seq[0])
