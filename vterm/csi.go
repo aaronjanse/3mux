@@ -27,7 +27,7 @@ func (v *VTerm) handleEraseInDisplay(parameterCode string) {
 		v.RedrawWindow()
 	case 1: // clear from Cursor to beginning of screen
 		for j := 0; j < v.Cursor.Y; j++ {
-			for i := 0; i < len(v.Screen[j]); j++ {
+			for i := 0; i < len(v.Screen[j]); i++ {
 				v.Screen[j][i].Rune = ' '
 				v.Screen[j][i].IsWide = false
 				v.Screen[j][i].PrevWide = false
