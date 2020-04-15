@@ -155,7 +155,7 @@ func (v *VTerm) putChar(ch rune) {
 		if v.Cursor.X >= 0 && v.Cursor.X < len(v.Screen[v.Cursor.Y])-rWidth+1 {
 			v.Screen[v.Cursor.Y][v.Cursor.X] = char
 			if rWidth > 1 { // WARN: assumes max width of two
-				v.Screen[v.Cursor.Y][v.Cursor.X+1] = render.Char{PrevWide: true}
+				v.Screen[v.Cursor.Y][v.Cursor.X+1] = render.Char{PrevWide: true, Style: v.Cursor.Style}
 			}
 		}
 	}
