@@ -2,7 +2,6 @@ package vterm
 
 import (
 	"github.com/aaronjanse/3mux/render"
-	width "github.com/mattn/go-runewidth"
 )
 
 func (v *VTerm) ScrollbackReset() {
@@ -129,8 +128,13 @@ func (v *VTerm) shiftCursorY(diff int) {
 }
 
 // putChar renders as given character using the cursor stored in vterm
-func (v *VTerm) putChar(ch rune) {
-	rWidth := width.RuneWidth(ch)
+func (v *VTerm) putChar(ch rune, wide bool) {
+	var rWidth int
+	if wide {
+		rWidth = 2
+	} else {
+		rWidth = 1
+	}
 
 	if v.Cursor.X > v.w-rWidth {
 		v.setCursorX(0)

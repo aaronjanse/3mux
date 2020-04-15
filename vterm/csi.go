@@ -6,9 +6,8 @@ import (
 	"github.com/aaronjanse/3mux/render"
 )
 
-func (v *VTerm) handleEraseInDisplay(parameterCode string) {
-	seq := parseSemicolonNumSeq(parameterCode, 0)
-	switch seq[0] {
+func (v *VTerm) handleEraseInDisplay(directive int) {
+	switch directive {
 	case 0: // clear from Cursor to end of screen
 		for i := v.Cursor.X; i < len(v.Screen[v.Cursor.Y]); i++ {
 			v.Screen[v.Cursor.Y][i] = render.Char{Rune: ' '}
@@ -46,13 +45,12 @@ func (v *VTerm) handleEraseInDisplay(parameterCode string) {
 		v.setCursorPos(0, 0)
 		v.RedrawWindow()
 	default:
-		log.Printf("Unrecognized erase in display directive: %v", seq[0])
+		log.Printf("Unrecognized erase in display directive: %d", directive)
 	}
 }
 
-func (v *VTerm) handleEraseInLine(parameterCode string) {
-	seq := parseSemicolonNumSeq(parameterCode, 0)
-	switch seq[0] {
+func (v *VTerm) handleEraseInLine(directive int) {
+	switch directive {
 	case 0: // clear from Cursor to end of line
 		for i := v.Cursor.X; i < len(v.Screen[v.Cursor.Y]); i++ {
 			v.Screen[v.Cursor.Y][i] = render.Char{Rune: ' '}
@@ -66,7 +64,7 @@ func (v *VTerm) handleEraseInLine(parameterCode string) {
 			v.Screen[v.Cursor.Y][i] = render.Char{Rune: ' '}
 		}
 	default:
-		log.Printf("Unrecognized erase in line directive: %v", seq[0])
+		log.Printf("Unrecognized erase in line directive: %d", directive)
 	}
 	v.RedrawWindow()
 }

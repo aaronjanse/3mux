@@ -3,6 +3,7 @@ package main
 import (
 	"time"
 
+	"github.com/aaronjanse/3mux/ecma48"
 	"github.com/aaronjanse/3mux/keypress"
 	"github.com/aaronjanse/3mux/render"
 )
@@ -158,13 +159,13 @@ func doDemo() {
 				copiedText += string(r)
 			}
 			fg := scr[i][x].Style.Fg
-			if fg.ColorMode == render.ColorNone || x > 10 {
-				fg.ColorMode = render.ColorBit3Bright
+			if fg.ColorMode == ecma48.ColorNone || x > 10 {
+				fg.ColorMode = ecma48.ColorBit3Bright
 				fg.Code = 7
 			}
 			bg := scr[i][x].Style.Bg
-			if bg.ColorMode == render.ColorNone {
-				bg.ColorMode = render.ColorBit3Normal
+			if bg.ColorMode == ecma48.ColorNone {
+				bg.ColorMode = ecma48.ColorBit3Normal
 				bg.Code = 0
 			}
 			ch := render.PositionedChar{

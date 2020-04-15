@@ -158,6 +158,7 @@ func Listen(callback func(parsedData interface{}, rawData []byte)) {
 		ev := term.PollRawEvent(raw)
 
 		data := raw[:ev.N]
+		// log.Printf("%q", data)
 
 		handle := func(parsedData interface{}) {
 			callback(parsedData, data)

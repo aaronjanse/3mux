@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/aaronjanse/3mux/ecma48"
 	"github.com/aaronjanse/3mux/render"
 )
 
@@ -11,8 +12,8 @@ func drawSelectionBorder(r Rect) {
 	bottomBorder := r.y+r.h+1 < termH
 
 	style := render.Style{
-		Fg: render.Color{
-			ColorMode: render.ColorBit3Normal,
+		Fg: ecma48.Color{
+			ColorMode: ecma48.ColorBit3Normal,
 			Code:      6,
 		},
 	}

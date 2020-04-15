@@ -1,16 +1,24 @@
 package main
 
 import (
+	"bufio"
 	"errors"
 	"fmt"
 	"log"
 	"math/rand"
+	"os"
+	"os/exec"
+	"os/signal"
+	runtimeDebug "runtime/debug"
 	"strings"
+	"syscall"
 	"time"
 
+	"github.com/aaronjanse/3mux/ecma48"
 	"github.com/aaronjanse/3mux/keypress"
 	"github.com/aaronjanse/3mux/render"
 	"github.com/aaronjanse/3mux/vterm"
+	"github.com/kr/pty"
 )
 
 // SearchDirection is which direction we move through search results
@@ -24,14 +32,13 @@ const (
 
 // A Pane is a tiling unit representing a terminal
 type Pane struct {
-	id int
-
-	selected bool
-
-	renderRect Rect
-
+	ptmx  *os.File
+	cmd   *exec.Cmd
 	vterm *vterm.VTerm
-	shell Shell
+
+	id         int
+	selected   bool
+	renderRect Rect
 
 	searchMode            bool
 	searchText            string
@@ -45,31 +52,33 @@ type Pane struct {
 }
 
 func newTerm(selected bool) *Pane {
-	stdout := make(chan rune, 3200000)
-	stdin := make(chan rune, 3200000)
-
 	t := &Pane{
 		id:       rand.Intn(10),
 		selected: selected,
-
-		shell: newShell(stdout),
+		cmd:      exec.Command(os.Getenv("SHELL")),
 	}
 
-	go func() {
-		for {
-			x := <-stdin
-			t.shell.handleStdin(string(x))
-		}
-	}()
+	ptmx, err := pty.Start(t.cmd)
+	if err != nil {
+		fatalShutdownNow("starting shell: " + err.Error())
+	}
+	t.ptmx = ptmx
 
+	parentSetCursor := func(x, y int) {
+		if t.selected {
+			renderer.SetCursor(x+t.renderRect.x, y+t.renderRect.y)
+		}
+	}
+
+	t.vterm = vterm.NewVTerm(renderer, parentSetCursor)
 	go func() {
 		defer func() {
 			if r := recover(); r != nil {
-				fatalShutdownNow("pane.go (shell death)\n" + r.(error).Error())
+				fatalShutdownNow("pane.go (vt.ProcessStream)\n" + r.(error).Error())
 			}
 		}()
 
-		t.shell.cmd.Wait()
+		t.vterm.ProcessStream(bufio.NewReader(t.ptmx))
 
 		// FIXME: only supports one workspace
 		if t.selected {
@@ -98,24 +107,6 @@ func newTerm(selected bool) *Pane {
 			keypress.ShouldProcessMouse(false)
 		}
 	}()
-
-	parentSetCursor := func(x, y int) {
-		if t.selected {
-			renderer.SetCursor(x+t.renderRect.x, y+t.renderRect.y)
-		}
-	}
-
-	vt := vterm.NewVTerm(&t.shell.byteCounter, renderer, parentSetCursor, stdout, stdin)
-	go func() {
-		defer func() {
-			if r := recover(); r != nil {
-				fatalShutdownNow("pane.go (vt.ProcessStream)\n" + r.(error).Error())
-			}
-		}()
-		vt.ProcessStream()
-	}()
-
-	t.vterm = vt
 
 	return t
 }
@@ -184,7 +175,10 @@ func (t *Pane) handleStdin(in string) {
 		t.displayStatusText(t.searchText)
 	} else {
 		t.vterm.ScrollbackReset()
-		t.shell.handleStdin(in)
+		_, err := t.ptmx.Write([]byte(in))
+		if err != nil {
+			fatalShutdownNow("writing to shell stdin: " + err.Error())
+		}
 		t.vterm.RefreshCursor()
 	}
 }
@@ -222,12 +216,12 @@ func (t *Pane) doSearch() {
 					X: t.renderRect.x + i,
 					Y: t.renderRect.y + t.renderRect.h - match.y1,
 					Style: render.Style{
-						Bg: render.Color{
-							ColorMode: render.ColorBit3Bright,
+						Bg: ecma48.Color{
+							ColorMode: ecma48.ColorBit3Bright,
 							Code:      2,
 						},
-						Fg: render.Color{
-							ColorMode: render.ColorBit3Normal,
+						Fg: ecma48.Color{
+							ColorMode: ecma48.ColorBit3Normal,
 							Code:      0,
 						},
 					},
@@ -349,12 +343,12 @@ func (t *Pane) displayStatusText(s string) {
 				X: t.renderRect.x + i,
 				Y: t.renderRect.y + t.renderRect.h - 1,
 				Style: render.Style{
-					Bg: render.Color{
-						ColorMode: render.ColorBit3Bright,
+					Bg: ecma48.Color{
+						ColorMode: ecma48.ColorBit3Bright,
 						Code:      2,
 					},
-					Fg: render.Color{
-						ColorMode: render.ColorBit3Normal,
+					Fg: ecma48.Color{
+						ColorMode: ecma48.ColorBit3Normal,
 						Code:      0,
 					},
 				},
@@ -372,12 +366,12 @@ func (t *Pane) clearStatusText() {
 				X: i,
 				Y: t.renderRect.h - 1,
 				Style: render.Style{
-					Bg: render.Color{
-						ColorMode: render.ColorBit3Bright,
+					Bg: ecma48.Color{
+						ColorMode: ecma48.ColorBit3Bright,
 						Code:      2,
 					},
-					Fg: render.Color{
-						ColorMode: render.ColorBit3Normal,
+					Fg: ecma48.Color{
+						ColorMode: ecma48.ColorBit3Normal,
 						Code:      0,
 					},
 				},
@@ -389,7 +383,10 @@ func (t *Pane) clearStatusText() {
 
 func (t *Pane) kill() {
 	t.vterm.Kill()
-	t.shell.Kill()
+	// FIXME: handle error
+	t.ptmx.Close()
+	// FIXME: handle error
+	t.cmd.Process.Kill()
 }
 
 func (t *Pane) setPause(pause bool) {
@@ -414,9 +411,30 @@ func (t *Pane) setRenderRect(x, y, w, h int) {
 		t.vterm.RedrawWindow()
 	}
 
-	t.shell.resize(w, h)
+	t.resizeShell(w, h)
 
 	t.softRefresh()
+}
+
+func (t *Pane) resizeShell(w, h int) {
+	ch := make(chan os.Signal, 1)
+	signal.Notify(ch, syscall.SIGWINCH)
+	go func() {
+		for range ch {
+			err := pty.Setsize(t.ptmx, &pty.Winsize{
+				Rows: uint16(h), Cols: uint16(w),
+				X: 16 * uint16(w), Y: 16 * uint16(h),
+			})
+			if err != nil {
+				log.Printf("Error during: shell.go:resize(%d, %d)", w, h)
+				log.Println("Tiling state:", root.serialize())
+				log.Println(string(runtimeDebug.Stack()))
+				log.Println()
+				log.Println("Please submit a bug report with this stack trace to https://github.com/aaronjanse/3mux/issues")
+			}
+		}
+	}()
+	ch <- syscall.SIGWINCH
 }
 
 func (t *Pane) getRenderRect() Rect {

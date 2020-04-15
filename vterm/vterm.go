@@ -35,10 +35,9 @@ type VTerm struct {
 
 	NeedsRedraw bool
 
-	startTime           int64
-	shellByteCounter    *uint64
-	internalByteCounter uint64
-	usingSlowRefresh    bool
+	startTime        int64
+	runeCounter      uint64
+	usingSlowRefresh bool
 
 	Cursor render.Cursor
 
@@ -65,7 +64,7 @@ type VTerm struct {
 }
 
 // NewVTerm returns a VTerm ready to be used by its exported methods
-func NewVTerm(shellByteCounter *uint64, renderer *render.Renderer, parentSetCursor func(x, y int), in <-chan rune, out chan<- rune) *VTerm {
+func NewVTerm(renderer *render.Renderer, parentSetCursor func(x, y int)) *VTerm {
 	w := 10
 	h := 10
 
@@ -90,9 +89,6 @@ func NewVTerm(shellByteCounter *uint64, renderer *render.Renderer, parentSetCurs
 		Scrollback:       [][]render.Char{},
 		usingAltScreen:   false,
 		Cursor:           render.Cursor{},
-		in:               in,
-		out:              out,
-		shellByteCounter: shellByteCounter,
 		usingSlowRefresh: false,
 		renderer:         renderer,
 		parentSetCursor:  parentSetCursor,
@@ -116,7 +112,6 @@ func NewVTerm(shellByteCounter *uint64, renderer *render.Renderer, parentSetCurs
 // Kill safely shuts down all vterm processes for the instance
 func (v *VTerm) Kill() {
 	v.usingSlowRefresh = false
-	v.ChangePause <- true
 }
 
 // Reshape safely updates a VTerm's width & height

@@ -7,6 +7,8 @@ import (
 	"sync"
 	"time"
 	"unicode/utf8"
+
+	"github.com/aaronjanse/3mux/ecma48"
 )
 
 // Renderer is our simplified implemention of ncurses
@@ -152,12 +154,12 @@ func (r *Renderer) ListenToQueue() {
 					for y := r.h - 5; y <= r.h-3; y++ {
 						newCursor := Cursor{
 							X: x, Y: y, Style: Style{
-								Bg: Color{
-									ColorMode: ColorBit3Bright,
+								Bg: ecma48.Color{
+									ColorMode: ecma48.ColorBit3Bright,
 									Code:      6,
 								},
-								Fg: Color{
-									ColorMode: ColorBit3Normal,
+								Fg: ecma48.Color{
+									ColorMode: ecma48.ColorBit3Normal,
 									Code:      0,
 								},
 							},
@@ -174,12 +176,12 @@ func (r *Renderer) ListenToQueue() {
 				for i, c := range r.DemoText {
 					newCursor := Cursor{
 						X: r.w - 2 - demoTextLen + i, Y: r.h - 4, Style: Style{
-							Bg: Color{
-								ColorMode: ColorBit3Bright,
+							Bg: ecma48.Color{
+								ColorMode: ecma48.ColorBit3Bright,
 								Code:      6,
 							},
-							Fg: Color{
-								ColorMode: ColorBit3Normal,
+							Fg: ecma48.Color{
+								ColorMode: ecma48.ColorBit3Normal,
 								Code:      0,
 							},
 						},

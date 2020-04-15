@@ -1,6 +1,10 @@
 package render
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/aaronjanse/3mux/ecma48"
+)
 
 // Cursor is Style along with position. Coordinates are relative to top left
 type Cursor struct {
@@ -12,8 +16,8 @@ type Cursor struct {
 type Style struct {
 	Bold, Faint, Italic, Underline, Conceal, CrossedOut bool
 
-	Fg Color // foreground color
-	Bg Color // background color
+	Fg ecma48.Color // foreground color
+	Bg ecma48.Color // background color
 }
 
 // Reset sets all rendering attributes of a cursor to their default values
@@ -25,8 +29,8 @@ func (s *Style) Reset() {
 	s.Conceal = false
 	s.CrossedOut = false
 
-	s.Fg.ColorMode = ColorNone
-	s.Bg.ColorMode = ColorNone
+	s.Fg.ColorMode = ecma48.ColorNone
+	s.Bg.ColorMode = ecma48.ColorNone
 }
 
 // deltaMarkup returns markup to transform from one cursor to another
@@ -50,17 +54,12 @@ func deltaMarkup(fromCur, toCur Cursor) string {
 	from := fromCur.Style
 
 	if to.Bg.ColorMode != from.Bg.ColorMode || to.Bg.Code != from.Bg.Code {
-		out += to.Bg.ToANSI(true)
+		out += ToANSI(to.Bg, true)
 	}
 
 	if to.Fg.ColorMode != from.Fg.ColorMode || to.Fg.Code != from.Fg.Code {
-		out += to.Fg.ToANSI(false)
+		out += ToANSI(to.Fg, false)
 	}
-
-	// // Without this, text randomly gets randomly underlined for some reason.
-	// if !to.Underline && !from.Underline {
-	// 	out += "\033[24m"
-	// }
 
 	/* remove effects */
 

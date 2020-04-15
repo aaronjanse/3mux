@@ -9,6 +9,7 @@ import (
 	runtimeDebug "runtime/debug"
 	"runtime/pprof"
 
+	"github.com/aaronjanse/3mux/ecma48"
 	"github.com/aaronjanse/3mux/keypress"
 	"github.com/aaronjanse/3mux/render"
 
@@ -158,12 +159,12 @@ func debug(s string) {
 				X: i,
 				Y: termH - 1,
 				Style: render.Style{
-					Bg: render.Color{
-						ColorMode: render.ColorBit3Bright,
+					Bg: ecma48.Color{
+						ColorMode: ecma48.ColorBit3Bright,
 						Code:      2,
 					},
-					Fg: render.Color{
-						ColorMode: render.ColorBit3Normal,
+					Fg: ecma48.Color{
+						ColorMode: ecma48.ColorBit3Normal,
 						Code:      0,
 					},
 				},
@@ -182,12 +183,12 @@ func debug(s string) {
 					X: termW - len(resizeText) + i,
 					Y: termH - 1,
 					Style: render.Style{
-						Bg: render.Color{
-							ColorMode: render.ColorBit3Bright,
+						Bg: ecma48.Color{
+							ColorMode: ecma48.ColorBit3Bright,
 							Code:      3,
 						},
-						Fg: render.Color{
-							ColorMode: render.ColorBit3Normal,
+						Fg: ecma48.Color{
+							ColorMode: ecma48.ColorBit3Normal,
 							Code:      0,
 						},
 					},
