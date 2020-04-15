@@ -323,6 +323,10 @@ func (p *Parser) handleSGR(parameterCode string) {
 	}
 
 	for {
+		if len(seq) == 0 {
+			break
+		}
+
 		c := seq[0]
 
 		switch c {
@@ -456,10 +460,6 @@ func (p *Parser) handleSGR(parameterCode string) {
 			} else {
 				p.out <- p.wrap(StyleForeground(color))
 			}
-		}
-
-		if len(seq) == 0 {
-			break
 		}
 	}
 }
