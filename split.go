@@ -63,6 +63,85 @@ func (s *Split) setPause(pause bool) {
 	}
 }
 
+func (s *Split) selectAtCoords(x, y int) {
+	for idx, n := range s.elements {
+		r := n.contents.getRenderRect()
+		vertValid := r.y <= y && y < r.y+r.h
+		horizValid := r.x <= x && x < r.x+r.w
+		if vertValid && horizValid {
+			switch child := n.contents.(type) {
+			case *Split:
+				child.selectAtCoords(x, y)
+			}
+			s.selectionIdx = idx
+			return
+		}
+	}
+}
+
+func (s *Split) updateSelection(selected bool) {
+	for idx, n := range s.elements {
+		switch child := n.contents.(type) {
+		case *Split:
+			child.updateSelection(selected && idx == s.selectionIdx)
+		case *Pane:
+			child.UpdateSelection(selected && idx == s.selectionIdx)
+		}
+	}
+}
+
+func (s *Split) dragBorder(x1, y1, x2, y2 int) {
+	for idx, n := range s.elements {
+		r := n.contents.getRenderRect()
+
+		// test if we're at a divider
+		horiz := !s.verticallyStacked && x1 == r.x+r.w
+		vert := s.verticallyStacked && y1 == r.y+r.h
+		if horiz || vert {
+			firstRec := s.elements[idx].contents.getRenderRect()
+			secondRec := s.elements[idx+1].contents.getRenderRect()
+
+			var combinedSize int
+			if s.verticallyStacked {
+				combinedSize = firstRec.h + secondRec.h
+			} else {
+				combinedSize = firstRec.w + secondRec.w
+			}
+
+			var wantedRelativeBorderPos int
+			if s.verticallyStacked {
+				wantedRelativeBorderPos = y2 - firstRec.y
+			} else {
+				wantedRelativeBorderPos = x2 - firstRec.x
+			}
+
+			wantedBorderRatio := float32(wantedRelativeBorderPos) / float32(combinedSize)
+			totalProportion := s.elements[idx].size + s.elements[idx+1].size
+
+			if wantedBorderRatio > 1 { // user did an impossible drag
+				return
+			}
+
+			s.elements[idx].size = wantedBorderRatio * totalProportion
+			s.elements[idx+1].size = (1 - wantedBorderRatio) * totalProportion
+
+			s.refreshRenderRect()
+			return
+		}
+
+		// test if we're within a child
+		withinVert := r.y <= y1 && y1 < r.y+r.h
+		withinHoriz := r.x <= x1 && x1 < r.x+r.w
+		if withinVert && withinHoriz {
+			switch child := n.contents.(type) {
+			case *Split:
+				child.dragBorder(x1, y1, x2, y2)
+			}
+			return
+		}
+	}
+}
+
 // removeTheDead recursively searches the tree and removes panes with Dead == true.
 // A pane declares itself dead when its shell dies.
 func removeTheDead(path Path) {

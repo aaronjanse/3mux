@@ -74,4 +74,24 @@ func (u *Universe) refreshRenderRect() {
 
 func (u *Universe) AddPane() {
 	u.workspaces[u.selectionIdx].addPane()
+	u.updateSelection()
+	u.refreshRenderRect() // FIXME only needs to redraw lines!
+}
+
+func (u *Universe) SelectAtCoords(x, y int) {
+	u.workspaces[u.selectionIdx].selectAtCoords(x, y)
+	u.updateSelection()
+	u.refreshRenderRect() // FIXME only needs to redraw lines!
+}
+
+func (u *Universe) DragBorder(x1, y1, x2, y2 int) {
+	u.workspaces[u.selectionIdx].dragBorder(x1, y1, x2, y2)
+	u.refreshRenderRect() // FIXME only needs to redraw lines!
+}
+
+// this is used to update who is in control of the cursor
+func (u *Universe) updateSelection() {
+	for idx, w := range u.workspaces {
+		w.updateSelection(idx == u.selectionIdx)
+	}
 }

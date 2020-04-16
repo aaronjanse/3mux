@@ -103,6 +103,13 @@ func newTerm(selected bool) *Pane {
 	return t
 }
 
+func (t *Pane) UpdateSelection(selected bool) {
+	t.selected = selected
+	if selected {
+		t.vterm.RefreshCursor()
+	}
+}
+
 func (t *Pane) handleStdin(in string) {
 	if t.searchMode && t.searchResultsMode {
 		switch in[0] { // FIXME ignores extra chars
@@ -386,7 +393,7 @@ func (t *Pane) setPause(pause bool) {
 }
 
 func (t *Pane) serialize() string {
-	out := fmt.Sprintf("Term[%dx%d]", t.renderRect.w, t.renderRect.h)
+	out := fmt.Sprintf("Term[%d,%d %dx%d]", t.renderRect.x, t.renderRect.y, t.renderRect.w, t.renderRect.h)
 	if t.selected {
 		return out + "*"
 	}

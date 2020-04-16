@@ -215,19 +215,23 @@ func (p *Parser) dispatchCsi() {
 		seq := parseSemicolonNumSeq(p.params, 1)
 
 		switch seq[0] {
+		case 0:
+			switch p.final {
+			case 'M':
+				p.out <- p.wrap(MouseDown{X: seq[1] - 1, Y: seq[2] - 1})
+			case 'm':
+				p.out <- p.wrap(MouseUp{X: seq[1] - 1, Y: seq[2] - 1})
+			default:
+				p.out <- p.wrap(Unrecognized("Mouse"))
+			}
+		case 32:
+			p.out <- p.wrap(MouseDrag{X: seq[1] - 1, Y: seq[2] - 1})
 		case 64:
 			p.out <- p.wrap(ScrollDown(1))
 		case 65:
 			p.out <- p.wrap(ScrollUp(1))
 		default:
-			switch p.final {
-			case 'M':
-				p.out <- p.wrap(MouseDown{X: seq[1] - 1, Y: seq[1] - 1})
-			case 'm':
-				p.out <- p.wrap(MouseUp{X: seq[1] - 1, Y: seq[1] - 1})
-			default:
-				p.out <- p.wrap(Unrecognized("Mouse"))
-			}
+			p.out <- p.wrap(Unrecognized("Mouse"))
 		}
 	case "?":
 		switch p.final {

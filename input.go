@@ -249,149 +249,19 @@ func seiveResizeEvents(human string, obj ecma48.Output) bool {
 }
 
 var mouseDownPath Path
+var mouseDownX, mouseDownY int
 
 // seiveMouseEvents processes mouse events and returns true if the data should *not* be passed downstream
 func seiveMouseEvents(human string, obj ecma48.Output) bool {
-	// switch ev := event.(type) {
-	// case keypress.MouseDown:
-	// 	// are we clicking a border? if so, which one?
-	// 	path := findClosestBorderForCoord([]int{root.selectionIdx}, ev.X, ev.Y)
-	// 	pane := path.getContainer()
-	// 	r := pane.getRenderRect()
-
-	// 	if ev.Y == r.y+r.h+1 {
-	// 		mouseDownPath = path
-	// 		parent, _ := mouseDownPath.getParent()
-	// 		if !parent.verticallyStacked {
-	// 			mouseDownPath = mouseDownPath[:len(mouseDownPath)-1]
-	// 		}
-	// 	} else if ev.X == r.x+r.w+1 {
-	// 		mouseDownPath = path
-	// 		parent, _ := mouseDownPath.getParent()
-	// 		if parent.verticallyStacked {
-	// 			mouseDownPath = mouseDownPath[:len(mouseDownPath)-1]
-	// 		}
-	// 	} else {
-	// 		// deselect the old Term
-	// 		oldTerm := getSelection().getContainer().(*Pane)
-	// 		oldTerm.selected = false
-	// 		// oldTerm.softRefresh()
-
-	// 		setSelection(path)
-
-	// 		// select the new Term
-	// 		newTerm := getSelection().getContainer().(*Pane)
-	// 		newTerm.selected = true
-	// 		// newTerm.softRefresh()
-
-	// 		newTerm.vterm.RefreshCursor()
-	// 		root.refreshRenderRect()
-	// 	}
-	// case keypress.MouseUp:
-	// 	if mouseDownPath != nil { // end resize
-	// 		lastPathIdx := mouseDownPath[len(mouseDownPath)-1]
-
-	// 		parent, _ := mouseDownPath.getParent()
-	// 		first := mouseDownPath.getContainer()
-	// 		second := parent.elements[lastPathIdx+1].contents
-
-	// 		firstRec := first.getRenderRect()
-	// 		secondRec := second.getRenderRect()
-
-	// 		var combinedSize int
-	// 		if parent.verticallyStacked {
-	// 			combinedSize = firstRec.h + secondRec.h
-	// 		} else {
-	// 			combinedSize = firstRec.w + secondRec.w
-	// 		}
-
-	// 		var wantedRelativeBorderPos int
-	// 		if parent.verticallyStacked {
-	// 			wantedRelativeBorderPos = ev.Y - firstRec.y
-	// 		} else {
-	// 			wantedRelativeBorderPos = ev.X - firstRec.x
-	// 		}
-
-	// 		wantedBorderRatio := float32(wantedRelativeBorderPos) / float32(combinedSize)
-	// 		totalProportion := parent.elements[lastPathIdx].size + parent.elements[lastPathIdx+1].size
-
-	// 		parent.elements[lastPathIdx].size = wantedBorderRatio * totalProportion
-	// 		parent.elements[lastPathIdx+1].size = (1 - wantedBorderRatio) * totalProportion
-
-	// 		parent.refreshRenderRect()
-
-	// 		mouseDownPath = nil
-	// 	}
 	switch ev := obj.Parsed.(type) {
 	case ecma48.MouseDown:
-		// are we clicking a border? if so, which one?
-		path := findClosestBorderForCoord([]int{root.selectionIdx}, ev.X, ev.Y)
-		pane := path.getContainer()
-		r := pane.getRenderRect()
-
-		if ev.Y == r.y+r.h+1 {
-			mouseDownPath = path
-			parent, _ := mouseDownPath.getParent()
-			if !parent.verticallyStacked {
-				mouseDownPath = mouseDownPath[:len(mouseDownPath)-1]
-			}
-		} else if ev.X == r.x+r.w+1 {
-			mouseDownPath = path
-			parent, _ := mouseDownPath.getParent()
-			if parent.verticallyStacked {
-				mouseDownPath = mouseDownPath[:len(mouseDownPath)-1]
-			}
-		} else {
-			// deselect the old Term
-			oldTerm := getSelection().getContainer().(*Pane)
-			oldTerm.selected = false
-			// oldTerm.softRefresh()
-
-			setSelection(path)
-
-			// select the new Term
-			newTerm := getSelection().getContainer().(*Pane)
-			newTerm.selected = true
-			// newTerm.softRefresh()
-
-			newTerm.vterm.RefreshCursor()
-			root.refreshRenderRect()
-		}
+		root.SelectAtCoords(ev.X, ev.Y)
+		mouseDownX = ev.X
+		mouseDownY = ev.Y
 	case ecma48.MouseUp:
-		if mouseDownPath != nil { // end resize
-			lastPathIdx := mouseDownPath[len(mouseDownPath)-1]
-
-			parent, _ := mouseDownPath.getParent()
-			first := mouseDownPath.getContainer()
-			second := parent.elements[lastPathIdx+1].contents
-
-			firstRec := first.getRenderRect()
-			secondRec := second.getRenderRect()
-
-			var combinedSize int
-			if parent.verticallyStacked {
-				combinedSize = firstRec.h + secondRec.h
-			} else {
-				combinedSize = firstRec.w + secondRec.w
-			}
-
-			var wantedRelativeBorderPos int
-			if parent.verticallyStacked {
-				wantedRelativeBorderPos = ev.Y - firstRec.y
-			} else {
-				wantedRelativeBorderPos = ev.X - firstRec.x
-			}
-
-			wantedBorderRatio := float32(wantedRelativeBorderPos) / float32(combinedSize)
-			totalProportion := parent.elements[lastPathIdx].size + parent.elements[lastPathIdx+1].size
-
-			parent.elements[lastPathIdx].size = wantedBorderRatio * totalProportion
-			parent.elements[lastPathIdx+1].size = (1 - wantedBorderRatio) * totalProportion
-
-			parent.refreshRenderRect()
-
-			mouseDownPath = nil
-		}
+		root.DragBorder(mouseDownX, mouseDownY, ev.X, ev.Y)
+	case ecma48.MouseDrag:
+		// do nothing
 	case ecma48.ScrollUp:
 		t := getSelection().getContainer().(*Pane)
 		t.vterm.ScrollbackDown()
