@@ -180,6 +180,7 @@ func moveWindow(d Direction) {
 	newTerm.softRefresh()
 	newTerm.vterm.RefreshCursor()
 
+	root.simplify()
 	root.refreshRenderRect()
 }
 
@@ -203,6 +204,8 @@ func killWindow() {
 	if len(root.workspaces[root.selectionIdx].contents.elements) == 1 {
 		keypress.ShouldProcessMouse(false)
 	}
+
+	root.simplify()
 }
 
 // stuff like h(h(x), y) -> h(x, y)
