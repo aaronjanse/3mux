@@ -146,6 +146,7 @@ func init() {
 }
 
 func seiveConfigEvents(human string) bool {
+	log.Println(human)
 	if fn, ok := config.bindings[human]; ok {
 		fn()
 		return true

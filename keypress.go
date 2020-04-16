@@ -28,7 +28,7 @@ func Shutdown() {
 
 func humanify(r rune) string {
 	switch r {
-	case '\n':
+	case '\n', '\r':
 		return "Enter"
 	default:
 		return string(r)

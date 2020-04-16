@@ -152,7 +152,7 @@ func (p *Parser) stateGround(r rune) {
 func (p *Parser) stateEscape(r rune) {
 	switch {
 	case p.keyboardMode &&
-		('0' <= r && r <= '9' || 'a' <= r && r <= 'z' || 'A' <= r && r <= 'Z'):
+		('\n' == r || '\r' == r || '0' <= r && r <= '9' || 'a' <= r && r <= 'z' || 'A' <= r && r <= 'Z'):
 		if 'A' <= r && r <= 'Z' {
 			p.out <- p.wrap(AltShiftChar{Char: r})
 		} else {

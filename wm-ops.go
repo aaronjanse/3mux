@@ -100,7 +100,7 @@ func moveWindow(d Direction) {
 				}
 			} else {
 				greatGrandparent, _ := grandparentPath.getParent()
-				greatGrandparent.insertContainer(tmp, grandparent.selectionIdx+2)
+				greatGrandparent.insertContainer(tmp, grandparent.selectionIdx+1)
 				greatGrandparent.selectionIdx++
 			}
 		} else {
@@ -174,6 +174,7 @@ func moveWindow(d Direction) {
 	newTerm.softRefresh()
 	newTerm.vterm.RefreshCursor()
 
+	root.simplify()
 	root.refreshRenderRect()
 }
 
@@ -197,6 +198,8 @@ func killWindow() {
 	newTerm.selected = true
 	newTerm.softRefresh()
 	newTerm.vterm.RefreshCursor()
+
+	root.simplify()
 }
 
 // stuff like h(h(x), y) -> h(x, y)
@@ -294,15 +297,16 @@ func moveSelection(d Direction) {
 	newTerm.selected = true
 	newTerm.softRefresh()
 	newTerm.vterm.RefreshCursor()
+
+	root.refreshRenderRect()
 }
 
 func (s *Split) addPane() {
-	path := getSelection()
-
-	// deselect the old Term
-	oldTerm := path.getContainer().(*Pane)
-	oldTerm.selected = false
-	// the parent is going to be redrawn so we don't need to redraw the old term right now
+	switch x := s.elements[s.selectionIdx].contents.(type) {
+	case *Split:
+		x.addPane()
+		return
+	}
 
 	if len(s.elements) > 8 {
 		return
@@ -326,6 +330,8 @@ func (s *Split) addPane() {
 	// update selection to new child
 	s.selectionIdx = len(s.elements) - 1
 	s.refreshRenderRect()
+
+	root.refreshRenderRect()
 }
 
 func resizeWindow(d Direction, diff float32) {

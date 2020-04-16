@@ -87,41 +87,39 @@ func seiveTmuxEvents(human string, obj ecma48.Output) bool {
 	}
 
 	if tmuxMode {
-		switch human {
+		switch string(obj.Raw) {
 		case "%":
 			pane := getSelection().getContainer().(*Pane)
 
 			parent, _ := getSelection().getParent()
-			parent.elements[parent.selectionIdx] = Node{
-				size: 1,
-				contents: &Split{
-					verticallyStacked: true,
-					elements: []Node{Node{
-						size:     1,
-						contents: pane,
-					}},
-				},
+			parent.elements[parent.selectionIdx].contents = &Split{
+				verticallyStacked: true,
+				selectionIdx:      0,
+				elements: []Node{Node{
+					size:     1,
+					contents: pane,
+				}},
 			}
 
-			root.refreshRenderRect()
 			root.AddPane()
+			root.simplify()
+			root.refreshRenderRect()
 		case "\"":
 			pane := getSelection().getContainer().(*Pane)
 
 			parent, _ := getSelection().getParent()
-			parent.elements[parent.selectionIdx] = Node{
-				size: 1,
-				contents: &Split{
-					verticallyStacked: false,
-					elements: []Node{Node{
-						size:     1,
-						contents: pane,
-					}},
-				},
+			parent.elements[parent.selectionIdx].contents = &Split{
+				verticallyStacked: false,
+				selectionIdx:      0,
+				elements: []Node{Node{
+					size:     1,
+					contents: pane,
+				}},
 			}
 
-			root.refreshRenderRect()
 			root.AddPane()
+			root.simplify()
+			root.refreshRenderRect()
 		case "{":
 			moveWindow(Left)
 		case "}":
@@ -144,6 +142,7 @@ func seiveTmuxEvents(human string, obj ecma48.Output) bool {
 						}
 						if done {
 							break
+							root.simplify()
 						}
 					}
 					break
