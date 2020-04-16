@@ -144,7 +144,7 @@ func (p *Parser) stateGround(r rune) {
 			IsWide: runewidth.RuneWidth(r) > 1,
 		})
 	default:
-		log.Printf("? GROUND %s (%d)", string(r), r)
+		log.Printf("? GROUND %q", r)
 		p.data = []rune{}
 	}
 }
@@ -165,7 +165,7 @@ func (p *Parser) stateEscape(r rune) {
 		// TODO: p.dispatchEsc()
 		p.state = stateGround
 	default:
-		// log.Printf("? ESC %s", string(r))
+		log.Printf("? ESC %q", r)
 	}
 }
 
@@ -394,6 +394,7 @@ func (p *Parser) handleSGR(parameterCode string) {
 		case 6: // rapid blink
 			seq = seq[1:]
 		case 7: // swap foreground & background; see case 27
+			p.out <- p.wrap(StyleReverse(true))
 			seq = seq[1:]
 		case 8:
 			p.out <- p.wrap(StyleConceal(true))
@@ -417,6 +418,7 @@ func (p *Parser) handleSGR(parameterCode string) {
 		case 25: // blink off
 			seq = seq[1:]
 		case 27: // inverse off; see case 7
+			p.out <- p.wrap(StyleReverse(false))
 			seq = seq[1:]
 		case 28:
 			p.out <- p.wrap(StyleConceal(false))

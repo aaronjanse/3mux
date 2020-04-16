@@ -192,6 +192,8 @@ func (v *VTerm) ProcessStream(input *bufio.Reader) {
 				v.Cursor.Style.Italic = bool(x)
 			case ecma48.StyleFaint:
 				v.Cursor.Style.Faint = bool(x)
+			case ecma48.StyleReverse:
+				v.Cursor.Style.Reverse = bool(x)
 			case ecma48.StyleUnderline:
 				v.Cursor.Style.Underline = bool(x)
 

@@ -14,7 +14,7 @@ type Cursor struct {
 
 // Style is the state of the terminal's drawing modes when printing a given character
 type Style struct {
-	Bold, Faint, Italic, Underline, Conceal, CrossedOut bool
+	Bold, Faint, Italic, Underline, Conceal, CrossedOut, Reverse bool
 
 	Fg ecma48.Color // foreground color
 	Bg ecma48.Color // background color
@@ -28,6 +28,7 @@ func (s *Style) Reset() {
 	s.Underline = false
 	s.Conceal = false
 	s.CrossedOut = false
+	s.Reverse = false
 
 	s.Fg.ColorMode = ecma48.ColorNone
 	s.Bg.ColorMode = ecma48.ColorNone
@@ -71,6 +72,10 @@ func deltaMarkup(fromCur, toCur Cursor) string {
 		out += "\033[24m"
 	}
 
+	if from.Reverse && !to.Reverse {
+		out += "\033[27m"
+	}
+
 	/* add effects */
 
 	if !from.Faint && to.Faint {
@@ -79,6 +84,10 @@ func deltaMarkup(fromCur, toCur Cursor) string {
 
 	if !from.Underline && to.Underline {
 		out += "\033[4m"
+	}
+
+	if !from.Reverse && to.Reverse {
+		out += "\033[7m"
 	}
 
 	return out

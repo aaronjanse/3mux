@@ -154,6 +154,8 @@ type StyleUnderline bool
 
 type StyleFaint bool
 
+type StyleReverse bool
+
 type StyleForeground Color
 
 type StyleBackground Color

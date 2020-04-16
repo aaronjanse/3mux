@@ -1,7 +1,5 @@
 package main
 
-import "log"
-
 func search() {
 	getSelection().getContainer().(*Pane).toggleSearch()
 }
@@ -183,12 +181,8 @@ func killWindow() {
 	t := parentPath.popContainer(parent.selectionIdx)
 	t.(*Pane).kill()
 
-	log.Print("killWindow")
-	log.Println(root.serialize())
-	log.Println(len(root.workspaces[root.selectionIdx].contents.elements))
 	// FIXME: allows for only one workspace
 	if len(root.workspaces[root.selectionIdx].contents.elements) == 0 {
-		log.Println("Killin")
 		shutdownNow()
 		return
 	}
