@@ -203,6 +203,7 @@ func (p *Parser) stateCsiParam(r rune) {
 }
 
 func (p *Parser) stateOscString(r rune) {
+	// TODO: https://askubuntu.com/a/1141814
 	switch {
 	case 0x07 == r: // FIXME: this is weird
 		p.state = stateGround
