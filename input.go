@@ -71,34 +71,30 @@ func handleInput(event interface{}, rawData []byte) {
 				pane := getSelection().getContainer().(*Pane)
 
 				parent, _ := getSelection().getParent()
-				parent.elements[parent.selectionIdx] = Node{
-					size: 1,
-					contents: &Split{
-						verticallyStacked: true,
-						elements: []Node{Node{
-							size:     1,
-							contents: pane,
-						}},
-					},
+				parent.elements[parent.selectionIdx].contents = &Split{
+					verticallyStacked: true,
+					elements: []Node{Node{
+						size:     1,
+						contents: pane,
+					}},
 				}
 
+				root.simplify()
 				root.refreshRenderRect()
 				newWindow()
 			case '"':
 				pane := getSelection().getContainer().(*Pane)
 
 				parent, _ := getSelection().getParent()
-				parent.elements[parent.selectionIdx] = Node{
-					size: 1,
-					contents: &Split{
-						verticallyStacked: false,
-						elements: []Node{Node{
-							size:     1,
-							contents: pane,
-						}},
-					},
+				parent.elements[parent.selectionIdx].contents = &Split{
+					verticallyStacked: false,
+					elements: []Node{Node{
+						size:     1,
+						contents: pane,
+					}},
 				}
 
+				root.simplify()
 				root.refreshRenderRect()
 				newWindow()
 			case '{':
