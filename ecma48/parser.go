@@ -51,9 +51,19 @@ func NewParser(keyboardMode bool) *Parser {
 
 // Parse starts the parsing process, reading from input, parsing, then sending to output
 func (p *Parser) Parse(input *bufio.Reader, output chan<- Output) error {
+	defer func() {
+		if r := recover(); r != nil {
+			log.Printf("%+v", p)
+			panic(r)
+		}
+	}()
+
 	p.out = output
 	for {
 		r, _, err := input.ReadRune()
+		if r == 65533 {
+			continue
+		}
 		if p.keyboardMode {
 			// log.Printf("R %q", r)
 		}
@@ -218,22 +228,27 @@ func (p *Parser) doClear() {
 }
 
 func (p *Parser) dispatchCsi() {
+	// fmt.Printf("\r\x1b[K? CSI %s %s", p.params, string(p.final))
 	switch p.intermediate {
 	case "<":
 		seq := parseSemicolonNumSeq(p.params, 1)
 
 		switch seq[0] {
 		case 0:
-			switch p.final {
-			case 'M':
-				p.out <- p.wrap(MouseDown{X: seq[1] - 1, Y: seq[2] - 1})
-			case 'm':
-				p.out <- p.wrap(MouseUp{X: seq[1] - 1, Y: seq[2] - 1})
-			default:
-				p.out <- p.wrap(Unrecognized("Mouse"))
+			if len(seq) > 2 {
+				switch p.final {
+				case 'M':
+					p.out <- p.wrap(MouseDown{X: seq[1] - 1, Y: seq[2] - 1})
+				case 'm':
+					p.out <- p.wrap(MouseUp{X: seq[1] - 1, Y: seq[2] - 1})
+				default:
+					p.out <- p.wrap(Unrecognized("Mouse"))
+				}
 			}
 		case 32:
-			p.out <- p.wrap(MouseDrag{X: seq[1] - 1, Y: seq[2] - 1})
+			if len(seq) > 2 {
+				p.out <- p.wrap(MouseDrag{X: seq[1] - 1, Y: seq[2] - 1})
+			}
 		case 64:
 			p.out <- p.wrap(ScrollDown(1))
 		case 65:
@@ -436,35 +451,61 @@ func (p *Parser) handleSGR(parameterCode string) {
 			seq = seq[1:]
 
 		case 38: // set foreground color
-			if seq[1] == 5 {
-				p.out <- p.wrap(StyleForeground(Color{
-					ColorMode: ColorBit8,
-					Code:      int32(seq[2]),
-				}))
-				seq = seq[3:]
-			} else if seq[1] == 2 {
-				p.out <- p.wrap(StyleForeground(Color{
-					ColorMode: ColorBit24,
-					Code:      int32(seq[2]<<16 + seq[3]<<8 + seq[4]),
-				}))
-				seq = seq[5:]
+			if len(seq) > 1 {
+				if seq[1] == 5 {
+					if len(seq) > 2 {
+						p.out <- p.wrap(StyleForeground(Color{
+							ColorMode: ColorBit8,
+							Code:      int32(seq[2]),
+						}))
+						seq = seq[3:]
+					} else {
+						seq = seq[2:]
+					}
+				} else if seq[1] > 2 {
+					if len(seq) > 4 {
+						p.out <- p.wrap(StyleForeground(Color{
+							ColorMode: ColorBit24,
+							Code:      int32(seq[2]<<16 + seq[3]<<8 + seq[4]),
+						}))
+						seq = seq[5:]
+					} else {
+						seq = seq[2:]
+					}
+				} else {
+					seq = seq[2:]
+				}
+			} else {
+				seq = seq[1:]
 			}
 		case 39: // default foreground color
 			p.out <- p.wrap(StyleForeground(Color{ColorMode: ColorNone}))
 			seq = seq[1:]
 		case 48: // set background color
-			if seq[1] == 5 {
-				p.out <- p.wrap(StyleBackground(Color{
-					ColorMode: ColorBit8,
-					Code:      int32(seq[2]),
-				}))
-				seq = seq[3:]
-			} else if seq[1] == 2 {
-				p.out <- p.wrap(StyleBackground(Color{
-					ColorMode: ColorBit24,
-					Code:      int32(seq[2]<<16 + seq[3]<<8 + seq[4]),
-				}))
-				seq = seq[5:]
+			if len(seq) > 1 {
+				if seq[1] == 5 {
+					if len(seq) > 2 {
+						p.out <- p.wrap(StyleBackground(Color{
+							ColorMode: ColorBit8,
+							Code:      int32(seq[2]),
+						}))
+						seq = seq[3:]
+					} else {
+						seq = seq[2:]
+					}
+				} else if seq[1] == 2 {
+					if len(seq) > 4 {
+						p.out <- p.wrap(StyleBackground(Color{
+							ColorMode: ColorBit24,
+							Code:      int32(seq[2]<<16 + seq[3]<<8 + seq[4]),
+						}))
+						seq = seq[5:]
+					} else {
+						seq = seq[2:]
+					}
+				}
+			} else {
+				seq = seq[1:]
 			}
 		case 49: // default background color
 			p.out <- p.wrap(StyleBackground(Color{ColorMode: ColorNone}))
@@ -506,6 +547,7 @@ func (p *Parser) handleSGR(parameterCode string) {
 				seq = seq[1:]
 			} else {
 				log.Printf("Unrecognized SGR code: %v", parameterCode)
+				seq = seq[1:]
 			}
 
 			color := Color{ColorMode: colorMode, Code: code}
@@ -536,7 +578,9 @@ func parseSemicolonNumSeq(s string, d int) []int {
 		} else {
 			num, err := strconv.ParseInt(part, 10, 32)
 			if err != nil {
-				continue // fixme?
+				log.Printf("Could not parse int in %s", s)
+				out = append(out, d)
+				continue
 			}
 
 			out = append(out, int(num))
