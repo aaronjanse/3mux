@@ -19,7 +19,9 @@ var oldState *terminal.State
 
 // Shutdown cleans up the terminal state
 func Shutdown() {
-	terminal.Restore(0, oldState)
+	if oldState != nil {
+		terminal.Restore(0, oldState)
+	}
 
 	fmt.Print("\x1b[?1002l")
 	fmt.Print("\x1b[?1006l")
