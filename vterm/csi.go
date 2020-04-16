@@ -53,15 +53,15 @@ func (v *VTerm) handleEraseInLine(directive int) {
 	switch directive {
 	case 0: // clear from Cursor to end of line
 		for i := v.Cursor.X; i < len(v.Screen[v.Cursor.Y]); i++ {
-			v.Screen[v.Cursor.Y][i] = render.Char{Rune: ' '}
+			v.Screen[v.Cursor.Y][i] = render.Char{Rune: ' ', Style: v.Cursor.Style}
 		}
 	case 1: // clear from Cursor to beginning of line
 		for i := 0; i < v.Cursor.X; i++ {
-			v.Screen[v.Cursor.Y][i] = render.Char{Rune: ' '}
+			v.Screen[v.Cursor.Y][i] = render.Char{Rune: ' ', Style: v.Cursor.Style}
 		}
 	case 2: // clear entire line; Cursor position remains the same
 		for i := 0; i < len(v.Screen[v.Cursor.Y]); i++ {
-			v.Screen[v.Cursor.Y][i] = render.Char{Rune: ' '}
+			v.Screen[v.Cursor.Y][i] = render.Char{Rune: ' ', Style: v.Cursor.Style}
 		}
 	default:
 		log.Printf("Unrecognized erase in line directive: %d", directive)
