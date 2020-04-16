@@ -76,7 +76,7 @@ func (p Path) getContainer() Container {
 	for len(p) > 0 {
 		switch val := cur.(type) {
 		case *Split:
-			cur = val.elements[val.selectionIdx].contents
+			cur = val.elements[p[0]].contents
 			p = p[1:]
 		default:
 			fatalShutdownNow("bad path")
