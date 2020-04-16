@@ -48,11 +48,35 @@ type Pane struct {
 	Dead bool
 }
 
+func getShellPath() string {
+	username := os.Getenv("USER")
+
+	file, err := os.Open("/etc/passwd")
+	if err != nil {
+		fatalShutdownNow(err.Error())
+	}
+
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+
+	scanner.Split(bufio.ScanLines)
+
+	for scanner.Scan() {
+		parts := strings.Split(scanner.Text(), ":")
+		if parts[0] == username {
+			return parts[len(parts)-1]
+		}
+	}
+	fatalShutdownNow("couldn't find shell to use")
+	return ""
+}
+
 func newTerm(selected bool) *Pane {
 	t := &Pane{
 		id:       rand.Intn(10),
 		selected: selected,
-		cmd:      exec.Command(os.Getenv("SHELL")),
+		cmd:      exec.Command(getShellPath()),
 	}
 
 	ptmx, err := pty.Start(t.cmd)
