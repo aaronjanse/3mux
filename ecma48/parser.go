@@ -130,6 +130,13 @@ func (p *Parser) stateGround(r rune) {
 		p.out <- p.wrap(CtrlChar{Char: 'A' + (r - 1)})
 	case p.keyboardMode && r == 127:
 		p.out <- p.wrap(Backspace{})
+	case p.keyboardMode && r > 127:
+		le := r - 128
+		if 'A' <= le && le <= 'Z' {
+			p.out <- p.wrap(AltShiftChar{Char: le})
+		} else {
+			p.out <- p.wrap(AltChar{Char: unicode.ToUpper(le)})
+		}
 	case '\b' == r:
 		p.out <- p.wrap(Backspace{})
 	case '\n' == r:
