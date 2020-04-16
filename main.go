@@ -10,10 +10,7 @@ import (
 	"runtime/pprof"
 
 	"github.com/aaronjanse/3mux/ecma48"
-	"github.com/aaronjanse/3mux/keypress"
 	"github.com/aaronjanse/3mux/render"
-
-	term "github.com/nsf/termbox-go"
 )
 
 // Rect is a rectangle with an origin x, origin y, width, and height
@@ -59,7 +56,7 @@ func main() {
 		defer pprof.StopCPUProfile()
 	}
 
-	termW, termH, _ = keypress.GetTermSize()
+	termW, termH, _ = GetTermSize()
 
 	renderer = render.NewRenderer()
 	go renderer.ListenToQueue()
@@ -94,7 +91,7 @@ func main() {
 		go doDemo()
 	}
 
-	keypress.Listen(handleInput)
+	Listen(handleInput)
 }
 
 func resize(w, h int) {
@@ -115,12 +112,12 @@ func resize(w, h int) {
 }
 
 func shutdownNow() {
-	term.Close()
+	Shutdown()
 	os.Exit(0)
 }
 
 func fatalShutdownNow(where string) {
-	term.Close()
+	Shutdown()
 	fmt.Println("Error during:", where)
 	fmt.Println("Tiling state:", root.serialize())
 	fmt.Println(string(runtimeDebug.Stack()))

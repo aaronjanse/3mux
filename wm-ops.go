@@ -1,8 +1,6 @@
 package main
 
-import (
-	"github.com/aaronjanse/3mux/keypress"
-)
+import "log"
 
 func search() {
 	getSelection().getContainer().(*Pane).toggleSearch()
@@ -18,15 +16,11 @@ func fullscreen() {
 	specaialPane := path.getContainer()
 	specaialPane.setRenderRect(r.x, r.y, r.w, r.h)
 	specaialPane.setPause(false)
-
-	keypress.ShouldProcessMouse(false)
 }
 
 func unfullscreen() {
 	root.workspaces[root.selectionIdx].doFullscreen = false
 	root.workspaces[root.selectionIdx].contents.setPause(false)
-
-	keypress.ShouldProcessMouse(true)
 
 	root.refreshRenderRect()
 }
@@ -188,8 +182,12 @@ func killWindow() {
 	t := parentPath.popContainer(parent.selectionIdx)
 	t.(*Pane).kill()
 
+	log.Print("killWindow")
+	log.Println(root.serialize())
+	log.Println(len(root.workspaces[root.selectionIdx].contents.elements))
 	// FIXME: allows for only one workspace
 	if len(root.workspaces[root.selectionIdx].contents.elements) == 0 {
+		log.Println("Killin")
 		shutdownNow()
 		return
 	}
@@ -199,10 +197,6 @@ func killWindow() {
 	newTerm.selected = true
 	newTerm.softRefresh()
 	newTerm.vterm.RefreshCursor()
-
-	if len(root.workspaces[root.selectionIdx].contents.elements) == 1 {
-		keypress.ShouldProcessMouse(false)
-	}
 }
 
 // stuff like h(h(x), y) -> h(x, y)
@@ -303,8 +297,6 @@ func moveSelection(d Direction) {
 }
 
 func (s *Split) addPane() {
-	keypress.ShouldProcessMouse(true)
-
 	path := getSelection()
 
 	// deselect the old Term

@@ -31,7 +31,7 @@ const (
 func (v *VTerm) ProcessStream(input *bufio.Reader) {
 	stdout := make(chan ecma48.Output, 3200000)
 
-	parser := ecma48.NewParser()
+	parser := ecma48.NewParser(false)
 
 	go func() {
 		parser.Parse(input, stdout)

@@ -28,7 +28,7 @@ func (v *VTerm) useSlowRefresh() {
 				return
 			}
 
-			v.RedrawWindow()
+			// v.RedrawWindow()
 		}
 	}()
 }

@@ -8,14 +8,11 @@ import (
 	"math/rand"
 	"os"
 	"os/exec"
-	"os/signal"
 	runtimeDebug "runtime/debug"
 	"strings"
-	"syscall"
 	"time"
 
 	"github.com/aaronjanse/3mux/ecma48"
-	"github.com/aaronjanse/3mux/keypress"
 	"github.com/aaronjanse/3mux/render"
 	"github.com/aaronjanse/3mux/vterm"
 	"github.com/kr/pty"
@@ -84,7 +81,6 @@ func newTerm(selected bool) *Pane {
 		if t.selected {
 			root.workspaces[root.selectionIdx].doFullscreen = false
 			root.workspaces[root.selectionIdx].contents.setPause(false)
-			keypress.ShouldProcessMouse(true)
 		}
 
 		t.Dead = true
@@ -101,10 +97,6 @@ func newTerm(selected bool) *Pane {
 
 			root.simplify()
 			root.refreshRenderRect()
-		}
-
-		if len(root.workspaces[root.selectionIdx].contents.elements) == 1 {
-			keypress.ShouldProcessMouse(false)
 		}
 	}()
 
@@ -417,24 +409,18 @@ func (t *Pane) setRenderRect(x, y, w, h int) {
 }
 
 func (t *Pane) resizeShell(w, h int) {
-	ch := make(chan os.Signal, 1)
-	signal.Notify(ch, syscall.SIGWINCH)
-	go func() {
-		for range ch {
-			err := pty.Setsize(t.ptmx, &pty.Winsize{
-				Rows: uint16(h), Cols: uint16(w),
-				X: 16 * uint16(w), Y: 16 * uint16(h),
-			})
-			if err != nil {
-				log.Printf("Error during: shell.go:resize(%d, %d)", w, h)
-				log.Println("Tiling state:", root.serialize())
-				log.Println(string(runtimeDebug.Stack()))
-				log.Println()
-				log.Println("Please submit a bug report with this stack trace to https://github.com/aaronjanse/3mux/issues")
-			}
-		}
-	}()
-	ch <- syscall.SIGWINCH
+	err := pty.Setsize(t.ptmx, &pty.Winsize{
+		Rows: uint16(h), Cols: uint16(w),
+		X: 16 * uint16(w), Y: 16 * uint16(h),
+	})
+	if err != nil {
+		log.Println(err.Error())
+		log.Printf("Error during: shell.go:resize(%d, %d)", w, h)
+		log.Println("Tiling state:", root.serialize())
+		log.Println(string(runtimeDebug.Stack()))
+		log.Println()
+		log.Println("Please submit a bug report with this stack trace to https://github.com/aaronjanse/3mux/issues")
+	}
 }
 
 func (t *Pane) getRenderRect() Rect {

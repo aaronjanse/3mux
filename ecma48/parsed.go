@@ -23,6 +23,21 @@ type Char struct {
 	IsWide bool
 }
 
+// CtrlChar is for ctrl+[character]
+type CtrlChar struct {
+	Char rune
+}
+
+// AltChar is for alt+[character]
+type AltChar struct {
+	Char rune
+}
+
+// AltShiftChar is for alt+shift+[character]
+type AltShiftChar struct {
+	Char rune
+}
+
 // Tab ('\t')
 type Tab struct{}
 
@@ -142,3 +157,15 @@ type StyleFaint bool
 type StyleForeground Color
 
 type StyleBackground Color
+
+type ScrollDown int
+
+type ScrollUp int
+
+type MouseDown struct {
+	X, Y int
+}
+
+type MouseUp struct {
+	X, Y int
+}

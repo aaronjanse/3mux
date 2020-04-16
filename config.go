@@ -3,63 +3,153 @@ package main
 import (
 	"log"
 	"strings"
-
-	"github.com/aaronjanse/3mux/keypress"
 )
 
 // Config stores all user configuration values
 type Config struct {
 	statusBar bool
-	bindings  map[interface{}]string
+	bindings  map[string]func()
+}
+
+var configFuncBindings = map[string]func(){
+	"newWindow": func() {
+		if !root.workspaces[root.selectionIdx].doFullscreen {
+			root.AddPane()
+			root.simplify()
+			root.refreshRenderRect()
+		}
+	},
+	"killWindow": func() {
+		if root.workspaces[root.selectionIdx].doFullscreen {
+			unfullscreen()
+		}
+		killWindow()
+		root.simplify()
+		root.refreshRenderRect()
+	},
+	"resize": func() {
+		if !root.workspaces[root.selectionIdx].doFullscreen {
+			resizeMode = true
+		}
+	},
+	"fullscreen": func() {
+		if root.workspaces[root.selectionIdx].doFullscreen {
+			unfullscreen()
+		} else {
+			fullscreen()
+		}
+		root.simplify()
+		root.refreshRenderRect()
+	},
+	"debugSlowMode": func() {
+		log.Println("slowmo enabled!")
+		if getSelection().getContainer().(*Pane).vterm.DebugSlowMode {
+			dbug := ""
+			scr := getSelection().getContainer().(*Pane).vterm.Screen
+			for _, row := range scr {
+				for _, ch := range row {
+					dbug += string(ch.Rune)
+				}
+				dbug += "\n"
+			}
+			log.Println("=== SCREEN OUTPUT ===")
+			log.Println(dbug)
+			getSelection().getContainer().(*Pane).vterm.DebugSlowMode = false
+		} else {
+			getSelection().getContainer().(*Pane).vterm.DebugSlowMode = true
+		}
+	},
+	"search": search,
+	"moveWindowUp": func() {
+		if !root.workspaces[root.selectionIdx].doFullscreen {
+			moveWindow(Up)
+			root.simplify()
+			root.refreshRenderRect()
+		}
+	},
+	"moveWindowDown": func() {
+		if !root.workspaces[root.selectionIdx].doFullscreen {
+			moveWindow(Down)
+			root.simplify()
+			root.refreshRenderRect()
+		}
+	},
+	"moveWindowLeft": func() {
+		if !root.workspaces[root.selectionIdx].doFullscreen {
+			moveWindow(Left)
+			root.simplify()
+			root.refreshRenderRect()
+		}
+	},
+	"moveWindowRight": func() {
+		if !root.workspaces[root.selectionIdx].doFullscreen {
+			moveWindow(Right)
+		}
+	},
+	"moveSelectionUp": func() {
+		if !root.workspaces[root.selectionIdx].doFullscreen {
+			moveSelection(Up)
+		}
+	},
+	"moveSelectionDown": func() {
+		if !root.workspaces[root.selectionIdx].doFullscreen {
+			moveSelection(Down)
+		}
+	},
+	"moveSelectionLeft": func() {
+		if !root.workspaces[root.selectionIdx].doFullscreen {
+			moveSelection(Left)
+		}
+	},
+	"moveSelectionRight": func() {
+		if !root.workspaces[root.selectionIdx].doFullscreen {
+			moveSelection(Right)
+		}
+	},
+}
+
+func compileBindings(sourceBindings map[string][]string) map[string]func() {
+	compiledBindings := map[string]func(){}
+	for funcName, keyCodes := range sourceBindings {
+		fn := configFuncBindings[funcName]
+		for _, keyCode := range keyCodes {
+			compiledBindings[keyCode] = fn
+		}
+	}
+
+	return compiledBindings
 }
 
 var config = Config{
 	statusBar: true,
-	bindings: map[interface{}]string{
-		keypress.AltChar{Char: 'N'}:      "newWindow",
-		keypress.AltChar{Char: '\n'}:     "newWindow",
-		keypress.AltShiftChar{Char: 'F'}: "fullscreen",
-
-		keypress.AltChar{Char: 'X'}: "debugSlowMode",
-
-		keypress.AltChar{Char: '/'}: "search",
-
-		keypress.AltShiftArrow{Direction: keypress.Up}:    "moveWindow(Up)",
-		keypress.AltShiftArrow{Direction: keypress.Down}:  "moveWindow(Down)",
-		keypress.AltShiftArrow{Direction: keypress.Left}:  "moveWindow(Left)",
-		keypress.AltShiftArrow{Direction: keypress.Right}: "moveWindow(Right)",
-
-		keypress.AltShiftChar{Char: 'H'}: "moveWindow(Left)",
-		keypress.AltShiftChar{Char: 'J'}: "moveWindow(Down)",
-		keypress.AltShiftChar{Char: 'K'}: "moveWindow(Up)",
-		keypress.AltShiftChar{Char: 'L'}: "moveWindow(Right)",
-
-		keypress.AltArrow{Direction: keypress.Up}:    "moveSelection(Up)",
-		keypress.AltArrow{Direction: keypress.Down}:  "moveSelection(Down)",
-		keypress.AltArrow{Direction: keypress.Left}:  "moveSelection(Left)",
-		keypress.AltArrow{Direction: keypress.Right}: "moveSelection(Right)",
-
-		keypress.AltChar{Char: 'H'}: "moveSelection(Left)",
-		keypress.AltChar{Char: 'J'}: "moveSelection(Down)",
-		keypress.AltChar{Char: 'K'}: "moveSelection(Up)",
-		keypress.AltChar{Char: 'L'}: "moveSelection(Right)",
-
-		keypress.AltShiftChar{Char: 'Q'}: "killWindow",
-
-		keypress.AltChar{Char: 'R'}: "resize",
-	},
 }
 
-func seiveConfigEvents(ev interface{}) bool {
-	if operationCode, ok := config.bindings[ev]; ok {
-		executeOperationCode(operationCode)
-		root.simplify()
+func init() {
+	config.bindings = compileBindings(map[string][]string{
+		"newWindow":     []string{"Alt+N", "Alt+Enter"},
+		"killWindow":    []string{"Alt+Shift+Q"},
+		"resize":        []string{"Alt+R"},
+		"fullscreen":    []string{"Alt+Shift+F"},
+		"debugSlowMode": []string{"Alt+X"},
+		"search":        []string{"Alt+/"},
 
-		root.refreshRenderRect()
+		"moveWindowUp":    []string{"Alt+Shift+K", "Alt+Shift+Up"},
+		"moveWindowDown":  []string{"Alt+Shift+J", "Alt+Shift+Down"},
+		"moveWindowLeft":  []string{"Alt+Shift+H", "Alt+Shift+Left"},
+		"moveWindowRight": []string{"Alt+Shift+L", "Alt+Shift+Right"},
 
+		"moveSelectionUp":    []string{"Alt+K", "Alt+Up"},
+		"moveSelectionDown":  []string{"Alt+J", "Alt+Down"},
+		"moveSelectionLeft":  []string{"Alt+H", "Alt+Left"},
+		"moveSelectionRight": []string{"Alt+L", "Alt+Right"},
+	})
+}
+
+func seiveConfigEvents(human string) bool {
+	if fn, ok := config.bindings[human]; ok {
+		fn()
 		return true
 	}
-
 	return false
 }
 

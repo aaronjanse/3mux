@@ -22,6 +22,7 @@ type Parser struct {
 	out chan<- Output
 
 	state
+	keyboardMode bool
 
 	private      rune
 	intermediate string
@@ -35,9 +36,10 @@ type Parser struct {
 }
 
 // NewParser creates a parser to be used for Parse()
-func NewParser() *Parser {
+func NewParser(keyboardMode bool) *Parser {
 	return &Parser{
 		state:        stateGround,
+		keyboardMode: keyboardMode,
 		private:      0,
 		intermediate: "",
 		params:       "",
@@ -52,6 +54,9 @@ func (p *Parser) Parse(input *bufio.Reader, output chan<- Output) error {
 	p.out = output
 	for {
 		r, _, err := input.ReadRune()
+		if p.keyboardMode {
+			// log.Printf("R %q", r)
+		}
 		if err != nil {
 			return err
 		}
@@ -121,6 +126,10 @@ func (p *Parser) anywhere(r rune) {
 
 func (p *Parser) stateGround(r rune) {
 	switch {
+	case p.keyboardMode && (1 <= r && r <= 26):
+		p.out <- p.wrap(CtrlChar{Char: 'A' + (r - 1)})
+	case p.keyboardMode && r == 127:
+		p.out <- p.wrap(Backspace{})
 	case '\b' == r:
 		p.out <- p.wrap(Backspace{})
 	case '\n' == r:
@@ -136,11 +145,20 @@ func (p *Parser) stateGround(r rune) {
 		})
 	default:
 		log.Printf("? GROUND %s (%d)", string(r), r)
+		p.data = []rune{}
 	}
 }
 
 func (p *Parser) stateEscape(r rune) {
 	switch {
+	case p.keyboardMode &&
+		('0' <= r && r <= '9' || 'a' <= r && r <= 'z' || 'A' <= r && r <= 'Z'):
+		if 'A' <= r && r <= 'Z' {
+			p.out <- p.wrap(AltShiftChar{Char: r})
+		} else {
+			p.out <- p.wrap(AltChar{Char: unicode.ToUpper(r)})
+		}
+		p.state = stateGround
 	case strings.Contains("DEHMNOPVWXZ[\\]^_", string(r)):
 		p.anywhere(r + 0x40)
 	case 0x30 <= r && r <= 0x4F || 0x51 <= r && r <= 0x57:
@@ -193,6 +211,24 @@ func (p *Parser) doClear() {
 
 func (p *Parser) dispatchCsi() {
 	switch p.intermediate {
+	case "<":
+		seq := parseSemicolonNumSeq(p.params, 1)
+
+		switch seq[0] {
+		case 64:
+			p.out <- p.wrap(ScrollDown(1))
+		case 65:
+			p.out <- p.wrap(ScrollUp(1))
+		default:
+			switch p.final {
+			case 'M':
+				p.out <- p.wrap(MouseDown{X: seq[1] - 1, Y: seq[1] - 1})
+			case 'm':
+				p.out <- p.wrap(MouseUp{X: seq[1] - 1, Y: seq[1] - 1})
+			default:
+				p.out <- p.wrap(Unrecognized("Mouse"))
+			}
+		}
 	case "?":
 		switch p.final {
 		case 'h': // DECSET
@@ -307,8 +343,12 @@ func (p *Parser) dispatchCsi() {
 		case 'u': // Restore Cursor Positon
 			p.out <- p.wrap(SCORC{})
 		default:
+			p.out <- p.wrap(Unrecognized("CSI"))
 			log.Printf("? CSI %s %s", p.params, string(p.final))
 		}
+	default:
+		p.out <- p.wrap(Unrecognized("CSI"))
+		log.Printf("? CSI %s %s %s", p.intermediate, p.params, string(p.final))
 	}
 }
 
