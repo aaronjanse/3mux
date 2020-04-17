@@ -30,7 +30,7 @@ type VTerm struct {
 	Scrollback    [][]render.Char // disabled when using alt screen; char cursor coords are ignored
 	ScrollbackPos int             // ScrollbackPos is the number of lines of scrollback visible
 
-	usingAltScreen bool
+	UsingAltScreen bool
 	screenBackup   [][]render.Char
 
 	NeedsRedraw bool
@@ -87,7 +87,7 @@ func NewVTerm(renderer *render.Renderer, parentSetCursor func(x, y int)) *VTerm 
 		blankLine:        []render.Char{},
 		Screen:           screen,
 		Scrollback:       [][]render.Char{},
-		usingAltScreen:   false,
+		UsingAltScreen:   false,
 		Cursor:           render.Cursor{},
 		usingSlowRefresh: false,
 		renderer:         renderer,

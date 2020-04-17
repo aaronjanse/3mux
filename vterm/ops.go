@@ -12,7 +12,7 @@ func (v *VTerm) ScrollbackReset() {
 
 // ScrollbackUp shifts the screen contents up, with scrollback
 func (v *VTerm) ScrollbackUp() {
-	if v.usingAltScreen {
+	if v.UsingAltScreen {
 		return
 	}
 
@@ -24,7 +24,7 @@ func (v *VTerm) ScrollbackUp() {
 
 // ScrollbackDown shifts the screen contents down, with scrollback
 func (v *VTerm) ScrollbackDown() {
-	if v.usingAltScreen {
+	if v.UsingAltScreen {
 		return
 	}
 
@@ -55,7 +55,7 @@ func (v *VTerm) forceRefreshCursor() {
 // scrollUp shifts screen contents up and adds blank lines to the bottom of the screen.
 // Lines pushed out of view are put in the scrollback.
 func (v *VTerm) scrollUp(n int) {
-	if !v.usingAltScreen {
+	if !v.UsingAltScreen {
 		rows := v.Screen[v.scrollingRegion.top : v.scrollingRegion.top+n]
 		v.Scrollback = append(v.Scrollback, rows...)
 	}

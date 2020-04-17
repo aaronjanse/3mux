@@ -106,15 +106,16 @@ func (v *VTerm) ProcessStream(input *bufio.Reader) {
 				// FIXME: distinguish between these
 				case 1049, 1047, 47:
 					if x.On {
-						if !v.usingAltScreen {
+						if !v.UsingAltScreen {
 							// TODO: reshape if needed
 							v.screenBackup = v.Screen
 						}
 					} else {
-						if v.usingAltScreen {
+						if v.UsingAltScreen {
 							v.Screen = v.screenBackup
 						}
 					}
+					v.UsingAltScreen = x.On
 				default:
 					log.Printf("Unrecognized DEC Private Mode: %d", x.Code)
 				}
