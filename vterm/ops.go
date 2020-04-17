@@ -63,6 +63,9 @@ func (v *VTerm) scrollUp(n int) {
 	newLines := make([][]render.Char, n)
 	for i := range newLines {
 		newLines[i] = make([]render.Char, v.w)
+		for x := range newLines[i] {
+			newLines[i][x].Style = v.Cursor.Style
+		}
 	}
 
 	v.Screen = append(append(append(
@@ -181,7 +184,7 @@ func (v *VTerm) putChar(ch rune, wide bool) {
 
 	// TODO: print to the window based on scrolling position
 	if !v.usingSlowRefresh {
-	v.renderer.HandleCh(positionedChar)
+		v.renderer.HandleCh(positionedChar)
 	}
 
 	if v.Cursor.X < v.w {

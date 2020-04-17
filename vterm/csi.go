@@ -10,12 +10,12 @@ func (v *VTerm) handleEraseInDisplay(directive int) {
 	switch directive {
 	case 0: // clear from Cursor to end of screen
 		for i := v.Cursor.X; i < len(v.Screen[v.Cursor.Y]); i++ {
-			v.Screen[v.Cursor.Y][i] = render.Char{Rune: ' '}
+			v.Screen[v.Cursor.Y][i] = render.Char{Rune: ' ', Style: v.Cursor.Style}
 		}
 		if v.Cursor.Y+1 < len(v.Screen) {
 			for j := v.Cursor.Y + 1; j < len(v.Screen); j++ {
 				for i := 0; i < len(v.Screen[j]); i++ {
-					v.Screen[j][i] = render.Char{Rune: ' '}
+					v.Screen[j][i] = render.Char{Rune: ' ', Style: v.Cursor.Style}
 				}
 			}
 		}
@@ -23,14 +23,14 @@ func (v *VTerm) handleEraseInDisplay(directive int) {
 	case 1: // clear from Cursor to beginning of screen
 		for j := 0; j < v.Cursor.Y; j++ {
 			for i := 0; i < len(v.Screen[j]); i++ {
-				v.Screen[j][i] = render.Char{Rune: ' '}
+				v.Screen[j][i] = render.Char{Rune: ' ', Style: v.Cursor.Style}
 			}
 		}
 		v.RedrawWindow()
 	case 2: // clear entire screen (and move Cursor to top left?)
 		for i := range v.Screen {
 			for j := range v.Screen[i] {
-				v.Screen[i][j] = render.Char{Rune: ' '}
+				v.Screen[i][j] = render.Char{Rune: ' ', Style: v.Cursor.Style}
 			}
 		}
 		v.setCursorPos(0, 0)
@@ -39,7 +39,7 @@ func (v *VTerm) handleEraseInDisplay(directive int) {
 		v.Scrollback = [][]render.Char{}
 		for i := range v.Screen {
 			for j := range v.Screen[i] {
-				v.Screen[i][j] = render.Char{Rune: ' '}
+				v.Screen[i][j] = render.Char{Rune: ' ', Style: v.Cursor.Style}
 			}
 		}
 		v.setCursorPos(0, 0)
