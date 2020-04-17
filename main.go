@@ -50,13 +50,17 @@ func main() {
 	if *cpuprofile != "" {
 		f, err := os.Create(*cpuprofile)
 		if err != nil {
-			fatalShutdownNow(err.Error())
+			log.Fatal(err.Error())
 		}
 		pprof.StartCPUProfile(f)
 		defer pprof.StopCPUProfile()
 	}
 
-	termW, termH, _ = GetTermSize()
+	var err error
+	termW, termH, err = GetTermSize()
+	if err != nil {
+		log.Fatalf("While getting terminal size: %s", err.Error())
+	}
 
 	renderer = render.NewRenderer()
 	go renderer.ListenToQueue()
