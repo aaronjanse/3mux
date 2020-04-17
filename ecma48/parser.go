@@ -74,6 +74,30 @@ func (p *Parser) Parse(input *bufio.Reader, output chan<- Output) error {
 		p.data = append(p.data, r)
 
 		atomic.AddUint64(&p.RuneCounter, 1)
+		if p.keyboardMode && r == 27 {
+			switch input.Buffered() {
+			case 0:
+				p.out <- p.wrap(Esc{})
+				continue
+			case 1:
+				r, _, err := input.ReadRune()
+				if err != nil {
+					return err
+				}
+				p.data = append(p.data, r)
+
+				if 'a' <= r && r <= 'z' {
+					p.out <- p.wrap(AltChar{Char: unicode.ToUpper(r)})
+				} else if 'A' <= r && r <= 'Z' {
+					p.out <- p.wrap(AltShiftChar{Char: r})
+				} else {
+					p.out <- p.wrap(AltChar{Char: r})
+				}
+				p.state = stateGround
+				continue
+			}
+		}
+
 		p.anywhere(r)
 	}
 }
@@ -100,6 +124,7 @@ const (
 )
 
 func (p *Parser) anywhere(r rune) {
+	switchedState := true
 	switch r {
 	case 0x00:
 	case 0x1B:
@@ -131,6 +156,10 @@ func (p *Parser) anywhere(r rune) {
 			log.Printf("? STATE %d", p.state)
 			p.state = stateGround
 		}
+		switchedState = false
+	}
+	if switchedState {
+		p.data = []rune{r}
 	}
 }
 
@@ -168,14 +197,6 @@ func (p *Parser) stateGround(r rune) {
 
 func (p *Parser) stateEscape(r rune) {
 	switch {
-	case p.keyboardMode &&
-		('\n' == r || '\r' == r || '0' <= r && r <= '9' || 'a' <= r && r <= 'z' || 'A' <= r && r <= 'Z'):
-		if 'A' <= r && r <= 'Z' {
-			p.out <- p.wrap(AltShiftChar{Char: r})
-		} else {
-			p.out <- p.wrap(AltChar{Char: unicode.ToUpper(r)})
-		}
-		p.state = stateGround
 	case strings.Contains("DEHMNOPVWXZ[\\]^_", string(r)):
 		p.anywhere(r + 0x40)
 	case 0x30 <= r && r <= 0x4F || 0x51 <= r && r <= 0x57:

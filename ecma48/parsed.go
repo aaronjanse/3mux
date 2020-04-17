@@ -17,6 +17,8 @@ type EOF struct{}
 // Unrecognized is when we don't understand the input
 type Unrecognized string
 
+type Esc struct{}
+
 // Char is a single character that may occupy multiple cells
 type Char struct {
 	Rune   rune
