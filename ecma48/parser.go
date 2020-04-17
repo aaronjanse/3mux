@@ -237,6 +237,7 @@ func (p *Parser) stateOscString(r rune) {
 	// TODO: https://askubuntu.com/a/1141814
 	switch {
 	case 0x07 == r: // FIXME: this is weird
+		p.out <- p.wrap(Unrecognized("OSC"))
 		p.state = stateGround
 	}
 }
