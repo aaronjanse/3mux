@@ -154,6 +154,11 @@ func (v *VTerm) ProcessStream(input *bufio.Reader) {
 				newLines := make([][]render.Char, x.N)
 				for i := range newLines {
 					newLines[i] = make([]render.Char, v.w)
+					if v.Cursor.Y == v.scrollingRegion.top {
+						for x := range newLines[i] {
+							newLines[i][x].Style = v.Cursor.Style
+						}
+					}
 				}
 
 				newLines = append(append(
