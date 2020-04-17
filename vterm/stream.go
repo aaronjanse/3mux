@@ -49,10 +49,10 @@ func (v *VTerm) ProcessStream(input *bufio.Reader) {
 				p = <-v.ChangePause
 			}
 		case output := <-stdout:
-			v.runeCounter++
+			v.runeCounter += uint64(len(output.Raw))
 
 			lag := atomic.LoadUint64(&parser.RuneCounter) - v.runeCounter
-			if lag > uint64(v.w*v.h*4) {
+			if lag > uint64(v.w*v.h) {
 				v.useSlowRefresh()
 			} else {
 				v.useFastRefresh()

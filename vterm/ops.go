@@ -40,6 +40,12 @@ func (v *VTerm) ScrollbackDown() {
 
 // RefreshCursor refreshes the ncurses cursor position
 func (v *VTerm) RefreshCursor() {
+	if !v.usingSlowRefresh {
+		v.forceRefreshCursor()
+	}
+}
+
+func (v *VTerm) forceRefreshCursor() {
 	if v.IsPaused {
 		return
 	}
@@ -174,7 +180,9 @@ func (v *VTerm) putChar(ch rune, wide bool) {
 	positionedChar.Cursor.Y += v.y
 
 	// TODO: print to the window based on scrolling position
+	if !v.usingSlowRefresh {
 	v.renderer.HandleCh(positionedChar)
+	}
 
 	if v.Cursor.X < v.w {
 		v.Cursor.X += rWidth
@@ -186,6 +194,12 @@ func (v *VTerm) putChar(ch rune, wide bool) {
 // RedrawWindow redraws the screen into ncurses from scratch.
 // This should be reserved for operations not yet formalized into a generic, efficient function.
 func (v *VTerm) RedrawWindow() {
+	if !v.usingSlowRefresh {
+		v.forceRedrawWindow()
+	}
+}
+
+func (v *VTerm) forceRedrawWindow() {
 	if v.ScrollbackPos < v.h {
 		for y := 0; y < v.h-v.ScrollbackPos; y++ {
 			for x := 0; x < v.w; x++ {

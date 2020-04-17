@@ -73,7 +73,6 @@ func (p *Parser) Parse(input *bufio.Reader, output chan<- Output) error {
 
 		p.data = append(p.data, r)
 
-		atomic.AddUint64(&p.RuneCounter, 1)
 		if p.keyboardMode && r == 27 {
 			switch input.Buffered() {
 			case 0:
@@ -103,6 +102,7 @@ func (p *Parser) Parse(input *bufio.Reader, output chan<- Output) error {
 }
 
 func (p *Parser) wrap(x Parsed) Output {
+	atomic.AddUint64(&p.RuneCounter, uint64(len(p.data)))
 	output := Output{
 		Raw:    p.data,
 		Parsed: x,

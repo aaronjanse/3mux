@@ -20,7 +20,7 @@ func (v *VTerm) useSlowRefresh() {
 	v.usingSlowRefresh = true
 
 	go func() {
-		ticker := time.NewTicker(time.Millisecond * 1000)
+		ticker := time.NewTicker(time.Millisecond * 250)
 
 		for range ticker.C {
 			if !v.usingSlowRefresh || v.IsPaused {
@@ -28,15 +28,12 @@ func (v *VTerm) useSlowRefresh() {
 				return
 			}
 
-			// v.RedrawWindow()
+			v.forceRedrawWindow()
+			v.forceRefreshCursor()
 		}
 	}()
 }
 
 func (v *VTerm) useFastRefresh() {
-	if !v.usingSlowRefresh {
-		return
-	}
-
 	v.usingSlowRefresh = false
 }
