@@ -173,6 +173,9 @@ func (v *VTerm) ProcessStream(input *bufio.Reader) {
 				newLines := make([][]render.Char, x.N)
 				for i := range newLines {
 					newLines[i] = make([]render.Char, v.w)
+					for x := range newLines[i] {
+						newLines[i][x].Style = v.Cursor.Style
+					}
 				}
 
 				v.Screen = append(append(append(
