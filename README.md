@@ -25,6 +25,7 @@
 |<kbd>Alt+R</kbd> | Enter resize mode. Resize selected pane with arrow keys or <kbd>h/j/k/l</kbd>. Exit using any other key(s)
 |<kbd>Alt+/</kbd> | Enter search mode. Type query, navigate between results with arrow keys or <kbd>n/N</kbd>
 |<kbd>Scroll</kbd> | Move through scrollback
+|<kbd>Shift</kbd> | Many terminal emulators support selecting text while pressing this key
 
 
 ### Supported tmux Bindings
