@@ -112,11 +112,17 @@ func resize(w, h int) {
 }
 
 func shutdownNow() {
+	if *cpuprofile != "" {
+		pprof.StopCPUProfile()
+	}
 	Shutdown()
 	os.Exit(0)
 }
 
 func fatalShutdownNow(where string) {
+	if *cpuprofile != "" {
+		pprof.StopCPUProfile()
+	}
 	Shutdown()
 	fmt.Println("Error during:", where)
 	fmt.Println("Tiling state:", root.serialize())
