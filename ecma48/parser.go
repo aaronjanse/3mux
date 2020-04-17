@@ -103,6 +103,11 @@ func (p *Parser) Parse(input *bufio.Reader, output chan<- Output) error {
 
 func (p *Parser) wrap(x Parsed) Output {
 	atomic.AddUint64(&p.RuneCounter, uint64(len(p.data)))
+	// i := 1000000
+	// if p.RuneCounter-uint64(len(p.data)) <= uint64(i) && p.RuneCounter > uint64(i) {
+	// 	fmt.Print("!")
+	// 	atomic.StoreUint64(&p.RuneCounter, 0)
+	// }
 	output := Output{
 		Raw:    p.data,
 		Parsed: x,
