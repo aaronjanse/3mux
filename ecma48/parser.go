@@ -298,6 +298,9 @@ func (p *Parser) dispatchCsi() {
 		}
 	case "":
 		switch p.final {
+		case '@':
+			seq := parseSemicolonNumSeq(p.params, 1)
+			p.out <- p.wrap(ICH{seq[0]})
 		case 'A', 'B', 'C', 'D':
 			seq := parseSemicolonNumSeq(p.params, 1)
 			n := seq[0]
@@ -359,16 +362,20 @@ func (p *Parser) dispatchCsi() {
 			seq := parseSemicolonNumSeq(p.params, 1)
 			p.out <- p.wrap(DL{N: seq[0]})
 		case 'n': // Device Status Report (TODO)
-			// seq := parseSemicolonNumSeq(p.params, 0)
-			// switch seq[0] {
-			// case 6:
-			// 	response := fmt.Sprintf("\x1b[%d;%dR", v.Cursor.Y+1, v.Cursor.X+1)
-			// 	for _, r := range response {
-			// 		v.out <- r
-			// 	}
-			// default:
-			// 	log.Println("Unrecognized DSR code", seq)
-			// }
+		// seq := parseSemicolonNumSeq(p.params, 0)
+		// switch seq[0] {
+		// case 6:
+		// 	response := fmt.Sprintf("\x1b[%d;%dR", v.Cursor.Y+1, v.Cursor.X+1)
+		// 	for _, r := range response {
+		// 		v.out <- r
+		// 	}
+		// default:
+		// 	log.Println("Unrecognized DSR code", seq)
+		// }
+
+		case 'P': // Delete Characters (DCH)
+			seq := parseSemicolonNumSeq(p.params, 1)
+			p.out <- p.wrap(DCH{seq[0]})
 		case 'r': // Set Scrolling Region
 			seq := parseSemicolonNumSeq(p.params, 1)
 			if len(seq) > 1 {
@@ -392,11 +399,11 @@ func (p *Parser) dispatchCsi() {
 			p.out <- p.wrap(SCORC{})
 		default:
 			p.out <- p.wrap(Unrecognized("CSI"))
-			log.Printf("? CSI %s %s", p.params, string(p.final))
+			log.Printf("? CSI , %s, %s", p.params, string(p.final))
 		}
 	default:
 		p.out <- p.wrap(Unrecognized("CSI"))
-		log.Printf("? CSI %s %s %s", p.intermediate, p.params, string(p.final))
+		log.Printf("? CSI %s, %s, %s", p.intermediate, p.params, string(p.final))
 	}
 }
 

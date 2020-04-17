@@ -58,6 +58,8 @@ func (v *VTerm) ProcessStream(input *bufio.Reader) {
 				v.useFastRefresh()
 			}
 
+			// log.Printf(":: %q", output.Raw)
+
 			switch x := output.Parsed.(type) {
 			case ecma48.EOF:
 				return
@@ -67,6 +69,7 @@ func (v *VTerm) ProcessStream(input *bufio.Reader) {
 				if v.Cursor.X > 0 {
 					v.shiftCursorX(-1)
 				}
+				v.RedrawWindow()
 			case ecma48.Newline:
 				if v.Cursor.Y == v.scrollingRegion.bottom {
 					v.scrollUp(1)
@@ -77,8 +80,27 @@ func (v *VTerm) ProcessStream(input *bufio.Reader) {
 				v.setCursorX(0)
 			case ecma48.Tab:
 				tabWidth := 8 // FIXME
-				v.Cursor.X += tabWidth - (v.Cursor.X % tabWidth)
+				v.shiftCursorX(tabWidth - (v.Cursor.X % tabWidth))
 
+			case ecma48.ICH: // insert characters
+				w := len(v.Screen[v.Cursor.Y])
+				new := make([]render.Char, w)
+				copy(new[:v.Cursor.X], v.Screen[v.Cursor.Y][:v.Cursor.X])
+				new = append(new, make([]render.Char, x.N)...)
+				new = append(new, v.Screen[v.Cursor.Y][v.Cursor.X:]...)
+				new = new[:w]
+				v.Screen[v.Cursor.Y] = new
+				v.RedrawWindow() // FIXME inefficient
+			case ecma48.DCH: // delete characters
+				if x.N > v.w-v.Cursor.X {
+					x.N = v.w - v.Cursor.X // FIXME: verify that we don't need +/- 1
+				}
+				new := make([]render.Char, len(v.Screen[v.Cursor.Y]))
+				copy(new[:v.Cursor.X], v.Screen[v.Cursor.Y][:v.Cursor.X])
+				new = append(new, v.Screen[v.Cursor.Y][v.Cursor.X+x.N:]...)
+				new = append(new, make([]render.Char, x.N)...)
+				v.Screen[v.Cursor.Y] = new
+				v.RedrawWindow() // FIXME inefficient
 			case ecma48.PrivateDEC:
 				switch x.Code {
 				// FIXME: distinguish between these
@@ -197,6 +219,8 @@ func (v *VTerm) ProcessStream(input *bufio.Reader) {
 			case ecma48.StyleUnderline:
 				v.Cursor.Style.Underline = bool(x)
 
+			case ecma48.Unrecognized:
+				log.Printf("?? %q", output.Raw)
 			default:
 				log.Printf("Unrecognized parser output: %+v", x)
 			}

@@ -115,8 +115,18 @@ type IL struct {
 	N int
 }
 
+// ICH (Insert Characters)
+type ICH struct {
+	N int
+}
+
 // DL (Delete Lines)
 type DL struct {
+	N int
+}
+
+// DCH (Delete Characters)
+type DCH struct {
 	N int
 }
 

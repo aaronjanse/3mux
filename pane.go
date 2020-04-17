@@ -198,11 +198,7 @@ func (t *Pane) handleStdin(in string) {
 		t.displayStatusText(t.searchText)
 	} else {
 		t.vterm.ScrollbackReset()
-		data := []byte(in)
-		if len(data) == 1 && data[0] <= 27 {
-			data = append(data, 0)
-		}
-		_, err := t.ptmx.Write(data)
+		_, err := t.ptmx.Write([]byte(in))
 		if err != nil {
 			fatalShutdownNow("writing to shell stdin: " + err.Error())
 		}
