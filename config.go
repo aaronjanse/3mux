@@ -1,6 +1,8 @@
 package main
 
 import (
+	"log"
+
 	"github.com/aaronjanse/3mux/wm"
 )
 
@@ -63,20 +65,21 @@ func init() {
 		"debugSlowMode": []string{"Alt+X"},
 		"search":        []string{"Alt+/"},
 
-		"moveWindowUp":    []string{"Alt+Shift+K", "Alt+Shift+Up"},
-		"moveWindowDown":  []string{"Alt+Shift+J", "Alt+Shift+Down"},
-		"moveWindowLeft":  []string{"Alt+Shift+H", "Alt+Shift+Left"},
-		"moveWindowRight": []string{"Alt+Shift+L", "Alt+Shift+Right"},
+		"moveWindow(Up)":    []string{"Alt+Shift+K", "Alt+Shift+Up"},
+		"moveWindow(Down)":  []string{"Alt+Shift+J", "Alt+Shift+Down"},
+		"moveWindow(Left)":  []string{"Alt+Shift+H", "Alt+Shift+Left"},
+		"moveWindow(Right)": []string{"Alt+Shift+L", "Alt+Shift+Right"},
 
-		"moveSelectionUp":    []string{"Alt+K", "Alt+Up"},
-		"moveSelectionDown":  []string{"Alt+J", "Alt+Down"},
-		"moveSelectionLeft":  []string{"Alt+H", "Alt+Left"},
-		"moveSelectionRight": []string{"Alt+L", "Alt+Right"},
+		"moveSelection(Up)":    []string{"Alt+K", "Alt+Up"},
+		"moveSelection(Down)":  []string{"Alt+J", "Alt+Down"},
+		"moveSelection(Left)":  []string{"Alt+H", "Alt+Left"},
+		"moveSelection(Right)": []string{"Alt+L", "Alt+Right"},
 	})
 }
 
 func seiveConfigEvents(u *wm.Universe, human string) bool {
 	if fn, ok := config.bindings[human]; ok {
+		log.Println(human)
 		fn(u)
 		return true
 	}

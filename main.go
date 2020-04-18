@@ -62,7 +62,8 @@ func main() {
 		log.Fatalf("While getting terminal size: %s", err.Error())
 	}
 
-	renderer = render.NewRenderer()
+	renderer := render.NewRenderer()
+	renderer.Resize(termW, termH)
 	go renderer.ListenToQueue()
 
 	root := wm.NewUniverse(renderer, func(err error) {

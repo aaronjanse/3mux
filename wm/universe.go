@@ -25,7 +25,7 @@ func NewUniverse(renderer *render.Renderer, onDeath func(error), renderRect Rect
 	return u
 }
 
-func (u *Universe) serialize() string {
+func (u *Universe) Serialize() string {
 	out := fmt.Sprintf("Universe[%d]", u.selectionIdx)
 
 	out += "("

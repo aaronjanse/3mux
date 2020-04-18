@@ -23,7 +23,6 @@ func newWorkspace(renderer *render.Renderer, onDeath func(error), renderRect Rec
 		newPane:      newPane,
 	}
 	w.contents = newSplit(renderer, w.handleChildDeath, renderRect, false, nil, newPane)
-	w.contents.addPane()
 	return w
 }
 
