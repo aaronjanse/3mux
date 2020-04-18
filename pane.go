@@ -73,10 +73,12 @@ func getShellPath() string {
 }
 
 func newTerm(selected bool) *Pane {
+	cmd := exec.Command(getShellPath())
+	cmd.Env = append(os.Environ(), "TERM=xterm-256color") // FIXME we should decide whether we want 256color in $TERM
 	t := &Pane{
 		id:       rand.Intn(10),
 		selected: selected,
-		cmd:      exec.Command(getShellPath()),
+		cmd:      cmd,
 	}
 
 	ptmx, err := pty.Start(t.cmd)
