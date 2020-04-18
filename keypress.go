@@ -6,10 +6,8 @@ import (
 	"log"
 	"os"
 	"os/exec"
-	"os/signal"
 	"strconv"
 	"strings"
-	"syscall"
 
 	"github.com/aaronjanse/3mux/ecma48"
 	"golang.org/x/crypto/ssh/terminal"
@@ -52,16 +50,6 @@ func Listen(callback func(human string, obj ecma48.Output)) {
 	fmt.Print("\x1b[?1l")
 
 	defer Shutdown()
-
-	go func() {
-		for {
-			c := make(chan os.Signal, 1)
-			signal.Notify(c, syscall.SIGWINCH)
-			<-c
-			w, h, _ := GetTermSize()
-			resize(w, h)
-		}
-	}()
 
 	stdin := make(chan ecma48.Output, 64)
 

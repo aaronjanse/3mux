@@ -6,17 +6,15 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
-	runtimeDebug "runtime/debug"
+	"os/signal"
 	"runtime/pprof"
+	"syscall"
 
 	"github.com/aaronjanse/3mux/ecma48"
+	"github.com/aaronjanse/3mux/pane"
 	"github.com/aaronjanse/3mux/render"
+	"github.com/aaronjanse/3mux/wm"
 )
-
-// Rect is a rectangle with an origin x, origin y, width, and height
-type Rect struct {
-	x, y, w, h int
-}
 
 var termW, termH int
 
@@ -26,9 +24,11 @@ var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
 var writeLogs = flag.Bool("log", false, "write logs to ./logs.txt")
 
 func main() {
+	shutdown := make(chan bool)
+
 	defer func() {
 		if r := recover(); r != nil {
-			fatalShutdownNow("main.go\n" + r.(error).Error())
+			log.Fatal(r.(error))
 		}
 	}()
 
@@ -65,54 +65,32 @@ func main() {
 	renderer = render.NewRenderer()
 	go renderer.ListenToQueue()
 
-	root = Universe{
-		workspaces: []*Workspace{
-			&Workspace{
-				contents: &Split{
-					verticallyStacked: false,
-					selectionIdx:      0,
-					elements: []Node{
-						Node{
-							size:     1,
-							contents: newTerm(true),
-						},
-					}},
-				doFullscreen: false,
-			},
-		},
-		selectionIdx: 0,
-	}
+	root := wm.NewUniverse(renderer, func(err error) {
+		shutdown <- true
+	}, wm.Rect{X: 0, Y: 0, W: termW, H: termH}, pane.NewPane)
 
-	defer root.kill()
-
-	resize(termW, termH)
-
-	if config.statusBar {
-		debug(root.serialize())
-	}
+	defer root.Kill()
 
 	if demoMode {
 		go doDemo()
 	}
 
-	Listen(handleInput)
-}
+	go func() {
+		for {
+			c := make(chan os.Signal, 1)
+			signal.Notify(c, syscall.SIGWINCH)
+			<-c
+			w, h, _ := GetTermSize()
+			root.SetRenderRect(0, 0, w, h)
+		}
+	}()
 
-func resize(w, h int) {
-	termW = w
-	termH = h
+	go Listen(func(human string, obj ecma48.Output) {
+		handleInput(root, human, obj)
+	})
+	defer shutdownNow()
 
-	renderer.Resize(w, h)
-
-	var wmH int
-	if config.statusBar {
-		wmH = h - 1
-	} else {
-		wmH = h
-	}
-	root.setRenderRect(0, 0, w, wmH)
-
-	renderer.HardRefresh()
+	<-shutdown
 }
 
 func shutdownNow() {
@@ -123,31 +101,18 @@ func shutdownNow() {
 	os.Exit(0)
 }
 
-func fatalShutdownNow(where string) {
-	if *cpuprofile != "" {
-		pprof.StopCPUProfile()
-	}
-	Shutdown()
-	fmt.Println("Error during:", where)
-	fmt.Println("Tiling state:", root.serialize())
-	fmt.Println(string(runtimeDebug.Stack()))
-	fmt.Println()
-	fmt.Println("Please submit a bug report with this stack trace to https://github.com/aaronjanse/3mux/issues")
-	os.Exit(0)
-}
-
 var resizeMode bool
 
-func getDirectionFromString(s string) Direction {
+func getDirectionFromString(s string) wm.Direction {
 	switch s {
 	case "Up":
-		return Up
+		return wm.Up
 	case "Down":
-		return Down
+		return wm.Down
 	case "Left":
-		return Left
+		return wm.Left
 	case "Right":
-		return Right
+		return wm.Right
 	default:
 		panic(fmt.Errorf("invalid direction: %v", s))
 	}

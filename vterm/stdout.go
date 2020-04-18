@@ -28,7 +28,7 @@ const (
 	StateOscString
 )
 
-func (v *VTerm) ProcessStream(input *bufio.Reader) {
+func (v *VTerm) ProcessStdout(input *bufio.Reader) {
 	stdout := make(chan ecma48.Output, 3200000)
 
 	parser := ecma48.NewParser(false)

@@ -1,115 +1,45 @@
 package main
 
 import (
-	"log"
-	"strings"
+	"github.com/aaronjanse/3mux/wm"
 )
 
 // Config stores all user configuration values
 type Config struct {
 	statusBar bool
-	bindings  map[string]func()
+	bindings  map[string]func(*wm.Universe)
 }
 
-var configFuncBindings = map[string]func(){
-	"newWindow": func() {
-		if !root.workspaces[root.selectionIdx].doFullscreen {
-			root.AddPane()
-			root.simplify()
-			root.refreshRenderRect()
-		}
-	},
-	"killWindow": func() {
-		if root.workspaces[root.selectionIdx].doFullscreen {
-			unfullscreen()
-		}
-		killWindow()
-		root.simplify()
-		root.refreshRenderRect()
-	},
-	"resize": func() {
-		if !root.workspaces[root.selectionIdx].doFullscreen {
-			resizeMode = true
-		}
-	},
-	"fullscreen": func() {
-		if root.workspaces[root.selectionIdx].doFullscreen {
-			unfullscreen()
-		} else {
-			fullscreen()
-		}
-		root.simplify()
-		root.refreshRenderRect()
-	},
-	"debugSlowMode": func() {
-		log.Println("slowmo enabled!")
-		if getSelection().getContainer().(*Pane).vterm.DebugSlowMode {
-			dbug := ""
-			scr := getSelection().getContainer().(*Pane).vterm.Screen
-			for _, row := range scr {
-				for _, ch := range row {
-					dbug += string(ch.Rune)
-				}
-				dbug += "\n"
-			}
-			log.Println("=== SCREEN OUTPUT ===")
-			log.Println(dbug)
-			getSelection().getContainer().(*Pane).vterm.DebugSlowMode = false
-		} else {
-			getSelection().getContainer().(*Pane).vterm.DebugSlowMode = true
-		}
-	},
-	"search": search,
-	"moveWindowUp": func() {
-		if !root.workspaces[root.selectionIdx].doFullscreen {
-			moveWindow(Up)
-			root.simplify()
-			root.refreshRenderRect()
-		}
-	},
-	"moveWindowDown": func() {
-		if !root.workspaces[root.selectionIdx].doFullscreen {
-			moveWindow(Down)
-			root.simplify()
-			root.refreshRenderRect()
-		}
-	},
-	"moveWindowLeft": func() {
-		if !root.workspaces[root.selectionIdx].doFullscreen {
-			moveWindow(Left)
-			root.simplify()
-			root.refreshRenderRect()
-		}
-	},
-	"moveWindowRight": func() {
-		if !root.workspaces[root.selectionIdx].doFullscreen {
-			moveWindow(Right)
-		}
-	},
-	"moveSelectionUp": func() {
-		if !root.workspaces[root.selectionIdx].doFullscreen {
-			moveSelection(Up)
-		}
-	},
-	"moveSelectionDown": func() {
-		if !root.workspaces[root.selectionIdx].doFullscreen {
-			moveSelection(Down)
-		}
-	},
-	"moveSelectionLeft": func() {
-		if !root.workspaces[root.selectionIdx].doFullscreen {
-			moveSelection(Left)
-		}
-	},
-	"moveSelectionRight": func() {
-		if !root.workspaces[root.selectionIdx].doFullscreen {
-			moveSelection(Right)
-		}
-	},
+var configFuncBindings = map[string]func(*wm.Universe){
+	"newWindow":  func(u *wm.Universe) { u.AddPane() },
+	"killWindow": func(u *wm.Universe) { u.KillPane() },
+	"fullscreen": func(u *wm.Universe) { u.ToggleFullscreen() },
+	"search":     func(u *wm.Universe) { u.ToggleSearch() },
+
+	"resize(Up)":    func(u *wm.Universe) { u.ResizePane(wm.Up) },
+	"resize(Down)":  func(u *wm.Universe) { u.ResizePane(wm.Down) },
+	"resize(Left)":  func(u *wm.Universe) { u.ResizePane(wm.Left) },
+	"resize(Right)": func(u *wm.Universe) { u.ResizePane(wm.Right) },
+
+	"moveWindow(Up)":    func(u *wm.Universe) { u.MoveWindow(wm.Up) },
+	"moveWindow(Down)":  func(u *wm.Universe) { u.MoveWindow(wm.Down) },
+	"moveWindow(Left)":  func(u *wm.Universe) { u.MoveWindow(wm.Left) },
+	"moveWindow(Right)": func(u *wm.Universe) { u.MoveWindow(wm.Right) },
+
+	"moveSelection(Up)":    func(u *wm.Universe) { u.MoveSelection(wm.Up) },
+	"moveSelection(Down)":  func(u *wm.Universe) { u.MoveSelection(wm.Down) },
+	"moveSelection(Left)":  func(u *wm.Universe) { u.MoveSelection(wm.Left) },
+	"moveSelection(Right)": func(u *wm.Universe) { u.MoveSelection(wm.Right) },
+
+	"cycleSelection(Forward)":  func(u *wm.Universe) { u.CycleSelection(true) },
+	"cycleSelection(Backward)": func(u *wm.Universe) { u.CycleSelection(false) },
+
+	"splitPane(Vertical)":   func(u *wm.Universe) { u.AddPaneTmux(true) },
+	"splitPane(Horizontal)": func(u *wm.Universe) { u.AddPaneTmux(false) },
 }
 
-func compileBindings(sourceBindings map[string][]string) map[string]func() {
-	compiledBindings := map[string]func(){}
+func compileBindings(sourceBindings map[string][]string) map[string]func(*wm.Universe) {
+	compiledBindings := map[string]func(*wm.Universe){}
 	for funcName, keyCodes := range sourceBindings {
 		fn := configFuncBindings[funcName]
 		for _, keyCode := range keyCodes {
@@ -145,78 +75,10 @@ func init() {
 	})
 }
 
-func seiveConfigEvents(human string) bool {
+func seiveConfigEvents(u *wm.Universe, human string) bool {
 	if fn, ok := config.bindings[human]; ok {
-		fn()
+		fn(u)
 		return true
 	}
 	return false
-}
-
-func executeOperationCode(s string) {
-	sections := strings.Split(s, "(")
-
-	funcName := sections[0]
-
-	var parametersText string
-	if len(sections) < 2 {
-		parametersText = ""
-	} else {
-		parametersText = strings.TrimRight(sections[1], ")")
-	}
-	params := strings.Split(parametersText, ",")
-	for idx, param := range params {
-		params[idx] = strings.TrimSpace(param)
-	}
-
-	if root.workspaces[root.selectionIdx].doFullscreen {
-		switch funcName {
-		case "fullscreen":
-			unfullscreen()
-		case "killWindow":
-			unfullscreen()
-			killWindow()
-		case "search":
-			search()
-		}
-	} else {
-		switch funcName {
-		case "search":
-			search()
-		case "fullscreen":
-			fullscreen()
-		case "newWindow":
-			root.AddPane()
-		case "moveWindow":
-			d := getDirectionFromString(params[0])
-			moveWindow(d)
-		case "moveSelection":
-			d := getDirectionFromString(params[0])
-			moveSelection(d)
-		case "killWindow":
-			killWindow()
-		case "resize":
-			resizeMode = true
-		case "debugSlowMode":
-			log.Println("slowmo enabled!")
-			if getSelection().getContainer().(*Pane).vterm.DebugSlowMode {
-				dbug := ""
-				scr := getSelection().getContainer().(*Pane).vterm.Screen
-				for _, row := range scr {
-					for _, ch := range row {
-						dbug += string(ch.Rune)
-					}
-					dbug += "\n"
-				}
-				log.Println("=== SCREEN OUTPUT ===")
-				log.Println(dbug)
-				getSelection().getContainer().(*Pane).vterm.DebugSlowMode = false
-			} else {
-				getSelection().getContainer().(*Pane).vterm.DebugSlowMode = true
-			}
-		default:
-			panic(funcName)
-		}
-
-	}
 }
