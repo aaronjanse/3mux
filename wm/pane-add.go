@@ -77,7 +77,8 @@ func (s *split) addPaneTmux(vert bool) {
 	case Node:
 		s.elements[s.selectionIdx].contents = newSplit(
 			s.renderer, s.handleChildDeath, x.GetRenderRect(), vert,
-			[]Node{x, s.newPane(s.renderer)}, s.newPane,
+			1, []Node{x, s.newPane(s.renderer)}, s.newPane,
 		)
+		s.refreshRenderRect(false)
 	}
 }

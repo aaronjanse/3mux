@@ -1,8 +1,6 @@
 package main
 
 import (
-	"log"
-
 	"github.com/aaronjanse/3mux/wm"
 )
 
@@ -58,9 +56,9 @@ var config = Config{
 
 func init() {
 	config.bindings = compileBindings(map[string][]string{
-		"newWindow":     []string{"Alt+N", "Alt+Enter"},
-		"killWindow":    []string{"Alt+Shift+Q"},
-		"resize":        []string{"Alt+R"},
+		"newWindow":  []string{"Alt+N", "Alt+Enter"},
+		"killWindow": []string{"Alt+Shift+Q"},
+		// "resize":        []string{"Alt+R"},
 		"fullscreen":    []string{"Alt+Shift+F"},
 		"debugSlowMode": []string{"Alt+X"},
 		"search":        []string{"Alt+/"},
@@ -79,7 +77,6 @@ func init() {
 
 func seiveConfigEvents(u *wm.Universe, human string) bool {
 	if fn, ok := config.bindings[human]; ok {
-		log.Println(human)
 		fn(u)
 		return true
 	}

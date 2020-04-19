@@ -25,7 +25,7 @@ func (s *split) moveSelection(d Direction) (bubble bool) {
 			case alignedBackward:
 				s.selectionIdx--
 			default:
-				panic("should never happen")
+				return true
 			}
 		}
 	case Node:

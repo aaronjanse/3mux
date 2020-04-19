@@ -1,123 +1,111 @@
 package wm
 
-// func drawSelectionBorder(r Rect) {
-// 	leftBorder := r.x > 0
-// 	rightBorder := r.x+r.w+1 < termW
-// 	topBorder := r.y > 0
-// 	bottomBorder := r.y+r.h+1 < termH
+import (
+	"github.com/aaronjanse/3mux/ecma48"
+	"github.com/aaronjanse/3mux/render"
+)
 
-// 	style := render.Style{
-// 		Fg: ecma48.Color{
-// 			ColorMode: ecma48.ColorBit3Normal,
-// 			Code:      6,
-// 		},
-// 	}
+func (s *split) drawSelectionBorder() {
+	if !s.selected {
+		return
+	}
 
-// 	// draw lines
-// 	if leftBorder {
-// 		for i := 0; i < r.h; i++ {
-// 			ch := render.PositionedChar{
-// 				Rune: '│',
-// 				Cursor: render.Cursor{
-// 					X:     r.x - 1,
-// 					Y:     r.y + i,
-// 					Style: style,
-// 				},
-// 			}
+	r := s.elements[s.selectionIdx].contents.GetRenderRect()
 
-// 			renderer.HandleCh(ch)
-// 		}
-// 	}
-// 	if rightBorder {
-// 		for i := 0; i < r.h; i++ {
-// 			ch := render.PositionedChar{
-// 				Rune: '│',
-// 				Cursor: render.Cursor{
-// 					X:     r.x + r.w,
-// 					Y:     r.y + i,
-// 					Style: style,
-// 				},
-// 			}
+	style := render.Style{
+		Fg: ecma48.Color{
+			ColorMode: ecma48.ColorBit3Normal,
+			Code:      6,
+		},
+	}
 
-// 			renderer.HandleCh(ch)
-// 		}
-// 	}
-// 	if topBorder {
-// 		for i := 0; i <= r.w; i++ {
-// 			ch := render.PositionedChar{
-// 				Rune: '─',
-// 				Cursor: render.Cursor{
-// 					X:     r.x + i,
-// 					Y:     r.y - 1,
-// 					Style: style,
-// 				},
-// 			}
+	for i := 0; i <= r.H; i++ {
+		ch := render.PositionedChar{
+			Rune: '│',
+			Cursor: render.Cursor{
+				X:     r.X - 1,
+				Y:     r.Y + i,
+				Style: style,
+			},
+		}
 
-// 			renderer.HandleCh(ch)
-// 		}
-// 	}
-// 	if bottomBorder {
-// 		for i := 0; i <= r.w; i++ {
-// 			ch := render.PositionedChar{
-// 				Rune: '─',
-// 				Cursor: render.Cursor{
-// 					X:     r.x + i,
-// 					Y:     r.y + r.h,
-// 					Style: style,
-// 				},
-// 			}
+		s.renderer.HandleCh(ch)
+	}
+	for i := 0; i <= r.H; i++ {
+		ch := render.PositionedChar{
+			Rune: '│',
+			Cursor: render.Cursor{
+				X:     r.X + r.W,
+				Y:     r.Y + i,
+				Style: style,
+			},
+		}
 
-// 			renderer.HandleCh(ch)
-// 		}
-// 	}
+		s.renderer.HandleCh(ch)
+	}
+	for i := 0; i <= r.W; i++ {
+		ch := render.PositionedChar{
+			Rune: '─',
+			Cursor: render.Cursor{
+				X:     r.X + i,
+				Y:     r.Y - 1,
+				Style: style,
+			},
+		}
 
-// 	// draw corners
-// 	if topBorder && leftBorder {
-// 		ch := render.PositionedChar{
-// 			Rune: '┌',
-// 			Cursor: render.Cursor{
-// 				X:     r.x - 1,
-// 				Y:     r.y - 1,
-// 				Style: style,
-// 			},
-// 		}
+		s.renderer.HandleCh(ch)
+	}
+	for i := 0; i <= r.W; i++ {
+		ch := render.PositionedChar{
+			Rune: '─',
+			Cursor: render.Cursor{
+				X:     r.X + i,
+				Y:     r.Y + r.H,
+				Style: style,
+			},
+		}
 
-// 		renderer.HandleCh(ch)
-// 	}
-// 	if topBorder && rightBorder {
-// 		ch := render.PositionedChar{
-// 			Rune: '┐',
-// 			Cursor: render.Cursor{
-// 				X:     r.x + r.w,
-// 				Y:     r.y - 1,
-// 				Style: style,
-// 			},
-// 		}
+		s.renderer.HandleCh(ch)
+	}
 
-// 		renderer.HandleCh(ch)
-// 	}
-// 	if bottomBorder && leftBorder {
-// 		ch := render.PositionedChar{
-// 			Rune: '└',
-// 			Cursor: render.Cursor{
-// 				X:     r.x - 1,
-// 				Y:     r.y + r.h,
-// 				Style: style,
-// 			},
-// 		}
+	ch := render.PositionedChar{
+		Rune: '┌',
+		Cursor: render.Cursor{
+			X:     r.X - 1,
+			Y:     r.Y - 1,
+			Style: style,
+		},
+	}
 
-// 		renderer.HandleCh(ch)
-// 	}
-// 	if bottomBorder && rightBorder {
-// 		ch := render.PositionedChar{
-// 			Rune: '┘',
-// 			Cursor: render.Cursor{
-// 				X:     r.x + r.w,
-// 				Y:     r.y + r.h,
-// 				Style: style,
-// 			},
-// 		}
+	s.renderer.HandleCh(ch)
+	ch = render.PositionedChar{
+		Rune: '┐',
+		Cursor: render.Cursor{
+			X:     r.X + r.W,
+			Y:     r.Y - 1,
+			Style: style,
+		},
+	}
 
-// 		renderer.HandleCh(ch)
-// 	}
-// }
+	s.renderer.HandleCh(ch)
+	ch = render.PositionedChar{
+		Rune: '└',
+		Cursor: render.Cursor{
+			X:     r.X - 1,
+			Y:     r.Y + r.H,
+			Style: style,
+		},
+	}
+
+	s.renderer.HandleCh(ch)
+	ch = render.PositionedChar{
+		Rune: '┘',
+		Cursor: render.Cursor{
+			X:     r.X + r.W,
+			Y:     r.Y + r.H,
+			Style: style,
+		},
+	}
+
+	s.renderer.HandleCh(ch)
+}

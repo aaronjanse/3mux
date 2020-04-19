@@ -1,8 +1,6 @@
 package vterm
 
 import (
-	"log"
-
 	"github.com/aaronjanse/3mux/render"
 )
 
@@ -213,7 +211,6 @@ func (v *VTerm) RedrawWindow() {
 }
 
 func (v *VTerm) forceRedrawWindow() {
-	log.Println("w", len(v.Screen[0]), ":", v.x, v.y, v.w)
 	if v.ScrollbackPos < v.h {
 		for y := 0; y < v.h-v.ScrollbackPos; y++ {
 			for x := 0; x < v.w; x++ {

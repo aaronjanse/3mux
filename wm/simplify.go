@@ -21,18 +21,20 @@ func (s *split) simplify() {
 		for idx, n := range (*s).elements {
 			switch child := n.contents.(type) {
 			case *split:
-				if child.verticallyStacked == s.verticallyStacked {
-					for j := range child.elements {
-						child.elements[j].size *= n.size
+				if len(child.elements) > 0 {
+					if child.verticallyStacked == s.verticallyStacked {
+						for j := range child.elements {
+							child.elements[j].size *= n.size
+						}
+						newElements = append(newElements, child.elements...)
+						if idx == s.selectionIdx {
+							selectionIdx += child.selectionIdx
+						} else if idx < s.selectionIdx {
+							selectionIdx += len(child.elements) - 1
+						}
+					} else {
+						newElements = append(newElements, n)
 					}
-					newElements = append(newElements, child.elements...)
-					if idx == s.selectionIdx {
-						selectionIdx += child.selectionIdx
-					} else if idx < s.selectionIdx {
-						selectionIdx += len(child.elements) - 1
-					}
-				} else {
-					newElements = append(newElements, n)
 				}
 			case Node:
 				newElements = append(newElements, n)

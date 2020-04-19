@@ -20,12 +20,14 @@ type split struct {
 	newPane NewPaneFunc
 }
 
-func newSplit(renderer *render.Renderer, onDeath func(error), rect Rect, verticallyStacked bool, children []Node, newPane NewPaneFunc) *split {
+func newSplit(renderer *render.Renderer, onDeath func(error), rect Rect, verticallyStacked bool, selectionIdx int, children []Node, newPane NewPaneFunc) *split {
 	s := &split{
 		verticallyStacked: verticallyStacked,
 		renderer:          renderer,
 		onDeath:           onDeath,
 		newPane:           newPane,
+		selectionIdx:      selectionIdx,
+		renderRect:        rect,
 	}
 
 	if children == nil {

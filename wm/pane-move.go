@@ -18,7 +18,20 @@ func (s *workspace) moveWindow(dir Direction) error {
 	if s.doFullscreen {
 		return errors.New("cannot move window while one is fullscreen")
 	}
-	s.contents.moveWindow(dir)
+	bubble, p := s.contents.moveWindow(dir)
+	if bubble {
+		if dir == Up || dir == Left {
+			s.contents = newSplit(
+				s.renderer, s.handleChildDeath, s.renderRect,
+				(dir == Up), 0, []Node{p, s.contents}, s.newPane,
+			)
+		} else {
+			s.contents = newSplit(
+				s.renderer, s.handleChildDeath, s.renderRect,
+				(dir == Down), 1, []Node{s.contents, p}, s.newPane,
+			)
+		}
+	}
 	return nil
 }
 
@@ -51,8 +64,8 @@ func (s *split) moveWindow(d Direction) (bubble bool, p Node) {
 				idx = s.selectionIdx + 1
 			case alignedBackward:
 				idx = s.selectionIdx
-			default:
-				panic("should never happen")
+			default: // VSplit[0](HSplit[0](Term[0,0 126x8]*), Term[0,9 126x8])
+				return true, p
 			}
 
 			s.elements = append(
@@ -95,6 +108,8 @@ func (s *split) moveWindow(d Direction) (bubble bool, p Node) {
 			}
 		}
 	}
+
+	// s.drawSelectionBorder()
 
 	return false, nil
 }
