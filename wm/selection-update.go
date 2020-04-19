@@ -12,6 +12,7 @@ func (s *workspace) UpdateSelection(selected bool) {
 }
 
 func (s *split) UpdateSelection(selected bool) {
+	s.selected = selected
 	for idx, n := range s.elements {
 		n.contents.UpdateSelection(selected && idx == s.selectionIdx)
 	}

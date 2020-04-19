@@ -22,6 +22,8 @@ func NewUniverse(renderer *render.Renderer, onDeath func(error), renderRect Rect
 		onDeath:      onDeath,
 	}
 	u.workspaces = []*workspace{newWorkspace(renderer, u.handleChildDeath, renderRect, newPane)}
+	u.updateSelection()
+	u.refreshRenderRect()
 	return u
 }
 

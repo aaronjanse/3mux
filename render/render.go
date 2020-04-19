@@ -64,6 +64,8 @@ func (r *Renderer) Resize(w, h int) {
 
 	r.w = w
 	r.h = h
+
+	r.HardRefresh()
 }
 
 func expandBuffer(buffer [][]Char, w, h int) [][]Char {

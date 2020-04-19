@@ -10,6 +10,15 @@ import (
 	"github.com/aaronjanse/3mux/render"
 )
 
+// SearchDirection is which direction we move through search results
+type SearchDirection int
+
+// enum of search directions
+const (
+	SearchUp SearchDirection = iota
+	SearchDown
+)
+
 func (t *Pane) doSearch() {
 	fullBuffer := append(t.vterm.Scrollback, t.vterm.Screen...)
 	match, err := t.locateText(fullBuffer, t.searchText)

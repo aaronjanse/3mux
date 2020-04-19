@@ -104,69 +104,13 @@ func (s *split) popElement(idx int) {
 	if s.selectionIdx > len(s.elements)-1 {
 		s.selectionIdx = len(s.elements) - 1
 	}
+
+	var totalSize float32
+	for _, e := range s.elements {
+		totalSize += e.size
+	}
+	scale := 1 / totalSize
+	for i := range s.elements {
+		s.elements[i].size *= scale
+	}
 }
-
-// func (s *Split) moveWindowXX(d Direction) {
-// 	path := getSelection()
-// 	parent, parentPath := path.getParent()
-
-// 	vert := parent.verticallyStacked
-
-// 	{
-// 		movingVert := d == Up || d == Down
-
-// 		p := path
-// 		for len(p) > 1 {
-// 			s, _ := p.getParent()
-// 			if s.verticallyStacked == movingVert {
-// 				tmp := parentPath.popContainer(parent.selectionIdx)
-
-// 				if d == Left || d == Up {
-// 					s.insertContainer(tmp, s.selectionIdx)
-// 				} else {
-// 					s.insertContainer(tmp, s.selectionIdx+1)
-// 					s.selectionIdx++
-// 				}
-
-// 				// root.refreshRenderRect()
-// 				break
-// 			}
-// 			p = p[:len(p)-1]
-// 		}
-
-// 		// if len(p) == 1 && len(parent.elements) > 1 {
-// 		// 	tmp := parentPath.popContainer(parent.selectionIdx)
-// 		// 	tmpRoot := root.workspaces[root.selectionIdx].contents
-
-// 		// 	var h int
-// 		// 	if config.statusBar {
-// 		// 		h = termH - 1
-// 		// 	} else {
-// 		// 		h = termH
-// 		// 	}
-
-// 		// 	root.workspaces[root.selectionIdx].contents = NewSplit(
-// 		// 		renderer, movingVert, Rect{x: 0, y: 0, w: termW, h: h},
-// 		// 		[]Container{tmpRoot},
-// 		// 	)
-
-// 		// 	insertIdx := 0
-// 		// 	if d == Down || d == Right {
-// 		// 		insertIdx = 1
-// 		// 	}
-// 		// 	root.workspaces[root.selectionIdx].contents.insertContainer(tmp, insertIdx)
-// 		// 	root.workspaces[root.selectionIdx].contents.selectionIdx = insertIdx
-
-// 		// 	// root.refreshRenderRect()
-// 		// }
-// 	}
-
-// 	// select the new Term
-// 	newTerm := getSelection().getContainer().(*Pane)
-// 	newTerm.selected = true
-// 	newTerm.softRefresh()
-// 	newTerm.vterm.RefreshCursor()
-
-// 	root.simplify()
-// 	root.refreshRenderRect()
-// }

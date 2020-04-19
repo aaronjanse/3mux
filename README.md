@@ -45,6 +45,8 @@
 2. `go get github.com/aaronjanse/3mux`
 3. Run `3mux` to launch the terminal multiplexer
 
+To update `3mux`, run `go get -u github.com/aaronjanse/3mux`
+
 #### Terminal.app
 _**Warning: Arrow-key-controlled pane management is currently unsupported on Terminal.app. Please use the default vim-like keybindings instead.**_  
 Preferences > Profiles > Keyboard > Use Option as Meta Key  

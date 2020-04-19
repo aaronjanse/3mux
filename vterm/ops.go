@@ -1,6 +1,8 @@
 package vterm
 
 import (
+	"log"
+
 	"github.com/aaronjanse/3mux/render"
 )
 
@@ -109,6 +111,14 @@ func (v *VTerm) setCursorPos(x, y int) {
 		v.Cursor.X = x
 	}
 
+	if y <= v.h && y > len(v.Screen) {
+		for y := 0; y <= v.h; y++ {
+			if y >= len(v.Screen) {
+				v.Screen = append(v.Screen, []render.Char{})
+			}
+		}
+	}
+
 	if y < 0 {
 		v.Cursor.Y = 0
 	} else if y > v.h {
@@ -203,23 +213,37 @@ func (v *VTerm) RedrawWindow() {
 }
 
 func (v *VTerm) forceRedrawWindow() {
+	log.Println("w", len(v.Screen[0]), ":", v.x, v.y, v.w)
 	if v.ScrollbackPos < v.h {
 		for y := 0; y < v.h-v.ScrollbackPos; y++ {
 			for x := 0; x < v.w; x++ {
-				if y >= len(v.Screen) || x >= len(v.Screen[y]) {
-					continue
+				var line []render.Char
+				if y < len(v.Screen) {
+					line = v.Screen[y]
+				} else {
+					line = make([]render.Char, v.w)
 				}
 
-				ch := render.PositionedChar{
-					Rune:     v.Screen[y][x].Rune,
-					IsWide:   v.Screen[y][x].IsWide,
-					PrevWide: v.Screen[y][x].PrevWide,
-					Cursor: render.Cursor{
-						X: v.x + x, Y: v.y + y + v.ScrollbackPos, Style: v.Screen[y][x].Style,
-					},
+				var ch render.PositionedChar
+				if x < len(line) {
+					ch = render.PositionedChar{
+						Rune:     line[x].Rune,
+						IsWide:   line[x].IsWide,
+						PrevWide: line[x].PrevWide,
+						Cursor: render.Cursor{
+							X: v.x + x, Y: v.y + y + v.ScrollbackPos, Style: line[x].Style,
+						},
+					}
+					v.renderer.HandleCh(ch)
+				} else {
+					ch = render.PositionedChar{
+						Rune: ' ',
+						Cursor: render.Cursor{
+							X: v.x + x, Y: v.y + y + v.ScrollbackPos, Style: render.Style{},
+						},
+					}
 				}
 
-				v.renderer.HandleCh(ch)
 			}
 		}
 	}

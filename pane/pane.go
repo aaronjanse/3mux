@@ -2,12 +2,10 @@ package pane
 
 import (
 	"bufio"
-	"errors"
 	"fmt"
-	"math/rand"
 	"os"
 	"os/exec"
-	"strings"
+	"runtime/debug"
 
 	"github.com/aaronjanse/3mux/render"
 	"github.com/aaronjanse/3mux/vterm"
@@ -15,22 +13,14 @@ import (
 	"github.com/kr/pty"
 )
 
-// SearchDirection is which direction we move through search results
-type SearchDirection int
-
-// enum of search directions
-const (
-	SearchUp SearchDirection = iota
-	SearchDown
-)
-
 // A Pane is a tiling unit representing a terminal
 type Pane struct {
+	born bool
+
 	ptmx  *os.File
 	cmd   *exec.Cmd
 	vterm *vterm.VTerm
 
-	id         int
 	selected   bool
 	renderRect wm.Rect
 	renderer   *render.Renderer
@@ -47,29 +37,6 @@ type Pane struct {
 	OnDeath func(error)
 }
 
-func getShellPath() (string, error) {
-	username := os.Getenv("USER")
-
-	file, err := os.Open("/etc/passwd")
-	if err != nil {
-		return "", err
-	}
-
-	defer file.Close()
-
-	scanner := bufio.NewScanner(file)
-
-	scanner.Split(bufio.ScanLines)
-
-	for scanner.Scan() {
-		parts := strings.Split(scanner.Text(), ":")
-		if parts[0] == username {
-			return parts[len(parts)-1], nil
-		}
-	}
-	return "", errors.New("Could not find shell to use")
-}
-
 func NewPane(renderer *render.Renderer) wm.Node {
 	return newTerm(renderer)
 }
@@ -79,10 +46,13 @@ func newTerm(renderer *render.Renderer) *Pane {
 	if err != nil {
 		panic(err)
 	}
+
+	cmd := exec.Command(shellPath)
+	cmd.Env = append(os.Environ(), "TERM=xterm-256color") // FIXME we should decide whether we want 256color in $TERM
 	t := &Pane{
-		id:       rand.Intn(10),
+		born:     false,
 		renderer: renderer,
-		cmd:      exec.Command(shellPath),
+		cmd:      cmd,
 	}
 
 	ptmx, err := pty.Start(t.cmd)
@@ -98,19 +68,41 @@ func newTerm(renderer *render.Renderer) *Pane {
 	}
 
 	t.vterm = vterm.NewVTerm(renderer, parentSetCursor)
-	go func() {
-		defer func() {
-			if r := recover(); r != nil {
-				t.OnDeath(r.(error))
-			}
-		}()
-
-		t.vterm.ProcessStdout(bufio.NewReader(t.ptmx))
-
-		t.OnDeath(nil)
-	}()
 
 	return t
+}
+
+func (t *Pane) SetRenderRect(fullscreen bool, x, y, w, h int) {
+	t.renderRect = wm.Rect{X: x, Y: y, W: w, H: h}
+
+	if !t.born {
+		go func() {
+			defer func() {
+				if r := recover(); r != nil {
+					t.Dead = true
+					t.OnDeath(fmt.Errorf("%s\n%s",
+						r.(error).Error(),
+						debug.Stack(),
+					))
+				}
+			}()
+
+			t.vterm.ProcessStdout(bufio.NewReader(t.ptmx))
+
+			t.Dead = true
+			t.OnDeath(nil)
+		}()
+		t.born = true
+	}
+
+	if !t.vterm.IsPaused {
+		t.vterm.Reshape(x, y, w, h)
+		t.vterm.RedrawWindow()
+	}
+
+	t.resizeShell(w, h)
+
+	t.softRefresh()
 }
 
 func (t *Pane) ScrollDown() {
@@ -230,19 +222,6 @@ func (t *Pane) Serialize() string {
 }
 
 func (t *Pane) simplify() {}
-
-func (t *Pane) SetRenderRect(fullscreen bool, x, y, w, h int) {
-	t.renderRect = wm.Rect{x, y, w, h}
-
-	if !t.vterm.IsPaused {
-		t.vterm.Reshape(x, y, w, h)
-		t.vterm.RedrawWindow()
-	}
-
-	t.resizeShell(w, h)
-
-	t.softRefresh()
-}
 
 func (t *Pane) Resize(w, h int) {
 	t.SetRenderRect(false, t.renderRect.X, t.renderRect.Y, w, h)

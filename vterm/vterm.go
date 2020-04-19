@@ -116,26 +116,21 @@ func (v *VTerm) Kill() {
 
 // Reshape safely updates a VTerm's width & height
 func (v *VTerm) Reshape(x, y, w, h int) {
-
 	v.x = x
 	v.y = y
-
-	for y := 0; y <= h; y++ {
-		if y >= len(v.Screen) {
-			v.Screen = append(v.Screen, []render.Char{})
-		}
-
-		for x := 0; x <= w; x++ {
-			if x >= len(v.Screen[y]) {
-				v.Screen[y] = append(v.Screen[y], render.Char{Rune: ' ', Style: render.Style{}})
-			}
-		}
-	}
 
 	if len(v.Screen)-1 > h {
 		diff := len(v.Screen) - h - 1
 		v.Scrollback = append(v.Scrollback, v.Screen[:diff]...)
 		v.Screen = v.Screen[diff:]
+	}
+
+	for y := 0; y < len(v.Screen); y++ {
+		for x := 0; x <= w; x++ {
+			if x >= len(v.Screen[y]) {
+				v.Screen[y] = append(v.Screen[y], render.Char{Rune: ' ', Style: render.Style{}})
+			}
+		}
 	}
 
 	if v.scrollingRegion.top == 0 && v.scrollingRegion.bottom == v.h-1 {

@@ -496,7 +496,7 @@ func (p *Parser) handleSGR(parameterCode string) {
 					} else {
 						seq = seq[2:]
 					}
-				} else if seq[1] > 2 {
+				} else if seq[1] == 2 {
 					if len(seq) > 4 {
 						p.out <- p.wrap(StyleForeground(Color{
 							ColorMode: ColorBit24,

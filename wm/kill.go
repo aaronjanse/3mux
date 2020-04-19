@@ -26,8 +26,11 @@ func (s *split) handleChildDeath(err error) {
 			s.popElement(idx)
 		}
 	}
-	if len(s.elements) == 0 {
+	if len(s.elements) == 0 || err != nil {
 		s.Dead = true
 		s.onDeath(err)
+	} else {
+		s.refreshRenderRect(false)
+		s.elements[s.selectionIdx].contents.UpdateSelection(s.selected)
 	}
 }

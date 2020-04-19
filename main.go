@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"runtime/debug"
 	"runtime/pprof"
 	"syscall"
 
@@ -24,13 +25,7 @@ var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
 var writeLogs = flag.Bool("log", false, "write logs to ./logs.txt")
 
 func main() {
-	shutdown := make(chan bool)
-
-	defer func() {
-		if r := recover(); r != nil {
-			log.Fatal(r.(error))
-		}
-	}()
+	shutdown := make(chan error)
 
 	flag.Parse()
 
@@ -56,6 +51,12 @@ func main() {
 		defer pprof.StopCPUProfile()
 	}
 
+	defer func() {
+		if r := recover(); r != nil {
+			displayError(r.(error))
+		}
+	}()
+
 	var err error
 	termW, termH, err = GetTermSize()
 	if err != nil {
@@ -67,7 +68,7 @@ func main() {
 	go renderer.ListenToQueue()
 
 	root := wm.NewUniverse(renderer, func(err error) {
-		shutdown <- true
+		shutdown <- err
 	}, wm.Rect{X: 0, Y: 0, W: termW, H: termH}, pane.NewPane)
 
 	defer root.Kill()
@@ -91,7 +92,15 @@ func main() {
 	})
 	defer shutdownNow()
 
-	<-shutdown
+	err = <-shutdown
+	if err != nil {
+		displayError(err)
+	}
+}
+
+func displayError(err error) {
+	fmt.Println(err)
+	debug.PrintStack()
 }
 
 func shutdownNow() {
@@ -119,55 +128,55 @@ func getDirectionFromString(s string) wm.Direction {
 	}
 }
 
-func debug(s string) {
-	for i := 0; i < termW; i++ {
-		r := ' '
-		if i < len(s) {
-			r = rune(s[i])
-		}
+// func debug(s string) {
+// 	for i := 0; i < termW; i++ {
+// 		r := ' '
+// 		if i < len(s) {
+// 			r = rune(s[i])
+// 		}
 
-		ch := render.PositionedChar{
-			Rune: r,
-			Cursor: render.Cursor{
-				X: i,
-				Y: termH - 1,
-				Style: render.Style{
-					Bg: ecma48.Color{
-						ColorMode: ecma48.ColorBit3Bright,
-						Code:      2,
-					},
-					Fg: ecma48.Color{
-						ColorMode: ecma48.ColorBit3Normal,
-						Code:      0,
-					},
-				},
-			},
-		}
-		renderer.HandleCh(ch)
-	}
+// 		ch := render.PositionedChar{
+// 			Rune: r,
+// 			Cursor: render.Cursor{
+// 				X: i,
+// 				Y: termH - 1,
+// 				Style: render.Style{
+// 					Bg: ecma48.Color{
+// 						ColorMode: ecma48.ColorBit3Bright,
+// 						Code:      2,
+// 					},
+// 					Fg: ecma48.Color{
+// 						ColorMode: ecma48.ColorBit3Normal,
+// 						Code:      0,
+// 					},
+// 				},
+// 			},
+// 		}
+// 		renderer.HandleCh(ch)
+// 	}
 
-	if resizeMode {
-		resizeText := "RESIZE"
+// 	if resizeMode {
+// 		resizeText := "RESIZE"
 
-		for i, r := range resizeText {
-			ch := render.PositionedChar{
-				Rune: r,
-				Cursor: render.Cursor{
-					X: termW - len(resizeText) + i,
-					Y: termH - 1,
-					Style: render.Style{
-						Bg: ecma48.Color{
-							ColorMode: ecma48.ColorBit3Bright,
-							Code:      3,
-						},
-						Fg: ecma48.Color{
-							ColorMode: ecma48.ColorBit3Normal,
-							Code:      0,
-						},
-					},
-				},
-			}
-			renderer.HandleCh(ch)
-		}
-	}
-}
+// 		for i, r := range resizeText {
+// 			ch := render.PositionedChar{
+// 				Rune: r,
+// 				Cursor: render.Cursor{
+// 					X: termW - len(resizeText) + i,
+// 					Y: termH - 1,
+// 					Style: render.Style{
+// 						Bg: ecma48.Color{
+// 							ColorMode: ecma48.ColorBit3Bright,
+// 							Code:      3,
+// 						},
+// 						Fg: ecma48.Color{
+// 							ColorMode: ecma48.ColorBit3Normal,
+// 							Code:      0,
+// 						},
+// 					},
+// 				},
+// 			}
+// 			renderer.HandleCh(ch)
+// 		}
+// 	}
+// }

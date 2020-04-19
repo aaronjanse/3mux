@@ -13,6 +13,7 @@ type split struct {
 	selectionIdx      int
 	renderer          *render.Renderer
 	renderRect        Rect
+	selected          bool
 
 	onDeath func(error)
 	Dead    bool
