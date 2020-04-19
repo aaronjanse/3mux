@@ -264,10 +264,10 @@ func seiveMouseEvents(human string, obj ecma48.Output) bool {
 		// do nothing
 	case ecma48.ScrollUp:
 		t := getSelection().getContainer().(*Pane)
-		t.vterm.ScrollbackDown()
+		t.vterm.ScrollbackUp()
 	case ecma48.ScrollDown:
 		t := getSelection().getContainer().(*Pane)
-		t.vterm.ScrollbackUp()
+		t.vterm.ScrollbackDown()
 	default:
 		return false
 	}
