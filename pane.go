@@ -49,6 +49,9 @@ type Pane struct {
 }
 
 func getShellPath() string {
+	if shell := os.Getenv("SHELL"); shell != "" {
+		return shell
+	}
 	username := os.Getenv("USER")
 
 	file, err := os.Open("/etc/passwd")
