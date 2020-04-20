@@ -109,7 +109,7 @@ func (v *VTerm) setCursorPos(x, y int) {
 		v.Cursor.X = x
 	}
 
-	if y <= v.h && y > len(v.Screen) {
+	if y <= v.h && y >= len(v.Screen) {
 		for y := 0; y <= v.h; y++ {
 			if y >= len(v.Screen) {
 				v.Screen = append(v.Screen, []render.Char{})

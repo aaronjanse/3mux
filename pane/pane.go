@@ -3,6 +3,7 @@ package pane
 import (
 	"bufio"
 	"fmt"
+	"log"
 	"os"
 	"os/exec"
 	"runtime/debug"
@@ -130,6 +131,106 @@ func (t *Pane) UpdateSelection(selected bool) {
 	t.selected = selected
 	if selected {
 		t.vterm.RefreshCursor()
+
+		r := t.renderRect
+		log.Println(r)
+
+		style := render.Style{
+			Fg: ecma48.Color{
+				ColorMode: ecma48.ColorBit3Normal,
+				Code:      6,
+			},
+		}
+
+		for i := 0; i <= r.H; i++ {
+			ch := render.PositionedChar{
+				Rune: '│',
+				Cursor: render.Cursor{
+					X:     r.X - 1,
+					Y:     r.Y + i,
+					Style: style,
+				},
+			}
+
+			t.renderer.HandleCh(ch)
+		}
+		for i := 0; i <= r.H; i++ {
+			ch := render.PositionedChar{
+				Rune: '│',
+				Cursor: render.Cursor{
+					X:     r.X + r.W,
+					Y:     r.Y + i,
+					Style: style,
+				},
+			}
+
+			t.renderer.HandleCh(ch)
+		}
+		for i := 0; i <= r.W; i++ {
+			ch := render.PositionedChar{
+				Rune: '─',
+				Cursor: render.Cursor{
+					X:     r.X + i,
+					Y:     r.Y - 1,
+					Style: style,
+				},
+			}
+
+			t.renderer.HandleCh(ch)
+		}
+		for i := 0; i <= r.W; i++ {
+			ch := render.PositionedChar{
+				Rune: '─',
+				Cursor: render.Cursor{
+					X:     r.X + i,
+					Y:     r.Y + r.H,
+					Style: style,
+				},
+			}
+
+			t.renderer.HandleCh(ch)
+		}
+
+		ch := render.PositionedChar{
+			Rune: '┌',
+			Cursor: render.Cursor{
+				X:     r.X - 1,
+				Y:     r.Y - 1,
+				Style: style,
+			},
+		}
+
+		t.renderer.HandleCh(ch)
+		ch = render.PositionedChar{
+			Rune: '┐',
+			Cursor: render.Cursor{
+				X:     r.X + r.W,
+				Y:     r.Y - 1,
+				Style: style,
+			},
+		}
+
+		t.renderer.HandleCh(ch)
+		ch = render.PositionedChar{
+			Rune: '└',
+			Cursor: render.Cursor{
+				X:     r.X - 1,
+				Y:     r.Y + r.H,
+				Style: style,
+			},
+		}
+
+		t.renderer.HandleCh(ch)
+		ch = render.PositionedChar{
+			Rune: '┘',
+			Cursor: render.Cursor{
+				X:     r.X + r.W,
+				Y:     r.Y + r.H,
+				Style: style,
+			},
+		}
+
+		t.renderer.HandleCh(ch)
 	}
 }
 
@@ -164,10 +265,6 @@ func (t *Pane) Serialize() string {
 		return out + "*"
 	}
 	return out
-}
-
-func (t *Pane) Resize(w, h int) {
-	t.SetRenderRect(false, t.renderRect.X, t.renderRect.Y, w, h)
 }
 
 func (t *Pane) GetRenderRect() wm.Rect {

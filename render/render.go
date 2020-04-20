@@ -87,7 +87,7 @@ func expandBuffer(buffer [][]Char, w, h int) [][]Char {
 
 // HandleCh places a PositionedChar in the pending screen buffer
 func (r *Renderer) HandleCh(ch PositionedChar) {
-	if ch.Y < 0 || ch.Y >= len(r.pendingScreen) {
+	if ch.Y < 0 || ch.Y >= len(r.pendingScreen)-1 {
 		return
 	}
 	if ch.X < 0 || ch.X >= len(r.pendingScreen[ch.Y]) {

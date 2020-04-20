@@ -2,6 +2,7 @@ package wm
 
 func (u *Universe) MoveSelection(d Direction) {
 	u.workspaces[u.selectionIdx].moveSelection(d)
+	u.refreshRenderRect()
 	u.updateSelection()
 }
 
