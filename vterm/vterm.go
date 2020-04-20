@@ -35,7 +35,6 @@ type VTerm struct {
 
 	NeedsRedraw bool
 
-	startTime        int64
 	runeCounter      uint64
 	usingSlowRefresh bool
 
@@ -43,14 +42,8 @@ type VTerm struct {
 
 	renderer *render.Renderer
 
-	// TODO: delete `blankLine`
-	blankLine []render.Char
-
 	// parentSetCursor sets physical host's cursor taking the pane location into account
 	parentSetCursor func(x, y int)
-
-	in  <-chan rune
-	out chan<- rune
 
 	storedCursorX, storedCursorY int
 
@@ -59,8 +52,6 @@ type VTerm struct {
 	ChangePause   chan bool
 	IsPaused      bool
 	DebugSlowMode bool
-
-	parser *Parser
 }
 
 // NewVTerm returns a VTerm ready to be used by its exported methods
@@ -84,7 +75,6 @@ func NewVTerm(renderer *render.Renderer, parentSetCursor func(x, y int)) *VTerm 
 		x: 0, y: 0,
 		w:                w,
 		h:                h,
-		blankLine:        []render.Char{},
 		Screen:           screen,
 		Scrollback:       [][]render.Char{},
 		UsingAltScreen:   false,
@@ -97,13 +87,6 @@ func NewVTerm(renderer *render.Renderer, parentSetCursor func(x, y int)) *VTerm 
 		ChangePause:      make(chan bool, 1),
 		IsPaused:         false,
 		DebugSlowMode:    false,
-		parser: &Parser{
-			state:        StateGround,
-			private:      nil,
-			intermediate: "",
-			params:       "",
-			final:        nil,
-		},
 	}
 
 	return v

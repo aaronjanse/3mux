@@ -236,23 +236,6 @@ func (r *Renderer) SetCursor(x, y int) {
 	}
 }
 
-// Debug prints the given text to the status bar
-func (r *Renderer) Debug(s string) {
-	for i, ch := range s {
-		r.HandleCh(PositionedChar{
-			Rune: rune(ch),
-			Cursor: Cursor{
-				X: i, Y: r.h - 1,
-				Style: Style{},
-			}})
-	}
-}
-
-// GetRune returns the rune of the currentScreen at the given coordinates
-func (r *Renderer) GetRune(x, y int) rune {
-	return r.currentScreen[y][x].Rune
-}
-
 // HardRefresh force clears all cached chars. Used for handling terminal resize
 func (r *Renderer) HardRefresh() {
 	log.Println("HARD REFRESH")

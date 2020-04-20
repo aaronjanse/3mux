@@ -1,5 +1,7 @@
 package wm
 
+import "github.com/aaronjanse/3mux/ecma48"
+
 func (u *Universe) ToggleSearch() {
 	u.workspaces[u.selectionIdx].contents.ToggleSearch()
 }
@@ -22,9 +24,9 @@ func (s *split) ScrollDown() {
 	s.elements[s.selectionIdx].contents.ScrollDown()
 }
 
-func (u *Universe) HandleStdin(str string) {
-	u.workspaces[u.selectionIdx].contents.HandleStdin(str)
+func (u *Universe) HandleStdin(in ecma48.Output) {
+	u.workspaces[u.selectionIdx].contents.HandleStdin(in)
 }
-func (s *split) HandleStdin(str string) {
-	s.elements[s.selectionIdx].contents.HandleStdin(str)
+func (s *split) HandleStdin(in ecma48.Output) {
+	s.elements[s.selectionIdx].contents.HandleStdin(in)
 }

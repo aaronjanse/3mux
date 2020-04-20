@@ -19,6 +19,71 @@ const (
 	SearchDown
 )
 
+func (t *Pane) handleSearchStdin(in string) {
+	if t.searchResultsMode {
+		switch in[0] { // FIXME ignores extra chars
+		case 'n': // next
+			t.searchDirection = SearchDown
+			t.searchPos--
+			if t.searchPos < 0 {
+				t.searchPos = 0
+			}
+			t.doSearch()
+		case 'N': // prev
+			t.searchDirection = SearchUp
+			t.searchPos++
+			max := len(t.vterm.Scrollback) + len(t.vterm.Screen) - 1
+			if t.searchPos > max {
+				t.searchPos = max
+			}
+			t.doSearch()
+		case '/':
+			t.searchResultsMode = false
+			t.displayStatusText(t.searchText)
+		case 127:
+			fallthrough
+		case 8:
+			t.searchResultsMode = false
+			t.searchText = t.searchText[:len(t.searchText)-1]
+			t.displayStatusText(t.searchText)
+		case 3:
+			fallthrough
+		case 4:
+			fallthrough
+		case 13:
+			fallthrough
+		case 10: // enter
+			t.ToggleSearch()
+			t.vterm.ScrollbackPos = t.searchPos - len(t.vterm.Screen) + t.renderRect.H/2
+			t.vterm.RedrawWindow()
+		}
+	} else {
+		for _, c := range in {
+			if c == 3 || c == 4 || c == 27 {
+				t.ToggleSearch()
+				return
+			} else if c == 8 || c == 127 { // backspace
+				if len(t.searchText) > 0 {
+					t.searchText = t.searchText[:len(t.searchText)-1]
+				}
+			} else if c == 10 || c == 13 {
+				if len(t.searchText) == 0 {
+					t.ToggleSearch()
+					return
+				} else {
+					t.searchResultsMode = true
+					return // FIXME ignores extra chars
+				}
+			} else {
+				t.searchText += string(c)
+			}
+		}
+		t.searchPos = 0
+		t.doSearch()
+		t.displayStatusText(t.searchText)
+	}
+}
+
 func (t *Pane) doSearch() {
 	fullBuffer := append(t.vterm.Scrollback, t.vterm.Screen...)
 	match, err := t.locateText(fullBuffer, t.searchText)

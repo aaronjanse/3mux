@@ -1,6 +1,9 @@
 package wm
 
-import "github.com/aaronjanse/3mux/render"
+import (
+	"github.com/aaronjanse/3mux/ecma48"
+	"github.com/aaronjanse/3mux/render"
+)
 
 // Rect is a rectangle with an origin x, origin y, width, and height
 type Rect struct {
@@ -37,7 +40,7 @@ type Node interface {
 	ToggleSearch()
 	ScrollUp()
 	ScrollDown()
-	HandleStdin(string)
+	HandleStdin(ecma48.Output)
 }
 
 type Container interface {

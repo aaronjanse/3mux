@@ -41,7 +41,10 @@ var configFuncBindings = map[string]func(*wm.Universe){
 func compileBindings(sourceBindings map[string][]string) map[string]func(*wm.Universe) {
 	compiledBindings := map[string]func(*wm.Universe){}
 	for funcName, keyCodes := range sourceBindings {
-		fn := configFuncBindings[funcName]
+		fn, ok := configFuncBindings[funcName]
+		if !ok {
+			panic("Incorrect keybinding: " + funcName)
+		}
 		for _, keyCode := range keyCodes {
 			compiledBindings[keyCode] = fn
 		}
@@ -58,10 +61,11 @@ func init() {
 	config.bindings = compileBindings(map[string][]string{
 		"newWindow":  []string{"Alt+N", "Alt+Enter"},
 		"killWindow": []string{"Alt+Shift+Q"},
+		"fullscreen": []string{"Alt+Shift+F"},
+		"search":     []string{"Alt+/"},
+
 		// "resize":        []string{"Alt+R"},
-		"fullscreen":    []string{"Alt+Shift+F"},
-		"debugSlowMode": []string{"Alt+X"},
-		"search":        []string{"Alt+/"},
+		// "debugSlowMode": []string{"Alt+X"},
 
 		"moveWindow(Up)":    []string{"Alt+Shift+K", "Alt+Shift+Up"},
 		"moveWindow(Down)":  []string{"Alt+Shift+J", "Alt+Shift+Down"},

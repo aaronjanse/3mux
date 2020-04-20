@@ -6,6 +6,8 @@ import (
 	"github.com/aaronjanse/3mux/ecma48"
 )
 
+// TODO: move into ecma48
+
 // ToANSI emits an ANSI SGR escape code for a given color
 func ToANSI(c ecma48.Color, bg bool) string {
 	var offset int32
