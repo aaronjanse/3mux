@@ -125,6 +125,8 @@ func main() {
 		case err := <-shutdown:
 			if err != nil {
 				panic(err)
+			} else {
+				return
 			}
 		}
 	}
