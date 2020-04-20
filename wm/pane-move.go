@@ -43,6 +43,16 @@ func (s *split) moveWindow(d Direction) (bubble bool, p Node) {
 	case Container:
 		bubble, p := child.moveWindow(d)
 		if bubble {
+			var idx int
+			switch {
+			case alignedForwards:
+				idx = s.selectionIdx + 1
+			case alignedBackward:
+				idx = s.selectionIdx
+			default: // VSplit[0](HSplit[0](Term[0,0 126x8]*), Term[0,9 126x8])
+				return true, p
+			}
+
 			p.SetDeathHandler(s.handleChildDeath)
 
 			newNodeSize := float32(1) / float32(len(s.elements)+1)
@@ -56,16 +66,6 @@ func (s *split) moveWindow(d Direction) (bubble bool, p Node) {
 			newNode := SizedNode{
 				size:     newNodeSize,
 				contents: p,
-			}
-
-			var idx int
-			switch {
-			case alignedForwards:
-				idx = s.selectionIdx + 1
-			case alignedBackward:
-				idx = s.selectionIdx
-			default: // VSplit[0](HSplit[0](Term[0,0 126x8]*), Term[0,9 126x8])
-				return true, p
 			}
 
 			s.elements = append(
