@@ -64,6 +64,10 @@ func deltaMarkup(fromCur, toCur Cursor) string {
 
 	/* remove effects */
 
+	if from.Bold && !to.Bold {
+		out += "\033[22m"
+	}
+
 	if from.Faint && !to.Faint {
 		out += "\033[22m"
 	}
@@ -77,6 +81,10 @@ func deltaMarkup(fromCur, toCur Cursor) string {
 	}
 
 	/* add effects */
+
+	if !from.Bold && to.Bold {
+		out += "\033[1m"
+	}
 
 	if !from.Faint && to.Faint {
 		out += "\033[2m"
