@@ -22,12 +22,12 @@ func (s *workspace) moveWindow(dir Direction) error {
 	if bubble {
 		if dir == Up || dir == Left {
 			s.contents = newSplit(
-				s.renderer, s.handleChildDeath, s.renderRect,
+				s.renderer, s.contents.redrawLines, s.handleChildDeath, s.renderRect,
 				(dir == Up), 0, []Node{p, s.contents}, s.newPane,
 			)
 		} else {
 			s.contents = newSplit(
-				s.renderer, s.handleChildDeath, s.renderRect,
+				s.renderer, s.contents.redrawLines, s.handleChildDeath, s.renderRect,
 				(dir == Down), 1, []Node{s.contents, p}, s.newPane,
 			)
 		}

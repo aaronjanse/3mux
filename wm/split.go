@@ -15,12 +15,13 @@ type split struct {
 	renderRect        Rect
 	selected          bool
 
-	onDeath func(error)
-	Dead    bool
-	newPane NewPaneFunc
+	onDeath        func(error)
+	Dead           bool
+	newPane        NewPaneFunc
+	redrawAllLines func()
 }
 
-func newSplit(renderer *render.Renderer, onDeath func(error), rect Rect, verticallyStacked bool, selectionIdx int, children []Node, newPane NewPaneFunc) *split {
+func newSplit(renderer *render.Renderer, redrawAllLines func(), onDeath func(error), rect Rect, verticallyStacked bool, selectionIdx int, children []Node, newPane NewPaneFunc) *split {
 	s := &split{
 		verticallyStacked: verticallyStacked,
 		renderer:          renderer,
@@ -28,6 +29,7 @@ func newSplit(renderer *render.Renderer, onDeath func(error), rect Rect, vertica
 		newPane:           newPane,
 		selectionIdx:      selectionIdx,
 		renderRect:        rect,
+		redrawAllLines:    redrawAllLines,
 	}
 
 	if children == nil {

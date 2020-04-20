@@ -18,7 +18,7 @@ type workspace struct {
 	renderRect Rect
 }
 
-func newWorkspace(renderer *render.Renderer, onDeath func(error), renderRect Rect, newPane NewPaneFunc) *workspace {
+func newWorkspace(renderer *render.Renderer, redrawAllLines func(), onDeath func(error), renderRect Rect, newPane NewPaneFunc) *workspace {
 	w := &workspace{
 		doFullscreen: false,
 		onDeath:      onDeath,
@@ -26,7 +26,7 @@ func newWorkspace(renderer *render.Renderer, onDeath func(error), renderRect Rec
 		renderer:     renderer,
 		renderRect:   renderRect,
 	}
-	w.contents = newSplit(renderer, w.handleChildDeath, renderRect, false, 0, nil, newPane)
+	w.contents = newSplit(renderer, redrawAllLines, w.handleChildDeath, renderRect, false, 0, nil, newPane)
 	return w
 }
 

@@ -57,7 +57,7 @@ func main() {
 			fmt.Println(r.(error))
 			fmt.Println(string(debug.Stack()))
 			fmt.Println()
-			fmt.Println("Please report this to https://github.com/aaronjanse/3mux/issues. ")
+			fmt.Println("Please report this to https://github.com/aaronjanse/3mux/issues.")
 		}
 	}()
 
@@ -77,11 +77,13 @@ func main() {
 	go renderer.ListenToQueue()
 
 	u := wm.NewUniverse(renderer, func(err error) {
+		log.Println("got shutdown??")
 		if err != nil {
 			shutdown <- fmt.Errorf("%s\n%s", err.Error(), debug.Stack())
 		} else {
 			shutdown <- nil
 		}
+		log.Println("done shutdown??")
 	}, wm.Rect{X: 0, Y: 0, W: termW, H: termH}, pane.NewPane)
 	defer u.Kill()
 
@@ -91,6 +93,7 @@ func main() {
 			signal.Notify(c, syscall.SIGWINCH)
 			<-c
 			w, h, _ := GetTermSize()
+			renderer.Resize(w, h)
 			u.SetRenderRect(0, 0, w, h)
 		}
 	}()

@@ -3,7 +3,6 @@ package pane
 import (
 	"bufio"
 	"fmt"
-	"log"
 	"os"
 	"os/exec"
 	"runtime/debug"
@@ -132,105 +131,105 @@ func (t *Pane) UpdateSelection(selected bool) {
 	if selected {
 		t.vterm.RefreshCursor()
 
-		r := t.renderRect
-		log.Println(r)
+		// r := t.renderRect
+		// log.Println(r)
 
-		style := render.Style{
-			Fg: ecma48.Color{
-				ColorMode: ecma48.ColorBit3Normal,
-				Code:      6,
-			},
-		}
+		// style := render.Style{
+		// 	Fg: ecma48.Color{
+		// 		ColorMode: ecma48.ColorBit3Normal,
+		// 		Code:      6,
+		// 	},
+		// }
 
-		for i := 0; i <= r.H; i++ {
-			ch := render.PositionedChar{
-				Rune: '│',
-				Cursor: render.Cursor{
-					X:     r.X - 1,
-					Y:     r.Y + i,
-					Style: style,
-				},
-			}
+		// for i := 0; i <= r.H; i++ {
+		// 	ch := render.PositionedChar{
+		// 		Rune: '│',
+		// 		Cursor: render.Cursor{
+		// 			X:     r.X - 1,
+		// 			Y:     r.Y + i,
+		// 			Style: style,
+		// 		},
+		// 	}
 
-			t.renderer.HandleCh(ch)
-		}
-		for i := 0; i <= r.H; i++ {
-			ch := render.PositionedChar{
-				Rune: '│',
-				Cursor: render.Cursor{
-					X:     r.X + r.W,
-					Y:     r.Y + i,
-					Style: style,
-				},
-			}
+		// 	t.renderer.HandleCh(ch)
+		// }
+		// for i := 0; i <= r.H; i++ {
+		// 	ch := render.PositionedChar{
+		// 		Rune: '│',
+		// 		Cursor: render.Cursor{
+		// 			X:     r.X + r.W,
+		// 			Y:     r.Y + i,
+		// 			Style: style,
+		// 		},
+		// 	}
 
-			t.renderer.HandleCh(ch)
-		}
-		for i := 0; i <= r.W; i++ {
-			ch := render.PositionedChar{
-				Rune: '─',
-				Cursor: render.Cursor{
-					X:     r.X + i,
-					Y:     r.Y - 1,
-					Style: style,
-				},
-			}
+		// 	t.renderer.HandleCh(ch)
+		// }
+		// for i := 0; i <= r.W; i++ {
+		// 	ch := render.PositionedChar{
+		// 		Rune: '─',
+		// 		Cursor: render.Cursor{
+		// 			X:     r.X + i,
+		// 			Y:     r.Y - 1,
+		// 			Style: style,
+		// 		},
+		// 	}
 
-			t.renderer.HandleCh(ch)
-		}
-		for i := 0; i <= r.W; i++ {
-			ch := render.PositionedChar{
-				Rune: '─',
-				Cursor: render.Cursor{
-					X:     r.X + i,
-					Y:     r.Y + r.H,
-					Style: style,
-				},
-			}
+		// 	t.renderer.HandleCh(ch)
+		// }
+		// for i := 0; i <= r.W; i++ {
+		// 	ch := render.PositionedChar{
+		// 		Rune: '─',
+		// 		Cursor: render.Cursor{
+		// 			X:     r.X + i,
+		// 			Y:     r.Y + r.H,
+		// 			Style: style,
+		// 		},
+		// 	}
 
-			t.renderer.HandleCh(ch)
-		}
+		// 	t.renderer.HandleCh(ch)
+		// }
 
-		ch := render.PositionedChar{
-			Rune: '┌',
-			Cursor: render.Cursor{
-				X:     r.X - 1,
-				Y:     r.Y - 1,
-				Style: style,
-			},
-		}
+		// ch := render.PositionedChar{
+		// 	Rune: '┌',
+		// 	Cursor: render.Cursor{
+		// 		X:     r.X - 1,
+		// 		Y:     r.Y - 1,
+		// 		Style: style,
+		// 	},
+		// }
 
-		t.renderer.HandleCh(ch)
-		ch = render.PositionedChar{
-			Rune: '┐',
-			Cursor: render.Cursor{
-				X:     r.X + r.W,
-				Y:     r.Y - 1,
-				Style: style,
-			},
-		}
+		// t.renderer.HandleCh(ch)
+		// ch = render.PositionedChar{
+		// 	Rune: '┐',
+		// 	Cursor: render.Cursor{
+		// 		X:     r.X + r.W,
+		// 		Y:     r.Y - 1,
+		// 		Style: style,
+		// 	},
+		// }
 
-		t.renderer.HandleCh(ch)
-		ch = render.PositionedChar{
-			Rune: '└',
-			Cursor: render.Cursor{
-				X:     r.X - 1,
-				Y:     r.Y + r.H,
-				Style: style,
-			},
-		}
+		// t.renderer.HandleCh(ch)
+		// ch = render.PositionedChar{
+		// 	Rune: '└',
+		// 	Cursor: render.Cursor{
+		// 		X:     r.X - 1,
+		// 		Y:     r.Y + r.H,
+		// 		Style: style,
+		// 	},
+		// }
 
-		t.renderer.HandleCh(ch)
-		ch = render.PositionedChar{
-			Rune: '┘',
-			Cursor: render.Cursor{
-				X:     r.X + r.W,
-				Y:     r.Y + r.H,
-				Style: style,
-			},
-		}
+		// t.renderer.HandleCh(ch)
+		// ch = render.PositionedChar{
+		// 	Rune: '┘',
+		// 	Cursor: render.Cursor{
+		// 		X:     r.X + r.W,
+		// 		Y:     r.Y + r.H,
+		// 		Style: style,
+		// 	},
+		// }
 
-		t.renderer.HandleCh(ch)
+		// t.renderer.HandleCh(ch)
 	}
 }
 
@@ -253,6 +252,8 @@ func (t *Pane) Kill() {
 	t.ptmx.Close()
 	// FIXME: handle error
 	t.cmd.Process.Kill()
+
+	t.Dead = true
 }
 
 func (t *Pane) SetPaused(pause bool) {

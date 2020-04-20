@@ -36,8 +36,6 @@
 |<kbd>Ctrl+b %</kbd> | Split vertically
 |<kbd>Ctrl+b {</kbd> | Move pane left
 |<kbd>Ctrl+b }</kbd> | Move pane right
-|<kbd>Ctrl+b o</kbd> | Next pane
-|<kbd>Ctrl+b ;</kbd> | Previous pane
 
 ### Installation Instructions
 

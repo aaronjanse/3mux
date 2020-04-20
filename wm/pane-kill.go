@@ -1,17 +1,19 @@
 package wm
 
 func (u *Universe) KillPane() {
-	u.workspaces[u.selectionIdx].killPane()
-	u.refreshRenderRect()
-	u.updateSelection()
+	allDead := u.workspaces[u.selectionIdx].killPane()
+	if !allDead {
+		u.refreshRenderRect()
+		u.updateSelection()
+	}
 }
 
-func (s *workspace) killPane() {
+func (s *workspace) killPane() (dead bool) {
 	s.setFullscreen(false)
-	s.contents.killPane()
+	return s.contents.killPane()
 }
 
-func (s *split) killPane() {
+func (s *split) killPane() (dead bool) {
 	switch child := s.elements[s.selectionIdx].contents.(type) {
 	case Container:
 		child.killPane()
@@ -19,13 +21,19 @@ func (s *split) killPane() {
 		child.Kill()
 	}
 
-	allDead := true
-	for _, n := range s.elements {
-		allDead = allDead && n.contents.IsDead()
+	for i := len(s.elements) - 1; i >= 0; i-- {
+		if s.elements[i].contents.IsDead() {
+			s.popElement(i)
+		}
 	}
 
-	if allDead {
-		s.Dead = true
-		s.onDeath(nil)
+	if s.selectionIdx >= len(s.elements) {
+		s.selectionIdx = len(s.elements) - 1
 	}
+
+	if len(s.elements) == 0 {
+		s.Dead = true
+		return true
+	}
+	return false
 }

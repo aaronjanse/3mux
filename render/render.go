@@ -245,7 +245,7 @@ func (r *Renderer) HardRefresh() {
 	r.drawingCursor = Cursor{}
 	for y := range r.currentScreen {
 		for x := range r.currentScreen[y] {
-			r.currentScreen[y][x] = Char{Rune: ' '}
+			r.currentScreen[y][x] = Char{}
 		}
 	}
 }

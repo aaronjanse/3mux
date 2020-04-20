@@ -45,7 +45,7 @@ type Node interface {
 
 type Container interface {
 	addPane()
-	killPane()
+	killPane() bool
 	setFullscreen(fullscreen bool, x, y int)
 	selectAtCoords(x, y int)
 	dragBorder(x1, y1, x2, y2 int)
@@ -56,6 +56,7 @@ type Container interface {
 	cycleSelection(forwards bool) (bubble bool)
 	selectMin()
 	selectMax()
+	getSelectedNode() Node
 	Node
 }
 

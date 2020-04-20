@@ -11,7 +11,10 @@ type Config struct {
 }
 
 var configFuncBindings = map[string]func(*wm.Universe){
-	"newWindow":  func(u *wm.Universe) { u.AddPane() },
+	"newPane":      func(u *wm.Universe) { u.AddPane() },
+	"newPaneHoriz": func(u *wm.Universe) { u.AddPaneTmux(false) },
+	"newPaneVert":  func(u *wm.Universe) { u.AddPaneTmux(true) },
+
 	"killWindow": func(u *wm.Universe) { u.KillPane() },
 	"fullscreen": func(u *wm.Universe) { u.ToggleFullscreen() },
 	"search":     func(u *wm.Universe) { u.ToggleSearch() },
@@ -59,23 +62,28 @@ var config = Config{
 
 func init() {
 	config.bindings = compileBindings(map[string][]string{
-		"newWindow":  []string{"Alt+N", "Alt+Enter"},
-		"killWindow": []string{"Alt+Shift+Q"},
-		"fullscreen": []string{"Alt+Shift+F"},
-		"search":     []string{"Alt+/"},
+		"newPane":      []string{`Alt+N`, `Alt+Enter`},
+		"newPaneHoriz": []string{`Alt+B "`},
+		"newPaneVert":  []string{`Alt+B %`},
 
-		// "resize":        []string{"Alt+R"},
-		// "debugSlowMode": []string{"Alt+X"},
+		"killWindow": []string{`Alt+Shift+Q`},
+		"fullscreen": []string{`Alt+Shift+F`},
+		"search":     []string{`Alt+/`},
 
-		"moveWindow(Up)":    []string{"Alt+Shift+K", "Alt+Shift+Up"},
-		"moveWindow(Down)":  []string{"Alt+Shift+J", "Alt+Shift+Down"},
-		"moveWindow(Left)":  []string{"Alt+Shift+H", "Alt+Shift+Left"},
-		"moveWindow(Right)": []string{"Alt+Shift+L", "Alt+Shift+Right"},
+		"resize(Up)":    []string{`Alt+R Up`},
+		"resize(Down)":  []string{`Alt+R Down`},
+		"resize(Left)":  []string{`Alt+R Left`},
+		"resize(Right)": []string{`Alt+R Right`},
 
-		"moveSelection(Up)":    []string{"Alt+K", "Alt+Up"},
-		"moveSelection(Down)":  []string{"Alt+J", "Alt+Down"},
-		"moveSelection(Left)":  []string{"Alt+H", "Alt+Left"},
-		"moveSelection(Right)": []string{"Alt+L", "Alt+Right"},
+		"moveWindow(Up)":    []string{`Alt+Shift+K`, `Alt+Shift+Up`},
+		"moveWindow(Down)":  []string{`Alt+Shift+J`, `Alt+Shift+Down`},
+		"moveWindow(Left)":  []string{`Alt+Shift+H`, `Alt+Shift+Left`, `Ctrl+B {`},
+		"moveWindow(Right)": []string{`Alt+Shift+L`, `Alt+Shift+Right`, `Ctrl+B }`},
+
+		"moveSelection(Up)":    []string{`Alt+K`, `Alt+Up`},
+		"moveSelection(Down)":  []string{`Alt+J`, `Alt+Down`},
+		"moveSelection(Left)":  []string{`Alt+H`, `Alt+Left`},
+		"moveSelection(Right)": []string{`Alt+L`, `Alt+Right`},
 	})
 }
 

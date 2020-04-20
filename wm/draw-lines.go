@@ -5,12 +5,28 @@ import (
 	"github.com/aaronjanse/3mux/render"
 )
 
-func (s *split) drawSelectionBorder() {
-	if !s.selected {
-		return
-	}
+func (u *Universe) getSelectedNode() Node {
+	return u.workspaces[u.selectionIdx].getSelectedNode()
+}
 
-	r := s.elements[s.selectionIdx].contents.GetRenderRect()
+func (s *workspace) getSelectedNode() Node {
+	return s.contents.getSelectedNode()
+}
+
+func (s *split) getSelectedNode() Node {
+	switch child := s.elements[s.selectionIdx].contents.(type) {
+	case Container:
+		return child.getSelectedNode()
+	case Node:
+		return child
+	}
+	panic("should never happen")
+}
+
+func (u *Universe) drawSelectionBorder() {
+	maxH := u.workspaces[u.selectionIdx].contents.GetRenderRect().H
+
+	r := u.getSelectedNode().GetRenderRect()
 
 	style := render.Style{
 		Fg: ecma48.Color{
@@ -20,28 +36,30 @@ func (s *split) drawSelectionBorder() {
 	}
 
 	for i := 0; i <= r.H; i++ {
-		ch := render.PositionedChar{
-			Rune: '│',
-			Cursor: render.Cursor{
-				X:     r.X - 1,
-				Y:     r.Y + i,
-				Style: style,
-			},
+		if r.Y+i < maxH {
+			ch := render.PositionedChar{
+				Rune: '│',
+				Cursor: render.Cursor{
+					X:     r.X - 1,
+					Y:     r.Y + i,
+					Style: style,
+				},
+			}
+			u.renderer.HandleCh(ch)
 		}
-
-		s.renderer.HandleCh(ch)
 	}
 	for i := 0; i <= r.H; i++ {
-		ch := render.PositionedChar{
-			Rune: '│',
-			Cursor: render.Cursor{
-				X:     r.X + r.W,
-				Y:     r.Y + i,
-				Style: style,
-			},
+		if r.Y+i < maxH {
+			ch := render.PositionedChar{
+				Rune: '│',
+				Cursor: render.Cursor{
+					X:     r.X + r.W,
+					Y:     r.Y + i,
+					Style: style,
+				},
+			}
+			u.renderer.HandleCh(ch)
 		}
-
-		s.renderer.HandleCh(ch)
 	}
 	for i := 0; i <= r.W; i++ {
 		ch := render.PositionedChar{
@@ -53,19 +71,22 @@ func (s *split) drawSelectionBorder() {
 			},
 		}
 
-		s.renderer.HandleCh(ch)
+		u.renderer.HandleCh(ch)
 	}
-	for i := 0; i <= r.W; i++ {
-		ch := render.PositionedChar{
-			Rune: '─',
-			Cursor: render.Cursor{
-				X:     r.X + i,
-				Y:     r.Y + r.H,
-				Style: style,
-			},
-		}
 
-		s.renderer.HandleCh(ch)
+	if r.Y+r.H < maxH {
+		for i := 0; i <= r.W; i++ {
+			ch := render.PositionedChar{
+				Rune: '─',
+				Cursor: render.Cursor{
+					X:     r.X + i,
+					Y:     r.Y + r.H,
+					Style: style,
+				},
+			}
+
+			u.renderer.HandleCh(ch)
+		}
 	}
 
 	ch := render.PositionedChar{
@@ -77,7 +98,7 @@ func (s *split) drawSelectionBorder() {
 		},
 	}
 
-	s.renderer.HandleCh(ch)
+	u.renderer.HandleCh(ch)
 	ch = render.PositionedChar{
 		Rune: '┐',
 		Cursor: render.Cursor{
@@ -87,25 +108,26 @@ func (s *split) drawSelectionBorder() {
 		},
 	}
 
-	s.renderer.HandleCh(ch)
-	ch = render.PositionedChar{
-		Rune: '└',
-		Cursor: render.Cursor{
-			X:     r.X - 1,
-			Y:     r.Y + r.H,
-			Style: style,
-		},
-	}
+	if r.Y+r.H < maxH {
+		u.renderer.HandleCh(ch)
+		ch = render.PositionedChar{
+			Rune: '└',
+			Cursor: render.Cursor{
+				X:     r.X - 1,
+				Y:     r.Y + r.H,
+				Style: style,
+			},
+		}
+		u.renderer.HandleCh(ch)
 
-	s.renderer.HandleCh(ch)
-	ch = render.PositionedChar{
-		Rune: '┘',
-		Cursor: render.Cursor{
-			X:     r.X + r.W,
-			Y:     r.Y + r.H,
-			Style: style,
-		},
+		ch = render.PositionedChar{
+			Rune: '┘',
+			Cursor: render.Cursor{
+				X:     r.X + r.W,
+				Y:     r.Y + r.H,
+				Style: style,
+			},
+		}
+		u.renderer.HandleCh(ch)
 	}
-
-	s.renderer.HandleCh(ch)
 }

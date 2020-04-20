@@ -281,7 +281,7 @@ func (p *Parser) dispatchCsi() {
 		case 65:
 			p.out <- p.wrap(ScrollUp(1))
 		default:
-			p.out <- p.wrap(Unrecognized("Mouse"))
+			// p.out <- p.wrap(Unrecognized("Mouse"))
 		}
 	case "?":
 		switch p.final {

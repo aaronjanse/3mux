@@ -45,6 +45,8 @@ func (s *split) moveSelection(d Direction) (bubble bool) {
 		} else {
 			return true
 		}
+	default:
+		panic("should never happen")
 	}
 
 	return false
