@@ -8,6 +8,10 @@ import (
 )
 
 func getShellPath() (string, error) {
+	if shell := os.Getenv("SHELL"); shell != "" {
+		return shell, nil
+	}
+
 	username := os.Getenv("USER")
 
 	file, err := os.Open("/etc/passwd")
