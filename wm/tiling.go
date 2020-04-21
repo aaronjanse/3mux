@@ -57,6 +57,7 @@ type Container interface {
 	selectMin()
 	selectMax()
 	getSelectedNode() Node
+	addPaneTmux(vert bool)
 	Node
 }
 

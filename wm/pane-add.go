@@ -53,7 +53,7 @@ func (s *split) addPane() {
 }
 
 func (u *Universe) AddPaneTmux(vert bool) error {
-	err := u.workspaces[u.selectionIdx].addPane()
+	err := u.workspaces[u.selectionIdx].addPaneTmux(vert)
 	if err != nil {
 		return err
 	}
@@ -66,14 +66,14 @@ func (s *workspace) addPaneTmux(vert bool) error {
 	if s.doFullscreen {
 		return errors.New("cannot add pane while one is fullscreen")
 	}
-	s.contents.addPane()
+	s.contents.addPaneTmux(vert)
 	return nil
 }
 
 func (s *split) addPaneTmux(vert bool) {
 	switch x := s.elements[s.selectionIdx].contents.(type) {
 	case Container:
-		x.addPane()
+		x.addPaneTmux(vert)
 	case Node:
 		s.elements[s.selectionIdx].contents = newSplit(
 			s.renderer, s.redrawLines, s.handleChildDeath, x.GetRenderRect(), vert,

@@ -27,6 +27,7 @@ var writeLogs = flag.Bool("log", false, "write logs to ./logs.txt")
 
 func main() {
 	shutdown := make(chan error)
+	stateBeforeInput := ""
 
 	flag.Parse()
 
@@ -57,6 +58,8 @@ func main() {
 			fmt.Println(r.(error))
 			fmt.Println(string(debug.Stack()))
 			fmt.Println()
+			fmt.Printf("BEFORE `%s`", stateBeforeInput)
+			fmt.Println()
 			fmt.Println("Please report this to https://github.com/aaronjanse/3mux/issues.")
 		}
 	}()
@@ -77,13 +80,11 @@ func main() {
 	go renderer.ListenToQueue()
 
 	u := wm.NewUniverse(renderer, func(err error) {
-		log.Println("got shutdown??")
 		if err != nil {
 			shutdown <- fmt.Errorf("%s\n%s", err.Error(), debug.Stack())
 		} else {
 			shutdown <- nil
 		}
-		log.Println("done shutdown??")
 	}, wm.Rect{X: 0, Y: 0, W: termW, H: termH}, pane.NewPane)
 	defer u.Kill()
 
@@ -117,6 +118,7 @@ func main() {
 	for {
 		select {
 		case next := <-stdin:
+			stateBeforeInput = u.Serialize()
 
 			human := humanify(next)
 
@@ -138,6 +140,8 @@ func main() {
 func humanify(obj ecma48.Output) string {
 	humanCode := ""
 	switch x := obj.Parsed.(type) {
+	case ecma48.Char:
+		humanCode = string(x.Rune)
 	case ecma48.CtrlChar:
 		humanCode = fmt.Sprintf("Ctrl+%s", humanifyRune(x.Char))
 	case ecma48.AltChar:

@@ -1,6 +1,9 @@
 package main
 
 import (
+	"fmt"
+	"strings"
+
 	"github.com/aaronjanse/3mux/wm"
 )
 
@@ -8,6 +11,7 @@ import (
 type Config struct {
 	statusBar bool
 	bindings  map[string]func(*wm.Universe)
+	modes     []string
 }
 
 var configFuncBindings = map[string]func(*wm.Universe){
@@ -41,7 +45,8 @@ var configFuncBindings = map[string]func(*wm.Universe){
 	"splitPane(Horizontal)": func(u *wm.Universe) { u.AddPaneTmux(false) },
 }
 
-func compileBindings(sourceBindings map[string][]string) map[string]func(*wm.Universe) {
+func compileBindings(sourceBindings map[string][]string) ([]string, map[string]func(*wm.Universe)) {
+	modes := []string{}
 	compiledBindings := map[string]func(*wm.Universe){}
 	for funcName, keyCodes := range sourceBindings {
 		fn, ok := configFuncBindings[funcName]
@@ -49,11 +54,21 @@ func compileBindings(sourceBindings map[string][]string) map[string]func(*wm.Uni
 			panic("Incorrect keybinding: " + funcName)
 		}
 		for _, keyCode := range keyCodes {
-			compiledBindings[keyCode] = fn
+			compiledBindings[strings.ToLower(keyCode)] = fn
+
+			parts := strings.Split(keyCode, " ")
+			switch len(parts) {
+			case 1:
+				// ignore
+			case 2:
+				modes = append(modes, strings.ToLower(parts[0]))
+			default:
+				panic(fmt.Sprintf("Unexpected config shortcut part count in: %s", keyCode))
+			}
 		}
 	}
 
-	return compiledBindings
+	return modes, compiledBindings
 }
 
 var config = Config{
@@ -61,10 +76,10 @@ var config = Config{
 }
 
 func init() {
-	config.bindings = compileBindings(map[string][]string{
+	modes, bindings := compileBindings(map[string][]string{
 		"newPane":      []string{`Alt+N`, `Alt+Enter`},
-		"newPaneHoriz": []string{`Alt+B "`},
-		"newPaneVert":  []string{`Alt+B %`},
+		"newPaneHoriz": []string{`Ctrl+B "`},
+		"newPaneVert":  []string{`Ctrl+B %`},
 
 		"killWindow": []string{`Alt+Shift+Q`},
 		"fullscreen": []string{`Alt+Shift+F`},
@@ -85,12 +100,36 @@ func init() {
 		"moveSelection(Left)":  []string{`Alt+H`, `Alt+Left`},
 		"moveSelection(Right)": []string{`Alt+L`, `Alt+Right`},
 	})
+
+	config.modes = modes
+	config.bindings = bindings
 }
 
+var mode = ""
+
 func seiveConfigEvents(u *wm.Universe, human string) bool {
-	if fn, ok := config.bindings[human]; ok {
-		fn(u)
-		return true
+	hu := strings.ToLower(human)
+	if mode == "" {
+		for _, possibleMode := range config.modes {
+			if hu == possibleMode {
+				mode = hu
+				return true
+			}
+		}
+
+		if fn, ok := config.bindings[hu]; ok {
+			fn(u)
+			return true
+		}
+	} else {
+		code := mode + " " + hu
+		mode = ""
+
+		if fn, ok := config.bindings[code]; ok {
+			fn(u)
+			return true
+		}
+
 	}
 	return false
 }
