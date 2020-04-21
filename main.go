@@ -64,6 +64,8 @@ func main() {
 		}
 	}()
 
+	config := loadOrGenerateConfig()
+
 	oldState, err := terminal.MakeRaw(0)
 	if err != nil {
 		log.Fatal(err)
@@ -126,7 +128,15 @@ func main() {
 				return
 			}
 
-			handleInput(u, human, next)
+			if seiveMouseEvents(u, human, next) {
+				break
+			}
+			if seiveConfigEvents(config, u, human) {
+				break
+			}
+			// if we didn't find anything special, just pass the raw data to
+			// the selected terminal
+			u.HandleStdin(next)
 		case err := <-shutdown:
 			if err != nil {
 				panic(err)
@@ -135,6 +145,30 @@ func main() {
 			}
 		}
 	}
+}
+
+var mouseDownX, mouseDownY int
+
+// seiveMouseEvents processes mouse events and returns true if the data should *not* be passed downstream
+func seiveMouseEvents(u *wm.Universe, human string, obj ecma48.Output) bool {
+	switch ev := obj.Parsed.(type) {
+	case ecma48.MouseDown:
+		u.SelectAtCoords(ev.X, ev.Y)
+		mouseDownX = ev.X
+		mouseDownY = ev.Y
+	case ecma48.MouseUp:
+		u.DragBorder(mouseDownX, mouseDownY, ev.X, ev.Y)
+	case ecma48.MouseDrag:
+		// do nothing
+	case ecma48.ScrollUp:
+		u.ScrollUp()
+	case ecma48.ScrollDown:
+		u.ScrollDown()
+	default:
+		return false
+	}
+
+	return true
 }
 
 func humanify(obj ecma48.Output) string {

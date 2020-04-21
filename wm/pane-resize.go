@@ -2,6 +2,7 @@ package wm
 
 func (u *Universe) ResizePane(d Direction) {
 	u.workspaces[u.selectionIdx].resizePane(d)
+	u.refreshRenderRect()
 }
 
 func (s *workspace) resizePane(d Direction) {
