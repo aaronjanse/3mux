@@ -18,7 +18,7 @@ func (s *workspace) moveWindow(dir Direction) error {
 	if s.doFullscreen {
 		return errors.New("cannot move window while one is fullscreen")
 	}
-	bubble, p := s.contents.moveWindow(dir)
+	bubble, _, p := s.contents.moveWindow(dir)
 	if bubble {
 		if dir == Up || dir == Left {
 			s.contents = newSplit(
@@ -35,13 +35,16 @@ func (s *workspace) moveWindow(dir Direction) error {
 	return nil
 }
 
-func (s *split) moveWindow(d Direction) (bubble bool, p Node) {
+func (s *split) moveWindow(d Direction) (bubble bool, superBubble bool, p Node) {
 	alignedForwards := (!s.verticallyStacked && d == Right) || (s.verticallyStacked && d == Down)
 	alignedBackward := (!s.verticallyStacked && d == Left) || (s.verticallyStacked && d == Up)
 
 	switch child := s.elements[s.selectionIdx].contents.(type) {
 	case Container:
-		bubble, p := child.moveWindow(d)
+		bubble, superBubble, p := child.moveWindow(d)
+		if superBubble {
+			return true, false, p
+		}
 		if bubble {
 			var idx int
 			switch {
@@ -50,7 +53,7 @@ func (s *split) moveWindow(d Direction) (bubble bool, p Node) {
 			case alignedBackward:
 				idx = s.selectionIdx
 			default: // VSplit[0](HSplit[0](Term[0,0 126x8]*), Term[0,9 126x8])
-				return true, p
+				return true, false, p
 			}
 
 			p.SetDeathHandler(s.handleChildDeath)
@@ -77,25 +80,25 @@ func (s *split) moveWindow(d Direction) (bubble bool, p Node) {
 		if alignedBackward {
 			if s.selectionIdx == 0 {
 				s.popElement(s.selectionIdx)
-				return true, child
-			} else {
-				tmp := s.elements[s.selectionIdx-1]
-				s.elements[s.selectionIdx-1] = s.elements[s.selectionIdx]
-				s.elements[s.selectionIdx] = tmp
-
-				s.selectionIdx--
+				return true, false, child
 			}
+
+			tmp := s.elements[s.selectionIdx-1]
+			s.elements[s.selectionIdx-1] = s.elements[s.selectionIdx]
+			s.elements[s.selectionIdx] = tmp
+
+			s.selectionIdx--
 		} else if alignedForwards {
 			if s.selectionIdx == len(s.elements)-1 {
 				s.popElement(s.selectionIdx)
-				return true, child
-			} else {
-				tmp := s.elements[s.selectionIdx+1]
-				s.elements[s.selectionIdx+1] = s.elements[s.selectionIdx]
-				s.elements[s.selectionIdx] = tmp
-
-				s.selectionIdx++
+				return true, false, child
 			}
+
+			tmp := s.elements[s.selectionIdx+1]
+			s.elements[s.selectionIdx+1] = s.elements[s.selectionIdx]
+			s.elements[s.selectionIdx] = tmp
+
+			s.selectionIdx++
 		} else {
 			switch len(s.elements) {
 			case 0:
@@ -104,14 +107,12 @@ func (s *split) moveWindow(d Direction) (bubble bool, p Node) {
 				s.verticallyStacked = !s.verticallyStacked
 			default:
 				s.popElement(s.selectionIdx)
-				return true, child
+				return true, len(s.elements) == 0, child
 			}
 		}
 	}
 
-	// s.drawSelectionBorder()
-
-	return false, nil
+	return false, false, nil
 }
 
 func (s *split) popElement(idx int) {

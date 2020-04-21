@@ -49,7 +49,7 @@ type Container interface {
 	setFullscreen(fullscreen bool, x, y int)
 	selectAtCoords(x, y int)
 	dragBorder(x1, y1, x2, y2 int)
-	moveWindow(d Direction) (bubble bool, p Node)
+	moveWindow(d Direction) (bubble bool, superBubble bool, p Node)
 	simplify()
 	resizePane(d Direction) (bubble bool)
 	moveSelection(d Direction) (bubble bool)
