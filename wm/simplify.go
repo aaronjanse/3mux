@@ -42,6 +42,15 @@ func (s *split) simplify() {
 		}
 		s.elements = newElements
 		s.selectionIdx = selectionIdx
+
+		var totalSize float32
+		for _, e := range s.elements {
+			totalSize += e.size
+		}
+		scale := 1 / totalSize
+		for i := range s.elements {
+			s.elements[i].size *= scale
+		}
 	}
 
 	for _, n := range s.elements {
