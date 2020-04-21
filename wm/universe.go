@@ -146,28 +146,28 @@ func helpBarMinLen(str string) int {
 
 var helpBar [][2]string = [][2]string{
 	[2]string{
-		"Alt+...      \t{N} New Pane  \t{Arrow} Move Pane     \t{/} Search    \t{\\} Hide Help",
-		"Alt+Shift+...\t{Q} Close Pane\t{Arrow} Move Selection\t{F} Fullscreen\t{?} More Help",
+		"Alt+...      \t{N} New Pane  \t{Arrow} Move Selection\t{/} Search    \t{\\} Hide Help",
+		"Alt+Shift+...\t{Q} Close Pane\t{Arrow} Move Pane     \t{F} Fullscreen\t{?} More Help",
 	},
 	[2]string{
-		"Alt+...      \t{N} New Pane  \t{Arrow} Move Pane     \t{\\} Hide Help",
-		"Alt+Shift+...\t{Q} Close Pane\t{Arrow} Move Selection\t{?} More Help",
+		"Alt+...      \t{N} New Pane  \t{Arrow} Move Selection\t{\\} Hide Help",
+		"Alt+Shift+...\t{Q} Close Pane\t{Arrow} Move Pane     \t{?} More Help",
 	},
 	[2]string{
-		"Alt+...      \t{N} New Pane  \t{Arrow} Move  \t{\\} Hide Help",
-		"Alt+Shift+...\t{Q} Close Pane\t{Arrow} Select\t{?} More Help",
+		"Alt+...      \t{N} New Pane  \t{Arrow} Select\t{\\} Hide Help",
+		"Alt+Shift+...\t{Q} Close Pane\t{Arrow} Move  \t{?} More Help",
 	},
 	[2]string{
-		"Alt+...      \t{N} New  \t{Arrow} Move  \t{\\} Hide Help",
-		"Alt+Shift+...\t{Q} Close\t{Arrow} Select\t{?} More Help",
+		"Alt+...      \t{N} New  \t{Arrow} Select\t{\\} Hide Help",
+		"Alt+Shift+...\t{Q} Close\t{Arrow} Move  \t{?} More Help",
 	},
 	[2]string{
 		"Alt+...      \t{N} New  \t{\\} Hide Help",
 		"Alt+Shift+...\t{Q} Close\t{?} More Help",
 	},
 	[2]string{
-		"{Alt+X}  Hide Help",
-		"{Alt+?}  More Help",
+		"{Alt+X}       Hide Help",
+		"{Alt+Shift+?} More Help",
 	},
 	[2]string{
 		"",
