@@ -9,6 +9,7 @@ func (u *Universe) AddPane() error {
 	if err != nil {
 		return err
 	}
+	u.simplify()
 	u.refreshRenderRect() // FIXME only needs to redraw lines!
 	u.updateSelection()
 	return nil
@@ -57,6 +58,7 @@ func (u *Universe) AddPaneTmux(vert bool) error {
 	if err != nil {
 		return err
 	}
+	u.simplify()
 	u.refreshRenderRect() // FIXME only needs to redraw lines!
 	u.updateSelection()
 	return nil

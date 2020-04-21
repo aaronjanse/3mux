@@ -25,11 +25,13 @@ func (s *split) moveSelection(d Direction) (bubble bool) {
 				s.selectionIdx++
 				if s.selectionIdx > len(s.elements)-1 {
 					s.selectionIdx = len(s.elements) - 1
+					return true
 				}
 			case alignedBackward:
 				s.selectionIdx--
 				if s.selectionIdx < 0 {
 					s.selectionIdx = 0
+					return true
 				}
 			default:
 				return true
