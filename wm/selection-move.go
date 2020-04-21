@@ -39,13 +39,13 @@ func (s *split) moveSelection(d Direction) (bubble bool) {
 		}
 	case Node:
 		if alignedBackward {
-			if s.selectionIdx == 0 {
+			if s.selectionIdx <= 0 {
 				return true
 			} else {
 				s.selectionIdx--
 			}
 		} else if alignedForwards {
-			if s.selectionIdx == len(s.elements)-1 {
+			if s.selectionIdx >= len(s.elements)-1 {
 				return true
 			} else {
 				s.selectionIdx++
