@@ -70,7 +70,6 @@ func (u *Universe) drawSelectionBorder() {
 				Style: style,
 			},
 		}
-
 		u.renderer.HandleCh(ch)
 	}
 
@@ -97,8 +96,8 @@ func (u *Universe) drawSelectionBorder() {
 			Style: style,
 		},
 	}
-
 	u.renderer.HandleCh(ch)
+
 	ch = render.PositionedChar{
 		Rune: '┐',
 		Cursor: render.Cursor{
@@ -107,9 +106,9 @@ func (u *Universe) drawSelectionBorder() {
 			Style: style,
 		},
 	}
+	u.renderer.HandleCh(ch)
 
 	if r.Y+r.H < maxH {
-		u.renderer.HandleCh(ch)
 		ch = render.PositionedChar{
 			Rune: '└',
 			Cursor: render.Cursor{
