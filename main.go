@@ -81,7 +81,7 @@ func main() {
 	renderer.Resize(termW, termH)
 	go renderer.ListenToQueue()
 
-	u := wm.NewUniverse(renderer, func(err error) {
+	u := wm.NewUniverse(renderer, config.generalSettings.EnableHelpBar, func(err error) {
 		go func() {
 			if err != nil {
 				shutdown <- fmt.Errorf("%s\n%s", err.Error(), debug.Stack())
