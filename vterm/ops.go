@@ -5,9 +5,10 @@ import (
 )
 
 func (v *VTerm) ScrollbackReset() {
-	v.ScrollbackPos = 0
-
-	v.RedrawWindow()
+	if v.ScrollbackPos != 0 {
+		v.ScrollbackPos = 0
+		v.RedrawWindow()
+	}
 }
 
 // ScrollbackUp shifts the screen contents up, with scrollback
