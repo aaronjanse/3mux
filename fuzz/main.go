@@ -16,7 +16,16 @@ import (
 func main() {
 	log.SetOutput(ioutil.Discard)
 
-	fuzzWM()
+	for i := 0; i < 8; i++ {
+		go fuzzECMA48()
+	}
+
+	for i := 0; i < 4; i++ {
+		go fuzzWM()
+	}
+
+	wait := make(chan bool)
+	<-wait
 }
 
 func fuzzECMA48() {
