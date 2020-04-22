@@ -10,6 +10,7 @@ import (
 	mathRand "math/rand"
 
 	"github.com/aaronjanse/3mux/ecma48"
+	"github.com/aaronjanse/3mux/pane"
 	"github.com/aaronjanse/3mux/wm"
 )
 
@@ -24,11 +25,48 @@ func main() {
 		go fuzzWM()
 	}
 
+	for i := 0; i < 12; i++ {
+		go fuzzVTerm()
+	}
+
 	wait := make(chan bool)
 	<-wait
 }
 
+func fuzzVTerm() {
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Println("=== VTerm Failed ===")
+			panic(r)
+		}
+	}()
+
+	r := &FakeRenderer{}
+	p := pane.NewPane(r)
+	p.SetDeathHandler(func(err error) {
+		panic(err)
+	})
+	p.SetRenderRect(false, 0, 0, 100, 100)
+
+	random := bufio.NewReader(rand.Reader)
+	out := make(chan ecma48.Output)
+
+	parser := ecma48.NewParser(false)
+	go parser.Parse(random, out)
+
+	for obj := range out {
+		p.HandleStdin(obj)
+	}
+}
+
 func fuzzECMA48() {
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Println("=== ECMA48 Failed ===")
+			panic(r)
+		}
+	}()
+
 	random := bufio.NewReader(rand.Reader)
 	out := make(chan ecma48.Output)
 

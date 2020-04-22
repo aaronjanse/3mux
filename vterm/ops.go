@@ -112,7 +112,7 @@ func (v *VTerm) setCursorPos(x, y int) {
 	if y <= v.h && y >= len(v.Screen) {
 		for y := 0; y <= v.h; y++ {
 			if y >= len(v.Screen) {
-				v.Screen = append(v.Screen, []ecma48.StyledChar{})
+				v.Screen = append(v.Screen, make([]ecma48.StyledChar, v.w))
 			}
 		}
 	}
@@ -219,6 +219,9 @@ func (v *VTerm) forceRedrawWindow() {
 					line = v.Screen[y]
 				} else {
 					line = make([]ecma48.StyledChar, v.w)
+					for x := range line {
+						line[x].Style = v.Cursor.Style
+					}
 				}
 
 				var ch ecma48.PositionedChar
