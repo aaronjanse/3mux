@@ -3,24 +3,23 @@ package main
 import (
 	"bufio"
 	"crypto/rand"
+	"fmt"
 	"io/ioutil"
 	"log"
 
+	mathRand "math/rand"
+
 	"github.com/aaronjanse/3mux/ecma48"
+	"github.com/aaronjanse/3mux/wm"
 )
 
 func main() {
 	log.SetOutput(ioutil.Discard)
 
-	go fuzz()
-	go fuzz()
-	go fuzz()
-	go fuzz()
-	go fuzz()
-	fuzz()
+	fuzzWM()
 }
 
-func fuzz() {
+func fuzzECMA48() {
 	random := bufio.NewReader(rand.Reader)
 	out := make(chan ecma48.Output)
 
@@ -29,4 +28,94 @@ func fuzz() {
 
 	for range out {
 	}
+}
+
+func fuzzWM() {
+	var pastStates []string
+	var pastFuncNames []string
+
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Println("=== WM Failed ===")
+			for i, state := range pastStates {
+				fmt.Println("State:", state)
+				fmt.Println("Func: ", pastFuncNames[i])
+			}
+			panic(r)
+		}
+	}()
+
+	r := &FakeRenderer{}
+	for {
+		u := wm.NewUniverse(r, func(err error) {}, wm.Rect{W: 100, H: 100}, newFakePane)
+		pastStates = []string{}
+		pastFuncNames = []string{}
+
+		for count := 0; count < 8; count++ {
+			if u.IsDead() {
+				break
+			}
+			name, fn := getRandomFunc()
+			pastFuncNames = append(pastFuncNames, name)
+			pastStates = append(pastStates, u.Serialize())
+
+			fn(u)
+		}
+	}
+}
+
+func getRandomFunc() (string, func(*wm.Universe)) {
+	i := mathRand.Intn(len(wm.FuncNames))
+	for k, v := range wm.FuncNames {
+		if i == 0 {
+			return k, v
+		}
+		i--
+	}
+	panic("should not be possible")
+}
+
+type FakeRenderer struct{}
+
+func (r *FakeRenderer) HandleCh(ch ecma48.PositionedChar) {
+}
+func (r *FakeRenderer) SetCursor(x, y int) {
+}
+
+type FakePane struct {
+	rect wm.Rect
+	dead bool
+}
+
+func newFakePane(renderer ecma48.Renderer) wm.Node {
+	return &FakePane{}
+}
+func (p *FakePane) SetRenderRect(fullscreen bool, x, y, w, h int) {
+	p.rect = wm.Rect{X: x, Y: y, W: w, H: h}
+}
+func (p *FakePane) GetRenderRect() wm.Rect {
+	return p.rect
+}
+func (p *FakePane) Serialize() string {
+	return "FakePane"
+}
+func (p *FakePane) SetPaused(paused bool) {
+}
+func (p *FakePane) Kill() {
+	p.dead = true
+}
+func (p *FakePane) IsDead() bool {
+	return p.dead
+}
+func (p *FakePane) ScrollUp() {
+}
+func (p *FakePane) ScrollDown() {
+}
+func (p *FakePane) ToggleSearch() {
+}
+func (p *FakePane) HandleStdin(ecma48.Output) {
+}
+func (p *FakePane) UpdateSelection(selected bool) {
+}
+func (p *FakePane) SetDeathHandler(fn func(error)) {
 }

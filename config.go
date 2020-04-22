@@ -139,7 +139,7 @@ func castMapInterface(source map[string]interface{}) map[string][]string {
 func compileBindings(sourceBindings map[string][]string) map[string]func(*wm.Universe) {
 	compiledBindings := map[string]func(*wm.Universe){}
 	for funcName, keyCodes := range sourceBindings {
-		fn, ok := configFuncBindings[funcName]
+		fn, ok := wm.FuncNames[funcName]
 		if !ok {
 			panic(errors.New("Incorrect keybinding: " + funcName))
 		}
@@ -182,35 +182,6 @@ func seiveConfigEvents(config CompiledConfig, u *wm.Universe, human string) bool
 		mode = ""
 	}
 	return false
-}
-
-var configFuncBindings = map[string]func(*wm.Universe){
-	"new-pane":  func(u *wm.Universe) { u.AddPane() },
-	"kill-pane": func(u *wm.Universe) { u.KillPane() },
-
-	"split-pane-horiz": func(u *wm.Universe) { u.AddPaneTmux(false) },
-	"split-pane-vert":  func(u *wm.Universe) { u.AddPaneTmux(true) },
-
-	"show-help":     func(u *wm.Universe) {},
-	"hide-help-bar": func(u *wm.Universe) {},
-
-	"toggle-fullscreen": func(u *wm.Universe) { u.ToggleFullscreen() },
-	"toggle-search":     func(u *wm.Universe) { u.ToggleSearch() },
-
-	"resize-up":    func(u *wm.Universe) { u.ResizePane(wm.Up) },
-	"resize-down":  func(u *wm.Universe) { u.ResizePane(wm.Down) },
-	"resize-left":  func(u *wm.Universe) { u.ResizePane(wm.Left) },
-	"resize-right": func(u *wm.Universe) { u.ResizePane(wm.Right) },
-
-	"move-pane-up":    func(u *wm.Universe) { u.MoveWindow(wm.Up) },
-	"move-pane-down":  func(u *wm.Universe) { u.MoveWindow(wm.Down) },
-	"move-pane-left":  func(u *wm.Universe) { u.MoveWindow(wm.Left) },
-	"move-pane-right": func(u *wm.Universe) { u.MoveWindow(wm.Right) },
-
-	"move-selection-up":    func(u *wm.Universe) { u.MoveSelection(wm.Up) },
-	"move-selection-down":  func(u *wm.Universe) { u.MoveSelection(wm.Down) },
-	"move-selection-left":  func(u *wm.Universe) { u.MoveSelection(wm.Left) },
-	"move-selection-right": func(u *wm.Universe) { u.MoveSelection(wm.Right) },
 }
 
 const defaultConfig = `

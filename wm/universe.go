@@ -15,6 +15,7 @@ type Universe struct {
 	renderer     ecma48.Renderer
 
 	onDeath func(error)
+	dead    bool
 }
 
 func NewUniverse(renderer ecma48.Renderer, onDeath func(error), renderRect Rect, newPane NewPaneFunc) *Universe {
@@ -43,6 +44,10 @@ func (u *Universe) Serialize() string {
 	out += ")"
 
 	return out
+}
+
+func (u *Universe) IsDead() bool {
+	return u.dead
 }
 
 // setRenderRect updates the Split's renderRect cache after which it calls refreshRenderRect

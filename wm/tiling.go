@@ -61,3 +61,32 @@ type Container interface {
 }
 
 type NewPaneFunc func(ecma48.Renderer) Node
+
+var FuncNames = map[string]func(*Universe){
+	"new-pane":  func(u *Universe) { u.AddPane() },
+	"kill-pane": func(u *Universe) { u.KillPane() },
+
+	"split-pane-horiz": func(u *Universe) { u.AddPaneTmux(false) },
+	"split-pane-vert":  func(u *Universe) { u.AddPaneTmux(true) },
+
+	"show-help":     func(u *Universe) {},
+	"hide-help-bar": func(u *Universe) {},
+
+	"toggle-fullscreen": func(u *Universe) { u.ToggleFullscreen() },
+	"toggle-search":     func(u *Universe) { u.ToggleSearch() },
+
+	"resize-up":    func(u *Universe) { u.ResizePane(Up) },
+	"resize-down":  func(u *Universe) { u.ResizePane(Down) },
+	"resize-left":  func(u *Universe) { u.ResizePane(Left) },
+	"resize-right": func(u *Universe) { u.ResizePane(Right) },
+
+	"move-pane-up":    func(u *Universe) { u.MoveWindow(Up) },
+	"move-pane-down":  func(u *Universe) { u.MoveWindow(Down) },
+	"move-pane-left":  func(u *Universe) { u.MoveWindow(Left) },
+	"move-pane-right": func(u *Universe) { u.MoveWindow(Right) },
+
+	"move-selection-up":    func(u *Universe) { u.MoveSelection(Up) },
+	"move-selection-down":  func(u *Universe) { u.MoveSelection(Down) },
+	"move-selection-left":  func(u *Universe) { u.MoveSelection(Left) },
+	"move-selection-right": func(u *Universe) { u.MoveSelection(Right) },
+}

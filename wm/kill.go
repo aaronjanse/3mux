@@ -16,6 +16,7 @@ func (s *split) Kill() {
 }
 
 func (u *Universe) handleChildDeath(err error) {
+	u.dead = true
 	u.onDeath(err) // FIXME: only supports one workspace
 }
 
