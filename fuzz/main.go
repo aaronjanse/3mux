@@ -54,7 +54,7 @@ func fuzzWM() {
 		pastStates = []string{}
 		pastFuncNames = []string{}
 
-		for count := 0; count < 8; count++ {
+		for count := 0; count < 32; count++ {
 			name, fn := getRandomFunc()
 			pastFuncNames = append(pastFuncNames, name)
 			pastStates = append(pastStates, u.Serialize())
