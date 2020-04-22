@@ -16,6 +16,7 @@ import (
 
 	"github.com/aaronjanse/3mux/ecma48"
 	"github.com/aaronjanse/3mux/pane"
+	"github.com/aaronjanse/3mux/vterm"
 	"github.com/aaronjanse/3mux/wm"
 )
 
@@ -34,7 +35,7 @@ func main() {
 	// 	go fuzzWM()
 	// }
 
-	for i := 0; i < 10; i++ {
+	for i := 0; i < 8; i++ {
 		go fuzzVTerm()
 	}
 
@@ -59,7 +60,7 @@ func fuzzVTerm() {
 	defer func() {
 		if r := recover(); r != nil {
 			fmt.Println("=== VTerm Failed ===")
-			panic(r)
+			panic(r.(error))
 		}
 	}()
 
@@ -71,15 +72,9 @@ func fuzzVTerm() {
 	p.SetRenderRect(false, 0, 0, 100, 100)
 
 	random := bufio.NewReader(rand.Reader)
-	out := make(chan ecma48.Output)
 
-	parser := ecma48.NewParser(false)
-	go parser.Parse(random, out)
-
-	for obj := range out {
-		p.HandleStdin(obj)
-		vtermCount++
-	}
+	vterm := vterm.NewVTerm(r, func(x, y int) {})
+	vterm.ProcessStdout(bufio.NewReader(random))
 }
 
 func fuzzECMA48() {

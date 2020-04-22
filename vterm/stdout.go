@@ -57,6 +57,10 @@ func (v *VTerm) ProcessStdout(input *bufio.Reader) {
 				v.useFastRefresh()
 			}
 
+			if len(output.Raw) == 0 {
+				break
+			}
+
 			// log.Printf(":: %q", output.Raw)
 
 			switch x := output.Parsed.(type) {
