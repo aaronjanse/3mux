@@ -29,12 +29,13 @@ const (
 
 func (v *VTerm) ProcessStdout(input *bufio.Reader) {
 	stdout := make(chan ecma48.Output, 3200000)
+	shutdown := make(chan bool)
 
 	parser := ecma48.NewParser(false)
 
 	go func() {
 		parser.Parse(input, stdout)
-		stdout <- ecma48.Output{Parsed: ecma48.EOF{}}
+		shutdown <- true
 	}()
 
 	for {
@@ -47,6 +48,8 @@ func (v *VTerm) ProcessStdout(input *bufio.Reader) {
 				}
 				p = <-v.ChangePause
 			}
+		case <-shutdown:
+			return
 		case output := <-stdout:
 			v.runeCounter += uint64(len(output.Raw))
 
@@ -64,8 +67,6 @@ func (v *VTerm) ProcessStdout(input *bufio.Reader) {
 			// log.Printf(":: %q", output.Raw)
 
 			switch x := output.Parsed.(type) {
-			case ecma48.EOF:
-				return
 			case ecma48.Char:
 				v.putChar(x.Rune, x.IsWide)
 			case ecma48.Backspace:
