@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/aaronjanse/3mux/ecma48"
-	"github.com/aaronjanse/3mux/render"
 )
 
 // SearchDirection is which direction we move through search results
@@ -111,12 +110,12 @@ func (t *Pane) doSearch() {
 
 		for i := match.x1; i <= match.x2; i++ {
 			theY := len(fullBuffer) - (bottomOfScreen + match.y1 + 1)
-			t.renderer.HandleCh(render.PositionedChar{
+			t.renderer.HandleCh(ecma48.PositionedChar{
 				Rune: fullBuffer[theY][i].Rune,
-				Cursor: render.Cursor{
+				Cursor: ecma48.Cursor{
 					X: t.renderRect.X + i,
 					Y: t.renderRect.Y + t.renderRect.H - match.y1,
-					Style: render.Style{
+					Style: ecma48.Style{
 						Bg: ecma48.Color{
 							ColorMode: ecma48.ColorBit3Bright,
 							Code:      2,
@@ -139,7 +138,7 @@ type SearchMatch struct {
 	x1, y1, x2, y2 int
 }
 
-func (t *Pane) locateText(chars [][]render.Char, text string) (SearchMatch, error) {
+func (t *Pane) locateText(chars [][]ecma48.StyledChar, text string) (SearchMatch, error) {
 	lineFromBottom := t.searchPos
 
 	i := len(chars) - t.searchPos - 1
@@ -205,9 +204,9 @@ func (t *Pane) ToggleSearch() {
 		t.searchDidShiftUp = !lastLineIsBlank
 
 		if !lastLineIsBlank {
-			blankLine := []render.Char{}
+			blankLine := []ecma48.StyledChar{}
 			for i := 0; i < t.renderRect.W; i++ {
-				blankLine = append(blankLine, render.Char{Rune: ' ', Style: render.Style{}})
+				blankLine = append(blankLine, ecma48.StyledChar{Rune: ' ', Style: ecma48.Style{}})
 			}
 
 			t.vterm.Scrollback = append(t.vterm.Scrollback, t.vterm.Screen[0])
@@ -223,7 +222,7 @@ func (t *Pane) ToggleSearch() {
 		t.vterm.ScrollbackPos = t.searchBackupScrollPos
 
 		if t.searchDidShiftUp {
-			t.vterm.Screen = append([][]render.Char{t.vterm.Scrollback[len(t.vterm.Scrollback)-1]}, t.vterm.Screen[:len(t.vterm.Screen)-1]...)
+			t.vterm.Screen = append([][]ecma48.StyledChar{t.vterm.Scrollback[len(t.vterm.Scrollback)-1]}, t.vterm.Screen[:len(t.vterm.Screen)-1]...)
 			t.vterm.Scrollback = t.vterm.Scrollback[:len(t.vterm.Scrollback)-1]
 		}
 		t.vterm.RedrawWindow()
@@ -238,12 +237,12 @@ func (t *Pane) displayStatusText(s string) {
 			r = rune(s[i])
 		}
 
-		ch := render.PositionedChar{
+		ch := ecma48.PositionedChar{
 			Rune: r,
-			Cursor: render.Cursor{
+			Cursor: ecma48.Cursor{
 				X: t.renderRect.X + i,
 				Y: t.renderRect.Y + t.renderRect.H - 1,
-				Style: render.Style{
+				Style: ecma48.Style{
 					Bg: ecma48.Color{
 						ColorMode: ecma48.ColorBit3Bright,
 						Code:      2,
@@ -261,12 +260,12 @@ func (t *Pane) displayStatusText(s string) {
 
 func (t *Pane) clearStatusText() {
 	for i := 0; i < t.renderRect.W; i++ {
-		ch := render.PositionedChar{
+		ch := ecma48.PositionedChar{
 			Rune: ' ',
-			Cursor: render.Cursor{
+			Cursor: ecma48.Cursor{
 				X: i,
 				Y: t.renderRect.H - 1,
-				Style: render.Style{
+				Style: ecma48.Style{
 					Bg: ecma48.Color{
 						ColorMode: ecma48.ColorBit3Bright,
 						Code:      2,

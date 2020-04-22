@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/aaronjanse/3mux/render"
+	"github.com/aaronjanse/3mux/ecma48"
 )
 
 // A Universe contains workspaces
@@ -12,12 +12,12 @@ type Universe struct {
 	workspaces   []*workspace
 	selectionIdx int
 	renderRect   Rect
-	renderer     *render.Renderer
+	renderer     ecma48.Renderer
 
 	onDeath func(error)
 }
 
-func NewUniverse(renderer *render.Renderer, onDeath func(error), renderRect Rect, newPane NewPaneFunc) *Universe {
+func NewUniverse(renderer ecma48.Renderer, onDeath func(error), renderRect Rect, newPane NewPaneFunc) *Universe {
 	u := &Universe{
 		selectionIdx: 0,
 		renderRect:   renderRect,
@@ -108,7 +108,7 @@ func (u *Universe) drawHelpBar() {
 			space += " "
 		}
 
-		style := render.Style{}
+		style := ecma48.Style{}
 
 		for line := 0; line < 2; line++ {
 			x := 0
@@ -120,9 +120,9 @@ func (u *Universe) drawHelpBar() {
 				case '}':
 					style.Reverse = false
 				default:
-					u.renderer.HandleCh(render.PositionedChar{
+					u.renderer.HandleCh(ecma48.PositionedChar{
 						Rune: r,
-						Cursor: render.Cursor{
+						Cursor: ecma48.Cursor{
 							X: x, Y: u.renderRect.H - 2 + line,
 							Style: style,
 						},

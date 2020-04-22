@@ -3,7 +3,7 @@ package wm
 import (
 	"fmt"
 
-	"github.com/aaronjanse/3mux/render"
+	"github.com/aaronjanse/3mux/ecma48"
 )
 
 // A Split splits a region of the screen into a areas reserved for multiple child nodes
@@ -11,7 +11,7 @@ type split struct {
 	verticallyStacked bool
 	elements          []SizedNode
 	selectionIdx      int
-	renderer          *render.Renderer
+	renderer          ecma48.Renderer
 	renderRect        Rect
 	selected          bool
 
@@ -21,7 +21,7 @@ type split struct {
 	redrawAllLines func()
 }
 
-func newSplit(renderer *render.Renderer, redrawAllLines func(), onDeath func(error), rect Rect, verticallyStacked bool, selectionIdx int, children []Node, newPane NewPaneFunc) *split {
+func newSplit(renderer ecma48.Renderer, redrawAllLines func(), onDeath func(error), rect Rect, verticallyStacked bool, selectionIdx int, children []Node, newPane NewPaneFunc) *split {
 	s := &split{
 		verticallyStacked: verticallyStacked,
 		renderer:          renderer,
@@ -171,16 +171,16 @@ func (s *split) redrawLines() {
 
 		if s.verticallyStacked {
 			for i := 0; i < w; i++ {
-				s.renderer.HandleCh(render.PositionedChar{
+				s.renderer.HandleCh(ecma48.PositionedChar{
 					Rune:   '─',
-					Cursor: render.Cursor{X: x + i, Y: y + pos},
+					Cursor: ecma48.Cursor{X: x + i, Y: y + pos},
 				})
 			}
 		} else {
 			for j := 0; j < h; j++ {
-				s.renderer.HandleCh(render.PositionedChar{
+				s.renderer.HandleCh(ecma48.PositionedChar{
 					Rune:   '│',
-					Cursor: render.Cursor{X: x + pos, Y: y + j},
+					Cursor: ecma48.Cursor{X: x + pos, Y: y + j},
 				})
 			}
 		}

@@ -2,7 +2,6 @@ package wm
 
 import (
 	"github.com/aaronjanse/3mux/ecma48"
-	"github.com/aaronjanse/3mux/render"
 )
 
 // Rect is a rectangle with an origin x, origin y, width, and height
@@ -61,4 +60,4 @@ type Container interface {
 	Node
 }
 
-type NewPaneFunc func(*render.Renderer) Node
+type NewPaneFunc func(ecma48.Renderer) Node

@@ -8,7 +8,6 @@ import (
 	"runtime/debug"
 
 	"github.com/aaronjanse/3mux/ecma48"
-	"github.com/aaronjanse/3mux/render"
 	"github.com/aaronjanse/3mux/vterm"
 	"github.com/aaronjanse/3mux/wm"
 	"github.com/kr/pty"
@@ -24,7 +23,7 @@ type Pane struct {
 
 	selected   bool
 	renderRect wm.Rect
-	renderer   *render.Renderer
+	renderer   ecma48.Renderer
 
 	searchMode            bool
 	searchText            string
@@ -38,7 +37,7 @@ type Pane struct {
 	OnDeath func(error)
 }
 
-func NewPane(renderer *render.Renderer) wm.Node {
+func NewPane(renderer ecma48.Renderer) wm.Node {
 	shellPath, err := getShellPath()
 	if err != nil {
 		panic(err)

@@ -3,14 +3,14 @@ package wm
 import (
 	"fmt"
 
-	"github.com/aaronjanse/3mux/render"
+	"github.com/aaronjanse/3mux/ecma48"
 )
 
 // A workspace is a desktop
 type workspace struct {
 	contents     *split
 	doFullscreen bool
-	renderer     *render.Renderer
+	renderer     ecma48.Renderer
 
 	onDeath    func(error)
 	Dead       bool
@@ -18,7 +18,7 @@ type workspace struct {
 	renderRect Rect
 }
 
-func newWorkspace(renderer *render.Renderer, redrawAllLines func(), onDeath func(error), renderRect Rect, newPane NewPaneFunc) *workspace {
+func newWorkspace(renderer ecma48.Renderer, redrawAllLines func(), onDeath func(error), renderRect Rect, newPane NewPaneFunc) *workspace {
 	w := &workspace{
 		doFullscreen: false,
 		onDeath:      onDeath,

@@ -6,7 +6,6 @@ import (
 	"sync/atomic"
 
 	"github.com/aaronjanse/3mux/ecma48"
-	"github.com/aaronjanse/3mux/render"
 )
 
 type Parser struct {
@@ -84,9 +83,9 @@ func (v *VTerm) ProcessStdout(input *bufio.Reader) {
 
 			case ecma48.ICH: // insert characters
 				w := len(v.Screen[v.Cursor.Y])
-				new := make([]render.Char, w)
+				new := make([]ecma48.StyledChar, w)
 				copy(new[:v.Cursor.X], v.Screen[v.Cursor.Y][:v.Cursor.X])
-				new = append(new, make([]render.Char, x.N)...)
+				new = append(new, make([]ecma48.StyledChar, x.N)...)
 				new = append(new, v.Screen[v.Cursor.Y][v.Cursor.X:]...)
 				new = new[:w]
 				v.Screen[v.Cursor.Y] = new
@@ -95,10 +94,10 @@ func (v *VTerm) ProcessStdout(input *bufio.Reader) {
 				if x.N > v.w-v.Cursor.X {
 					x.N = v.w - v.Cursor.X // FIXME: verify that we don't need +/- 1
 				}
-				new := make([]render.Char, len(v.Screen[v.Cursor.Y]))
+				new := make([]ecma48.StyledChar, len(v.Screen[v.Cursor.Y]))
 				copy(new[:v.Cursor.X], v.Screen[v.Cursor.Y][:v.Cursor.X])
 				new = append(new, v.Screen[v.Cursor.Y][v.Cursor.X+x.N:]...)
-				new = append(new, make([]render.Char, x.N)...)
+				new = append(new, make([]ecma48.StyledChar, x.N)...)
 				v.Screen[v.Cursor.Y] = new
 				v.RedrawWindow() // FIXME inefficient
 			case ecma48.PrivateDEC:
@@ -151,9 +150,9 @@ func (v *VTerm) ProcessStdout(input *bufio.Reader) {
 			case ecma48.IL:
 				v.setCursorX(0)
 
-				newLines := make([][]render.Char, x.N)
+				newLines := make([][]ecma48.StyledChar, x.N)
 				for i := range newLines {
-					newLines[i] = make([]render.Char, v.w)
+					newLines[i] = make([]ecma48.StyledChar, v.w)
 					if v.Cursor.Y == v.scrollingRegion.top {
 						for x := range newLines[i] {
 							newLines[i][x].Style = v.Cursor.Style
@@ -170,9 +169,9 @@ func (v *VTerm) ProcessStdout(input *bufio.Reader) {
 
 				v.RedrawWindow()
 			case ecma48.DL:
-				newLines := make([][]render.Char, x.N)
+				newLines := make([][]ecma48.StyledChar, x.N)
 				for i := range newLines {
-					newLines[i] = make([]render.Char, v.w)
+					newLines[i] = make([]ecma48.StyledChar, v.w)
 					for x := range newLines[i] {
 						newLines[i][x].Style = v.Cursor.Style
 					}
