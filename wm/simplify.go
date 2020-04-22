@@ -11,6 +11,7 @@ func (s *split) simplify() {
 	if len(s.elements) == 1 {
 		switch child := (*s).elements[0].contents.(type) {
 		case *split:
+			child.simplify()
 			s.verticallyStacked = child.verticallyStacked
 			s.elements = child.elements
 			s.selectionIdx = child.selectionIdx
@@ -21,6 +22,8 @@ func (s *split) simplify() {
 		for idx, n := range (*s).elements {
 			switch child := n.contents.(type) {
 			case *split:
+				child.simplify()
+
 				if len(child.elements) > 0 {
 					if child.verticallyStacked == s.verticallyStacked {
 						for j := range child.elements {
