@@ -70,7 +70,7 @@ var FuncNames = map[string]func(*Universe){
 	"split-pane-vert":  func(u *Universe) { u.AddPaneTmux(true) },
 
 	"show-help":     func(u *Universe) {},
-	"hide-help-bar": func(u *Universe) {},
+	"hide-help-bar": func(u *Universe) { u.HideHelpBar() },
 
 	"toggle-fullscreen": func(u *Universe) { u.ToggleFullscreen() },
 	"toggle-search":     func(u *Universe) { u.ToggleSearch() },

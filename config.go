@@ -19,9 +19,9 @@ import (
 )
 
 type UserConfig struct {
-	EnableHelpBar bool                              `toml:"enable-help-bar"`
-	Keys          map[string][]string               `toml:"keys"`
-	Modes         map[string]map[string]interface{} `toml:"modes"`
+	General CompiledConfigGeneral
+	Keys    map[string][]string               `toml:"keys"`
+	Modes   map[string]map[string]interface{} `toml:"modes"`
 }
 
 type CompiledConfig struct {
@@ -35,7 +35,7 @@ type CompiledConfig struct {
 }
 
 type CompiledConfigGeneral struct {
-	enableHelpBar bool
+	EnableHelpBar bool `toml:"enable-help-bar"`
 }
 
 func loadOrGenerateConfig() CompiledConfig {
@@ -114,7 +114,7 @@ func compileConfig(user UserConfig) CompiledConfig {
 
 	conf.normalBindings = compileBindings(user.Keys)
 
-	conf.generalSettings.enableHelpBar = user.EnableHelpBar
+	conf.generalSettings = user.General
 
 	return conf
 }
@@ -184,7 +184,8 @@ func seiveConfigEvents(config CompiledConfig, u *wm.Universe, human string) bool
 	return false
 }
 
-const defaultConfig = `
+const defaultConfig = `[general]
+
 enable-help-bar = true
 
 [keys]

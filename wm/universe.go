@@ -16,14 +16,17 @@ type Universe struct {
 
 	onDeath func(error)
 	dead    bool
+
+	helpBar bool
 }
 
-func NewUniverse(renderer ecma48.Renderer, onDeath func(error), renderRect Rect, newPane NewPaneFunc) *Universe {
+func NewUniverse(renderer ecma48.Renderer, helpBar bool, onDeath func(error), renderRect Rect, newPane NewPaneFunc) *Universe {
 	u := &Universe{
 		selectionIdx: 0,
 		renderRect:   renderRect,
 		onDeath:      onDeath,
 		renderer:     renderer,
+		helpBar:      helpBar,
 	}
 	u.workspaces = []*workspace{newWorkspace(renderer, u.redrawAllLines, u.handleChildDeath, renderRect, newPane)}
 	u.updateSelection()
@@ -85,10 +88,16 @@ func (u *Universe) refreshRenderRect() {
 	h := u.renderRect.H
 
 	for _, child := range u.workspaces {
-		child.setRenderRect(x, y, w, h-2)
+		if u.helpBar {
+			child.setRenderRect(x, y, w, h-2)
+		} else {
+			child.setRenderRect(x, y, w, h)
+		}
 	}
 
-	u.drawHelpBar()
+	if u.helpBar {
+		u.drawHelpBar()
+	}
 
 	u.redrawAllLines()
 	u.drawSelectionBorder()
@@ -139,6 +148,11 @@ func (u *Universe) drawHelpBar() {
 
 		break
 	}
+}
+
+func (u *Universe) HideHelpBar() {
+	u.helpBar = false
+	u.refreshRenderRect()
 }
 
 func helpBarMinLen(str string) int {
