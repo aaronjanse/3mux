@@ -6,28 +6,50 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"os"
+	"os/signal"
 
 	mathRand "math/rand"
+
+	"golang.org/x/text/language"
+	"golang.org/x/text/message"
 
 	"github.com/aaronjanse/3mux/ecma48"
 	"github.com/aaronjanse/3mux/pane"
 	"github.com/aaronjanse/3mux/wm"
 )
 
+var vtermCount int
+var ecmaCount int
+var wmCount int
+
 func main() {
 	log.SetOutput(ioutil.Discard)
 
-	for i := 0; i < 8; i++ {
-		go fuzzECMA48()
-	}
+	// for i := 0; i < 8; i++ {
+	// 	go fuzzECMA48()
+	// }
 
-	for i := 0; i < 4; i++ {
-		go fuzzWM()
-	}
+	// for i := 0; i < 4; i++ {
+	// 	go fuzzWM()
+	// }
 
-	for i := 0; i < 12; i++ {
+	for i := 0; i < 10; i++ {
 		go fuzzVTerm()
 	}
+
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt)
+	go func() {
+		for range c {
+			p := message.NewPrinter(language.English)
+			// p.Printf("WM operations:     %d\n", wmCount)
+			// p.Printf("ECMA48 operations: %d\n", ecmaCount)
+			p.Printf("VTerm operations:  %d\n", vtermCount)
+
+			os.Exit(0)
+		}
+	}()
 
 	wait := make(chan bool)
 	<-wait
@@ -42,7 +64,7 @@ func fuzzVTerm() {
 	}()
 
 	r := &FakeRenderer{}
-	p := pane.NewPane(r)
+	p := pane.NewPaneImpl(r, false)
 	p.SetDeathHandler(func(err error) {
 		panic(err)
 	})
@@ -56,6 +78,7 @@ func fuzzVTerm() {
 
 	for obj := range out {
 		p.HandleStdin(obj)
+		vtermCount++
 	}
 }
 
@@ -74,6 +97,7 @@ func fuzzECMA48() {
 	go p.Parse(random, out)
 
 	for range out {
+		ecmaCount++
 	}
 }
 
@@ -111,6 +135,7 @@ func fuzzWM() {
 			if u.IsDead() || stop {
 				break
 			}
+			wmCount++
 		}
 	}
 }

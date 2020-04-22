@@ -38,9 +38,17 @@ type Pane struct {
 }
 
 func NewPane(renderer ecma48.Renderer) wm.Node {
+	return NewPaneImpl(renderer, true)
+}
+
+func NewPaneImpl(renderer ecma48.Renderer, realShell bool) wm.Node {
 	shellPath, err := getShellPath()
 	if err != nil {
 		panic(err)
+	}
+
+	if !realShell {
+		shellPath = "cat"
 	}
 
 	cmd := exec.Command(shellPath)
