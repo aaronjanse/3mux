@@ -82,11 +82,13 @@ func main() {
 	go renderer.ListenToQueue()
 
 	u := wm.NewUniverse(renderer, func(err error) {
-		if err != nil {
-			shutdown <- fmt.Errorf("%s\n%s", err.Error(), debug.Stack())
-		} else {
-			shutdown <- nil
-		}
+		go func() {
+			if err != nil {
+				shutdown <- fmt.Errorf("%s\n%s", err.Error(), debug.Stack())
+			} else {
+				shutdown <- nil
+			}
+		}()
 	}, wm.Rect{X: 0, Y: 0, W: termW, H: termH}, pane.NewPane)
 	defer u.Kill()
 

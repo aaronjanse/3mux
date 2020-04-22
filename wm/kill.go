@@ -1,7 +1,5 @@
 package wm
 
-import "log"
-
 func (u *Universe) Kill() {
 	for _, n := range u.workspaces {
 		n.contents.Kill()
@@ -30,7 +28,6 @@ func (s *split) handleChildDeath(err error) {
 			s.popElement(idx)
 		}
 	}
-	log.Println(s.Serialize())
 	if len(s.elements) == 0 || err != nil {
 		s.Dead = true
 		s.onDeath(err)

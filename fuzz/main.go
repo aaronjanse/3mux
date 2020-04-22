@@ -47,19 +47,23 @@ func fuzzWM() {
 
 	r := &FakeRenderer{}
 	for {
-		u := wm.NewUniverse(r, func(err error) {}, wm.Rect{W: 100, H: 100}, newFakePane)
+		var stop bool
+		u := wm.NewUniverse(r, func(err error) {
+			stop = true
+		}, wm.Rect{W: 100, H: 100}, newFakePane)
 		pastStates = []string{}
 		pastFuncNames = []string{}
 
 		for count := 0; count < 8; count++ {
-			if u.IsDead() {
-				break
-			}
 			name, fn := getRandomFunc()
 			pastFuncNames = append(pastFuncNames, name)
 			pastStates = append(pastStates, u.Serialize())
 
 			fn(u)
+
+			if u.IsDead() || stop {
+				break
+			}
 		}
 	}
 }

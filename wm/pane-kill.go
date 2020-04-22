@@ -5,6 +5,8 @@ func (u *Universe) KillPane() {
 	if !allDead {
 		u.refreshRenderRect()
 		u.updateSelection()
+	} else {
+		u.onDeath(nil)
 	}
 }
 
