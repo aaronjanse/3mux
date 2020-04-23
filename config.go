@@ -201,7 +201,6 @@ kill-pane = ['Alt+Shift+Q']
 toggle-fullscreen = ['Alt+Shift+F']
 toggle-search = ['Alt+/']
 
-show-help     = ['Alt+Shift+?']
 hide-help-bar = ['Alt+\']
 
 move-pane-up    = ['Alt+Shift+Up',    'Alt+Shift+K']
