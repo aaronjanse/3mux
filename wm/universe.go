@@ -28,7 +28,7 @@ func NewUniverse(renderer ecma48.Renderer, helpBar bool, onDeath func(error), re
 		renderer:     renderer,
 		helpBar:      helpBar,
 	}
-	u.workspaces = []*workspace{newWorkspace(renderer, u.redrawAllLines, u.handleChildDeath, renderRect, newPane)}
+	u.workspaces = []*workspace{newWorkspace(renderer, u, u.handleChildDeath, renderRect, newPane)}
 	u.updateSelection()
 	u.refreshRenderRect()
 	return u
@@ -75,7 +75,13 @@ func (u *Universe) setPaused(pause bool) {
 
 func (u *Universe) redrawAllLines() {
 	for _, n := range u.workspaces {
-		n.contents.redrawLines()
+		n.redrawAllLines()
+	}
+}
+
+func (s *workspace) redrawAllLines() {
+	if !s.doFullscreen {
+		s.contents.redrawLines()
 	}
 }
 

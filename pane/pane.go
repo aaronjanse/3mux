@@ -137,106 +137,6 @@ func (t *Pane) UpdateSelection(selected bool) {
 	t.selected = selected
 	if selected {
 		t.vterm.RefreshCursor()
-
-		// r := t.renderRect
-		// log.Println(r)
-
-		// style := render.Style{
-		// 	Fg: ecma48.Color{
-		// 		ColorMode: ecma48.ColorBit3Normal,
-		// 		Code:      6,
-		// 	},
-		// }
-
-		// for i := 0; i <= r.H; i++ {
-		// 	ch := render.PositionedChar{
-		// 		Rune: '│',
-		// 		Cursor: render.Cursor{
-		// 			X:     r.X - 1,
-		// 			Y:     r.Y + i,
-		// 			Style: style,
-		// 		},
-		// 	}
-
-		// 	t.renderer.HandleCh(ch)
-		// }
-		// for i := 0; i <= r.H; i++ {
-		// 	ch := render.PositionedChar{
-		// 		Rune: '│',
-		// 		Cursor: render.Cursor{
-		// 			X:     r.X + r.W,
-		// 			Y:     r.Y + i,
-		// 			Style: style,
-		// 		},
-		// 	}
-
-		// 	t.renderer.HandleCh(ch)
-		// }
-		// for i := 0; i <= r.W; i++ {
-		// 	ch := render.PositionedChar{
-		// 		Rune: '─',
-		// 		Cursor: render.Cursor{
-		// 			X:     r.X + i,
-		// 			Y:     r.Y - 1,
-		// 			Style: style,
-		// 		},
-		// 	}
-
-		// 	t.renderer.HandleCh(ch)
-		// }
-		// for i := 0; i <= r.W; i++ {
-		// 	ch := render.PositionedChar{
-		// 		Rune: '─',
-		// 		Cursor: render.Cursor{
-		// 			X:     r.X + i,
-		// 			Y:     r.Y + r.H,
-		// 			Style: style,
-		// 		},
-		// 	}
-
-		// 	t.renderer.HandleCh(ch)
-		// }
-
-		// ch := render.PositionedChar{
-		// 	Rune: '┌',
-		// 	Cursor: render.Cursor{
-		// 		X:     r.X - 1,
-		// 		Y:     r.Y - 1,
-		// 		Style: style,
-		// 	},
-		// }
-
-		// t.renderer.HandleCh(ch)
-		// ch = render.PositionedChar{
-		// 	Rune: '┐',
-		// 	Cursor: render.Cursor{
-		// 		X:     r.X + r.W,
-		// 		Y:     r.Y - 1,
-		// 		Style: style,
-		// 	},
-		// }
-
-		// t.renderer.HandleCh(ch)
-		// ch = render.PositionedChar{
-		// 	Rune: '└',
-		// 	Cursor: render.Cursor{
-		// 		X:     r.X - 1,
-		// 		Y:     r.Y + r.H,
-		// 		Style: style,
-		// 	},
-		// }
-
-		// t.renderer.HandleCh(ch)
-		// ch = render.PositionedChar{
-		// 	Rune: '┘',
-		// 	Cursor: render.Cursor{
-		// 		X:     r.X + r.W,
-		// 		Y:     r.Y + r.H,
-		// 		Style: style,
-		// 	},
-		// }
-
-		// t.renderer.HandleCh(ch)
 	}
 }
 
@@ -265,6 +165,7 @@ func (t *Pane) Kill() {
 
 func (t *Pane) SetPaused(pause bool) {
 	t.vterm.ChangePause <- pause
+	t.vterm.IsPaused = pause
 }
 
 func (t *Pane) Serialize() string {

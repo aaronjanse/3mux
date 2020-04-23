@@ -7,7 +7,9 @@ func (u *Universe) SelectAtCoords(x, y int) {
 }
 
 func (s *workspace) selectAtCoords(x, y int) {
-	s.contents.selectAtCoords(x, y)
+	if !s.doFullscreen {
+		s.contents.selectAtCoords(x, y)
+	}
 }
 
 func (s *split) selectAtCoords(x, y int) {

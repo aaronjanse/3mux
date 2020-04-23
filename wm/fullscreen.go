@@ -2,6 +2,8 @@ package wm
 
 func (u *Universe) ToggleFullscreen() {
 	u.workspaces[u.selectionIdx].toggleFullscreen()
+	u.redrawAllLines()
+	u.drawSelectionBorder()
 }
 
 func (s *workspace) toggleFullscreen() {
@@ -15,6 +17,9 @@ func (s *workspace) setFullscreen(fullscreen bool) {
 		s.contents.GetRenderRect().W,
 		s.contents.GetRenderRect().H,
 	)
+	if !fullscreen {
+		s.contents.refreshRenderRect(false)
+	}
 }
 
 func (s *split) setFullscreen(fullscreen bool, w, h int) {

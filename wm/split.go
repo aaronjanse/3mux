@@ -15,13 +15,13 @@ type split struct {
 	renderRect        Rect
 	selected          bool
 
-	onDeath        func(error)
-	Dead           bool
-	newPane        NewPaneFunc
-	redrawAllLines func()
+	onDeath func(error)
+	Dead    bool
+	newPane NewPaneFunc
+	u       *Universe
 }
 
-func newSplit(renderer ecma48.Renderer, redrawAllLines func(), onDeath func(error), rect Rect, verticallyStacked bool, selectionIdx int, children []Node, newPane NewPaneFunc) *split {
+func newSplit(renderer ecma48.Renderer, u *Universe, onDeath func(error), rect Rect, verticallyStacked bool, selectionIdx int, children []Node, newPane NewPaneFunc) *split {
 	s := &split{
 		verticallyStacked: verticallyStacked,
 		renderer:          renderer,
@@ -29,7 +29,7 @@ func newSplit(renderer ecma48.Renderer, redrawAllLines func(), onDeath func(erro
 		newPane:           newPane,
 		selectionIdx:      selectionIdx,
 		renderRect:        rect,
-		redrawAllLines:    redrawAllLines,
+		u:                 u,
 	}
 
 	if children == nil {
@@ -91,24 +91,6 @@ func (s *split) SetRenderRect(fullscreen bool, x, y, w, h int) {
 func (s *split) GetRenderRect() Rect {
 	return s.renderRect
 }
-
-// // removeTheDead recursively searches the tree and removes panes with Dead == true.
-// // A pane declares itself dead when its shell dies.
-// func removeTheDead(path Path) {
-// 	s := path.getContainer().(*Split)
-// 	for idx := len(s.elements) - 1; idx >= 0; idx-- {
-// 		element := s.elements[idx]
-// 		switch c := element.contents.(type) {
-// 		case *Split:
-// 			removeTheDead(append(path, idx))
-// 		case *Pane:
-// 			if c.Dead {
-// 				t := path.popContainer(idx)
-// 				t.(*Pane).kill()
-// 			}
-// 		}
-// 	}
-// }
 
 // refreshRenderRect recalculates the coordinates of a Split's elements and calls setRenderRect on each of its children
 // this is for when one or more of a split's children are reshaped

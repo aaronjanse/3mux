@@ -18,7 +18,7 @@ type workspace struct {
 	renderRect Rect
 }
 
-func newWorkspace(renderer ecma48.Renderer, redrawAllLines func(), onDeath func(error), renderRect Rect, newPane NewPaneFunc) *workspace {
+func newWorkspace(renderer ecma48.Renderer, u *Universe, onDeath func(error), renderRect Rect, newPane NewPaneFunc) *workspace {
 	w := &workspace{
 		doFullscreen: false,
 		onDeath:      onDeath,
@@ -26,7 +26,7 @@ func newWorkspace(renderer ecma48.Renderer, redrawAllLines func(), onDeath func(
 		renderer:     renderer,
 		renderRect:   renderRect,
 	}
-	w.contents = newSplit(renderer, redrawAllLines, w.handleChildDeath, renderRect, false, 0, nil, newPane)
+	w.contents = newSplit(renderer, u, w.handleChildDeath, renderRect, false, 0, nil, newPane)
 	return w
 }
 
@@ -36,5 +36,9 @@ func (s *workspace) serialize() string {
 
 func (s *workspace) setRenderRect(x, y, w, h int) {
 	s.renderRect = Rect{X: x, Y: y, W: w, H: h}
-	s.contents.SetRenderRect(s.doFullscreen, x, y, w, h)
+	if s.doFullscreen {
+		s.getSelectedNode().SetRenderRect(true, x, y, w, h)
+	} else {
+		s.contents.SetRenderRect(s.doFullscreen, x, y, w, h)
+	}
 }

@@ -13,6 +13,16 @@ func (s *split) Kill() {
 	s.Dead = true
 }
 
+func (u *Universe) notifyDeath() {
+	u.workspaces[u.selectionIdx].notifyDeath()
+}
+
+func (s *workspace) notifyDeath() {
+	if s.doFullscreen && s.getSelectedNode().IsDead() {
+		s.setFullscreen(false)
+	}
+}
+
 func (u *Universe) handleChildDeath(err error) {
 	u.dead = true
 	u.onDeath(err) // FIXME: only supports one workspace
@@ -23,6 +33,7 @@ func (s *workspace) handleChildDeath(err error) {
 }
 
 func (s *split) handleChildDeath(err error) {
+	s.u.notifyDeath()
 	for idx := len(s.elements) - 1; idx >= 0; idx-- {
 		if s.elements[idx].contents.IsDead() {
 			s.popElement(idx)
