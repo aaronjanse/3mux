@@ -40,9 +40,12 @@ type CompiledConfigGeneral struct {
 
 func loadOrGenerateConfig() CompiledConfig {
 	var userTOML string
+	firstRun := false
 
 	xdgConfigPath, err := xdg.Paths{XDGSuffix: "3mux"}.ConfigFile("config.toml")
 	if err != nil {
+		firstRun = true
+
 		usr, err := user.Current()
 		if err != nil {
 			panic(err)
@@ -73,6 +76,8 @@ func loadOrGenerateConfig() CompiledConfig {
 	if _, err := toml.Decode(userTOML, &conf); err != nil {
 		panic(err)
 	}
+
+	conf.General.EnableHelpBar = conf.General.EnableHelpBar || firstRun
 
 	return compileConfig(conf)
 }
@@ -186,7 +191,7 @@ func seiveConfigEvents(config CompiledConfig, u *wm.Universe, human string) bool
 
 const defaultConfig = `[general]
 
-enable-help-bar = true
+enable-help-bar = false
 
 [keys]
 
