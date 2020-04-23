@@ -328,9 +328,9 @@ func (p *Parser) dispatchCsi() {
 					p.out <- p.wrap(CursorMovement{
 						N: n, Direction: dir,
 
-						Shift: (seq[1]-1)&0b001 > 0,
-						Alt:   (seq[1]-1)&0b010 > 0,
-						Ctrl:  (seq[1]-1)&0b100 > 0,
+						Shift: (seq[1]-1)&1 > 0,
+						Alt:   (seq[1]-1)&2 > 0,
+						Ctrl:  (seq[1]-1)&4 > 0,
 					})
 				} else {
 					p.out <- p.wrap(CursorMovement{N: n, Direction: dir})
