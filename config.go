@@ -214,7 +214,7 @@ move-selection-left  = ['Alt+Left',  'Alt+H']
 move-selection-right = ['Alt+Right', 'Alt+L']
 
 # NAME has no meaning apart from what may be displayed in a status bar
-# [keys.modes.NAME]
+# [modes.NAME]
 # mode-start = ['KEYCODE'] # type KEYCODE to start this mode
 # mode-sticky = STICKY
 # # if STICKY:
