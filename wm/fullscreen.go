@@ -12,8 +12,8 @@ func (s *workspace) setFullscreen(fullscreen bool) {
 	s.doFullscreen = fullscreen
 	s.contents.setFullscreen(
 		fullscreen,
-		s.contents.GetRenderRect().X,
-		s.contents.GetRenderRect().Y,
+		s.contents.GetRenderRect().W,
+		s.contents.GetRenderRect().H,
 	)
 }
 
