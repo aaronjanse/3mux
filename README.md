@@ -54,7 +54,7 @@ Preferences > Profiles > Keys > Option Key > Esc+
 
 ### Miscellaneous
 
-3mux searches `XDG_CONFIG_HOME` to find its config. If it cannot, it writes a config to `~/.config/3mux/config.toml` upon the first run.
+3mux searches `XDG_CONFIG_HOME` to find its config. If it cannot, it writes a config to `~/.config/3mux/config.toml` upon the first run. Modifiers in shortcuts (e.g. `Alt`) are case-insensitive.
 
 You can detect if you're running a script inside 3mux by checking if `THREEMUX` is equal to `1`.
 
