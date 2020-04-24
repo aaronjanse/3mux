@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/aaronjanse/3mux/ecma48"
+	"github.com/mattn/go-runewidth"
 )
 
 // SearchDirection is which direction we move through search results
@@ -143,14 +144,16 @@ func (t *Pane) locateText(chars [][]ecma48.StyledChar, text string) (SearchMatch
 
 	i := len(chars) - t.searchPos - 1
 	for {
-		var str strings.Builder
+		var strB strings.Builder
 
 		for _, c := range chars[i] {
-			str.WriteRune(c.Rune)
+			strB.WriteRune(c.Rune)
 		}
 
-		pos := strings.Index(str.String(), text)
+		str := strB.String()
+		pos := strings.Index(str, text)
 		if pos != -1 {
+			pos = runewidth.StringWidth(str[:pos])
 			return SearchMatch{
 				x1: pos,
 				x2: pos + len(text) - 1,
