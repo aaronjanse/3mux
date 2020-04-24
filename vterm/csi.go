@@ -28,7 +28,14 @@ func (v *VTerm) handleEraseInDisplay(directive int) {
 		}
 		v.RedrawWindow()
 	case 2: // clear entire screen (and move Cursor to top left?)
-		for i := range v.Screen {
+		for i := 0; i < v.h; i++ {
+			if i >= len(v.Screen) {
+				newLine := make([]ecma48.StyledChar, v.w)
+				for x := range newLine {
+					newLine[x].Style = v.Cursor.Style
+				}
+				v.Screen = append(v.Screen, newLine)
+			}
 			for j := range v.Screen[i] {
 				v.Screen[i][j] = ecma48.StyledChar{Rune: ' ', Style: v.Cursor.Style}
 			}
