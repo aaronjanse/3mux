@@ -53,6 +53,7 @@ func NewPaneImpl(renderer ecma48.Renderer, realShell bool) wm.Node {
 
 	cmd := exec.Command(shellPath)
 	cmd.Env = append(os.Environ(), "TERM=xterm-256color") // FIXME we should decide whether we want 256color in $TERM
+	cmd.Env = append(os.Environ(), "THREEMUX=1")
 	t := &Pane{
 		born:     false,
 		renderer: renderer,
