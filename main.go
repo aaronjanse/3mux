@@ -26,6 +26,12 @@ var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
 var writeLogs = flag.Bool("log", false, "write logs to ./logs.txt")
 
 func main() {
+	if os.Getenv("THREEMUX") == "1" {
+		fmt.Println("Refusing to run 3mux inside itself.")
+		fmt.Println("If you want to do it anyway, `unset THREEMUX`.")
+		return
+	}
+
 	shutdown := make(chan error)
 	stateBeforeInput := ""
 
