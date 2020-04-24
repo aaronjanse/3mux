@@ -37,6 +37,14 @@
 |<kbd>Ctrl+b {</kbd> | Move pane left
 |<kbd>Ctrl+b }</kbd> | Move pane right
 
+### Supported screen Bindings
+
+| Key(s) | Description
+|-------:|:------------
+|<kbd>Ctrl+a |</kbd> | Split horizontally
+|<kbd>Ctrl+b S</kbd> | Split vertically
+|<kbd>Ctrl+b Tab</kbd> | Cycle forward through panes
+
 ### Installation Instructions
 
 1. Install Golang
