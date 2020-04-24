@@ -190,6 +190,8 @@ func humanify(obj ecma48.Output) string {
 		humanCode = fmt.Sprintf("Alt+%s", humanifyRune(x.Char))
 	case ecma48.AltShiftChar:
 		humanCode = fmt.Sprintf("Alt+Shift+%s", humanifyRune(x.Char))
+	case ecma48.Tab:
+		humanCode = "Tab"
 	case ecma48.CursorMovement:
 		if x.Ctrl {
 			humanCode += "Ctrl+"

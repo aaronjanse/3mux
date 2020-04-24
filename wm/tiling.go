@@ -89,4 +89,7 @@ var FuncNames = map[string]func(*Universe){
 	"move-selection-down":  func(u *Universe) { u.MoveSelection(Down) },
 	"move-selection-left":  func(u *Universe) { u.MoveSelection(Left) },
 	"move-selection-right": func(u *Universe) { u.MoveSelection(Right) },
+
+	"cycle-selection-forward":  func(u *Universe) { u.CycleSelection(true) },
+	"cycle-selection-backward": func(u *Universe) { u.CycleSelection(false) },
 }
