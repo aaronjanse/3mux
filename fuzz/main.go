@@ -114,7 +114,7 @@ func fuzzWM() {
 	r := &FakeRenderer{}
 	for {
 		var stop bool
-		u := wm.NewUniverse(r, false, func(err error) {
+		u := wm.NewUniverse(r, false, false, func(err error) {
 			stop = true
 		}, wm.Rect{W: 100, H: 100}, newFakePane)
 		pastStates = []string{}

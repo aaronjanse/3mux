@@ -35,7 +35,8 @@ type CompiledConfig struct {
 }
 
 type CompiledConfigGeneral struct {
-	EnableHelpBar bool `toml:"enable-help-bar"`
+	EnableHelpBar   bool `toml:"enable-help-bar"`
+	EnableStatusBar bool `toml:"enable-status-bar"`
 }
 
 func loadOrGenerateConfig() CompiledConfig {
@@ -192,6 +193,7 @@ func seiveConfigEvents(config CompiledConfig, u *wm.Universe, human string) bool
 const defaultConfig = `[general]
 
 enable-help-bar = false
+enable-status-bar = true
 
 [keys]
 

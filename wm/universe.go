@@ -17,16 +17,18 @@ type Universe struct {
 	onDeath func(error)
 	dead    bool
 
-	helpBar bool
+	helpBar         bool
+	enableStatusBar bool
 }
 
-func NewUniverse(renderer ecma48.Renderer, helpBar bool, onDeath func(error), renderRect Rect, newPane NewPaneFunc) *Universe {
+func NewUniverse(renderer ecma48.Renderer, helpBar bool, enableStatusBar bool, onDeath func(error), renderRect Rect, newPane NewPaneFunc) *Universe {
 	u := &Universe{
-		selectionIdx: 0,
-		renderRect:   renderRect,
-		onDeath:      onDeath,
-		renderer:     renderer,
-		helpBar:      helpBar,
+		selectionIdx:    0,
+		renderRect:      renderRect,
+		onDeath:         onDeath,
+		renderer:        renderer,
+		helpBar:         helpBar,
+		enableStatusBar: enableStatusBar,
 	}
 	u.workspaces = []*workspace{newWorkspace(renderer, u, u.handleChildDeath, renderRect, newPane)}
 	u.updateSelection()
@@ -96,6 +98,8 @@ func (u *Universe) refreshRenderRect() {
 	for _, child := range u.workspaces {
 		if u.helpBar {
 			child.setRenderRect(x, y, w, h-2)
+		} else if u.enableStatusBar {
+			child.setRenderRect(x, y, w, h-1)
 		} else {
 			child.setRenderRect(x, y, w, h)
 		}
@@ -103,10 +107,43 @@ func (u *Universe) refreshRenderRect() {
 
 	if u.helpBar {
 		u.drawHelpBar()
+	} else if u.enableStatusBar {
+		u.drawStatusBar()
 	}
 
 	u.redrawAllLines()
 	u.drawSelectionBorder()
+}
+
+func (u *Universe) drawStatusBar() {
+	text := "3mux"
+	for i := 0; i < u.renderRect.W; i++ {
+		var r rune
+		if i < len(text) {
+			r = rune(text[i])
+		} else {
+			r = 0
+		}
+
+		ch := ecma48.PositionedChar{
+			Rune: r,
+			Cursor: ecma48.Cursor{
+				X: i, Y: u.renderRect.H - 1,
+				Style: ecma48.Style{
+					Fg: ecma48.Color{
+						ColorMode: ecma48.ColorBit3Normal,
+						Code:      0,
+					},
+					Bg: ecma48.Color{
+						ColorMode: ecma48.ColorBit3Normal,
+						Code:      2,
+					},
+				},
+			},
+		}
+
+		u.renderer.HandleCh(ch)
+	}
 }
 
 func (u *Universe) drawHelpBar() {
