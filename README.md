@@ -52,6 +52,12 @@ Preferences > Profiles > Keyboard > Use Option as Meta Key
 #### iTerm2
 Preferences > Profiles > Keys > Option Key > Esc+
 
+### Miscellaneous
+
+3mux searches `XDG_CONFIG_HOME` to find its config. If it cannot, it writes a config to `~/.config/3mux/config.toml` upon the first run.
+
+You can detect if you're running a script inside 3mux by checking if `THREEMUX` is equal to `1`.
+
 ### Contributing
 All help is welcome! You can help the project by filing issues recording what works well, what doesn't work well, and/or a feature you want. Pull Requests would be very much appreciated.
 
