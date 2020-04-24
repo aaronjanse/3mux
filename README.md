@@ -41,9 +41,9 @@
 
 | Key(s) | Description
 |-------:|:------------
-|<kbd>Ctrl+a |</kbd> | Split horizontally
-|<kbd>Ctrl+b S</kbd> | Split vertically
-|<kbd>Ctrl+b Tab</kbd> | Cycle forward through panes
+|<kbd>Ctrl+a \|</kbd> | Split horizontally
+|<kbd>Ctrl+a S</kbd> | Split vertically
+|<kbd>Ctrl+a Tab</kbd> | Cycle forward through panes
 
 ### Installation Instructions
 
