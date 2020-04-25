@@ -6,6 +6,7 @@
 
 ### Features
 
+* batteries included
 * i3-like keybindings
 * search
 * scrollback
