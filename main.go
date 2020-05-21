@@ -6,39 +6,42 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"net"
 	"os"
-	"os/exec"
-	"os/signal"
-	"runtime/debug"
 	"runtime/pprof"
 	"strconv"
 	"strings"
 	"syscall"
 
 	"github.com/aaronjanse/3mux/ecma48"
-	"github.com/aaronjanse/3mux/pane"
-	"github.com/aaronjanse/3mux/render"
-	"github.com/aaronjanse/3mux/wm"
+	"github.com/sevlyar/go-daemon"
 	"golang.org/x/crypto/ssh/terminal"
 )
+
+type fdReader int
+
+func (fd fdReader) Read(p []byte) (n int, err error) {
+	return syscall.Read(int(fd), p)
+}
 
 var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
 var writeLogs = flag.Bool("log", false, "write logs to ./logs.txt")
 
-func main() {
-	if os.Getenv("THREEMUX") == "1" {
-		fmt.Println("Refusing to run 3mux inside itself.")
-		fmt.Println("If you want to do it anyway, `unset THREEMUX`.")
-		return
-	}
+var cmdNew = flag.NewFlagSet("new", flag.ExitOnError)
+var cmdNewDetach = cmdNew.Bool("detach", false, "start session without attaching")
 
-	shutdown := make(chan error)
-	stateBeforeInput := ""
+var cmdHelp = flag.Bool("help", false, "show help")
+
+const dir = "/tmp/3mux/"
+
+func main() {
+
+	// log.Println("STARTING DAEMON")
 
 	flag.Parse()
 
 	// setup logging
-	if *writeLogs {
+	if *writeLogs || true {
 		f, err := os.OpenFile("logs.txt", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 		if err != nil {
 			log.Fatalf("error opening file: %v", err)
@@ -59,18 +62,158 @@ func main() {
 		defer pprof.StopCPUProfile()
 	}
 
-	defer func() {
-		if r := recover(); r != nil {
-			fmt.Println(r.(error))
-			fmt.Println(string(debug.Stack()))
-			fmt.Println()
-			fmt.Printf("BEFORE `%s`", stateBeforeInput)
-			fmt.Println()
-			fmt.Println("Please report this to https://github.com/aaronjanse/3mux/issues.")
-		}
-	}()
+	if os.Getenv("THREEMUX") == "1" {
+		return
+	}
 
-	config := loadOrGenerateConfig()
+	var cmd string
+	if len(os.Args) < 2 {
+
+	} else {
+		cmd = os.Args[1]
+
+	}
+
+	parentSessionID := os.Getenv("THREEMUX")
+
+	switch cmd {
+	case "detach":
+		net.Dial("unix", fmt.Sprintf("/tmp/3mux/%s/detach-client.sock", parentSessionID))
+		// net.Dial("unix", fmt.Sprintf("/tmp/3mux/%s/detach-server.sock", parentSessionID))
+	case "_serve-id":
+		log.Println("Servind!")
+		sessionID := os.Args[2]
+		serve(sessionID)
+	case "new":
+		if parentSessionID != "" {
+			refuseNesting()
+		}
+		sessionName := os.Args[2]
+		sessionID := launchServer(sessionName)
+		attach(sessionID)
+	case "attach":
+		if parentSessionID != "" {
+			refuseNesting()
+		}
+
+		sessionName := os.Args[2]
+		sessionID, err := findSession(sessionName)
+		if err != nil {
+			fmt.Printf("Could not find session `%s`\n", sessionName)
+		}
+		attach(sessionID)
+	default:
+		sessionName, isNew := defaultPrompt()
+
+		var sessionID string
+		if isNew {
+			sessionID = launchServer(sessionName)
+		} else {
+			var err error
+			sessionID, err = findSession(sessionName)
+			if err != nil {
+				fmt.Printf("Could not find session `%s`\n", sessionName)
+			}
+		}
+
+		attach(sessionID)
+	}
+
+	// fmt.Print("\x1b[?1049h")
+	// defer fmt.Print("\x1b[?1049l")
+	// fmt.Print("\x1b[?1006h")
+	// defer fmt.Print("\x1b[?1006l")
+	// fmt.Print("\x1b[?1002h")
+	// defer fmt.Print("\x1b[?1002l")
+
+	// fmt.Print("\x1b[?1l")
+
+}
+
+func findSession(sessionName string) (sessionID string, err error) {
+	os.MkdirAll("/tmp/3mux", 0666)
+	children, err := ioutil.ReadDir("/tmp/3mux/")
+	if err != nil {
+		panic(err)
+	}
+
+	for _, child := range children {
+		id := child.Name()
+		dir := fmt.Sprintf("/tmp/3mux/%s/", id)
+		nameRaw, _ := ioutil.ReadFile(dir + "name")
+		nameCleaned := strings.TrimSpace(string(nameRaw))
+
+		if nameCleaned == sessionName {
+			return id, nil
+		}
+	}
+
+	return "", fmt.Errorf("Could not find session: `%s`", sessionName)
+}
+
+func launchServer(sessionName string) (sessionID string) {
+	os.MkdirAll("/tmp/3mux", 0777)
+
+	id := 0
+	for {
+		path := fmt.Sprintf("/tmp/3mux/%d/", id)
+		if _, err := os.Stat(path); os.IsNotExist(err) {
+			break
+		} else {
+			fmt.Println(err)
+		}
+		id++
+	}
+	sessionID = strconv.Itoa(id)
+
+	dir := fmt.Sprintf("/tmp/3mux/%s/", sessionID)
+	os.MkdirAll(dir, 0755)                                  // FIXME perms
+	ioutil.WriteFile(dir+"name", []byte(sessionName), 0777) // FIXME perms
+
+	readySocket, err := net.Listen("unix", dir+"ready.sock")
+	if err != nil {
+		panic(err)
+	}
+
+	context := &daemon.Context{
+		PidFileName: "sample.pid",
+		Args:        []string{"3mux", "_serve-id", sessionID, "--log"},
+	}
+	_, err = context.Reborn()
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println(sessionID)
+	readySocket.Accept()
+	os.Remove(dir + "ready.sock")
+
+	return sessionID
+}
+
+func refuseNesting() {
+	fmt.Println("Refusing to run 3mux inside itself.")
+	fmt.Println("If you want to do so anyway, `unset THREEMUX`.")
+}
+
+func defaultPrompt() (sessionName string, isNew bool) {
+	children, err := ioutil.ReadDir("/tmp/3mux/")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	optionIdx := 0
+	options := []string{}
+	idxToDir := map[int]string{}
+
+	for idx, child := range children {
+		dir := fmt.Sprintf("/tmp/3mux/%s/", child.Name())
+		thisName, _ := ioutil.ReadFile(dir + "name")
+
+		options = append(options, strings.TrimSpace(string(thisName)))
+
+		idxToDir[idx] = dir
+	}
 
 	oldState, err := terminal.MakeRaw(0)
 	if err != nil {
@@ -78,178 +221,163 @@ func main() {
 	}
 	defer terminal.Restore(0, oldState)
 
-	termW, termH, err := GetTermSize()
-	if err != nil {
-		log.Fatalf("While getting terminal size: %s", err.Error())
-	}
-
-	renderer := render.NewRenderer()
-	renderer.Resize(termW, termH)
-	go renderer.ListenToQueue()
-
-	u := wm.NewUniverse(renderer,
-		config.generalSettings.EnableHelpBar,
-		config.generalSettings.EnableStatusBar,
-		func(err error) {
-			go func() {
-				if err != nil {
-					shutdown <- fmt.Errorf("%s\n%s", err.Error(), debug.Stack())
-				} else {
-					shutdown <- nil
-				}
-			}()
-		}, wm.Rect{X: 0, Y: 0, W: termW, H: termH}, pane.NewPane)
-	defer u.Kill()
-
-	go func() {
-		for {
-			c := make(chan os.Signal, 1)
-			signal.Notify(c, syscall.SIGWINCH)
-			<-c
-			w, h, _ := GetTermSize()
-			renderer.Resize(w, h)
-			u.SetRenderRect(0, 0, w, h)
-		}
-	}()
-
-	fmt.Print("\x1b[?1049h")
-	defer fmt.Print("\x1b[?1049l")
-	fmt.Print("\x1b[?1006h")
-	defer fmt.Print("\x1b[?1006l")
-	fmt.Print("\x1b[?1002h")
-	defer fmt.Print("\x1b[?1002l")
-
-	fmt.Print("\x1b[?1l")
-
 	stdin := make(chan ecma48.Output, 64)
 	defer close(stdin)
 
 	parser := ecma48.NewParser(true)
-
 	go parser.Parse(bufio.NewReader(os.Stdin), stdin)
+	defer func() {
+		parser.Shutdown <- nil
+	}()
 
+	if len(options) == 0 {
+		isNew = true
+		sessionName = promptNewSessionName(options, stdin)
+		return
+	} else {
+		fmt.Print("Attach to an existing session or create a new one:\r\n")
+
+		// fmt.Print("\x1b[?25l") // hide cursor
+
+		fmt.Print("\x1b[1;36m> " + options[0] + "\x1b[39;2m\r\n")
+
+		for _, option := range options[1:] {
+			fmt.Print("  " + option + "\x1b[39m\r\n")
+		}
+
+		fmt.Print("+ create new session\r")
+		fmt.Printf("\x1b[%dA", len(options))
+
+		clearOptions := func() {
+			fmt.Printf("\r\x1b[%dB", len(options)-optionIdx)
+			for i := 0; i < len(options)+1; i++ {
+				fmt.Print("\x1b[K\x1b[A")
+			}
+		}
+
+		for {
+			next := <-stdin
+			if len(next.Raw) == 1 {
+				switch next.Raw[0] {
+				case 13:
+					clearOptions()
+					if optionIdx == len(options) {
+						isNew = true
+						sessionName = promptNewSessionName(options, stdin)
+						return
+					} else if optionIdx < len(options) {
+						sessionName = options[optionIdx]
+						return
+					}
+				case 3:
+					clearOptions()
+					os.Exit(1)
+				}
+			}
+			switch x := next.Parsed.(type) {
+			case ecma48.CursorMovement:
+				switch x.Direction {
+				case ecma48.Up:
+					if optionIdx > 0 {
+						if optionIdx == len(options) {
+							fmt.Print("\r+ create new session\r")
+						} else {
+							fmt.Print("\r  " + options[optionIdx] + "\r")
+						}
+						optionIdx--
+						fmt.Print("\x1b[1A")
+						fmt.Print("\x1b[22;1;36m> " + options[optionIdx] + "\x1b[39;2m\r")
+					}
+				case ecma48.Down:
+					if optionIdx < len(options) {
+						fmt.Print("\r  " + options[optionIdx] + "\r\n")
+						optionIdx++
+						if optionIdx == len(options) {
+							fmt.Print("\x1b[22;1;36m+ create new session\x1b[39;2m\r")
+						} else {
+							fmt.Print("\x1b[22;1;36m> " + options[optionIdx] + "\x1b[39;2m\r")
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+func promptNewSessionName(existing []string, stdin chan ecma48.Output) string {
+	problem := ""
 	for {
-		select {
-		case next := <-stdin:
-			stateBeforeInput = u.Serialize()
+		fmt.Print("\x1b[22mName of new session:\r\n")
+		fmt.Print("\x1b[22;36m? \x1b[m")
+		fmt.Print(problem)
+		fmt.Print("\r\x1b[2C")
 
-			human := humanify(next)
+		name := surveyName(stdin)
 
-			if human == "Ctrl+Q" {
-				return
-			}
-
-			if seiveMouseEvents(u, human, next) {
-				break
-			}
-			if seiveConfigEvents(config, u, human) {
-				break
-			}
-			// if we didn't find anything special, just pass the raw data to
-			// the selected terminal
-			u.HandleStdin(next)
-		case err := <-shutdown:
-			if err != nil {
-				panic(err)
-			} else {
-				return
+		for _, existingName := range existing {
+			if name == existingName {
+				problem = "session names must be unique"
+				continue
 			}
 		}
+
+		return name
 	}
 }
 
-var mouseDownX, mouseDownY int
-
-// seiveMouseEvents processes mouse events and returns true if the data should *not* be passed downstream
-func seiveMouseEvents(u *wm.Universe, human string, obj ecma48.Output) bool {
-	switch ev := obj.Parsed.(type) {
-	case ecma48.MouseDown:
-		u.SelectAtCoords(ev.X, ev.Y)
-		mouseDownX = ev.X
-		mouseDownY = ev.Y
-	case ecma48.MouseUp:
-		u.DragBorder(mouseDownX, mouseDownY, ev.X, ev.Y)
-	case ecma48.MouseDrag:
-		// do nothing
-	case ecma48.ScrollUp:
-		u.ScrollUp()
-	case ecma48.ScrollDown:
-		u.ScrollDown()
-	default:
-		return false
-	}
-
-	return true
-}
-
-func humanify(obj ecma48.Output) string {
-	humanCode := ""
-	switch x := obj.Parsed.(type) {
-	case ecma48.Char:
-		humanCode = string(x.Rune)
-	case ecma48.CtrlChar:
-		humanCode = fmt.Sprintf("Ctrl+%s", humanifyRune(x.Char))
-	case ecma48.AltChar:
-		humanCode = fmt.Sprintf("Alt+%s", humanifyRune(x.Char))
-	case ecma48.AltShiftChar:
-		humanCode = fmt.Sprintf("Alt+Shift+%s", humanifyRune(x.Char))
-	case ecma48.Tab:
-		humanCode = "Tab"
-	case ecma48.CursorMovement:
-		if x.Ctrl {
-			humanCode += "Ctrl+"
+func surveyName(stdin chan ecma48.Output) string {
+	defer fmt.Print("\r\x1b[K\x1b[A\x1b[K")
+	idx := 0
+	out := ""
+	for {
+		next := <-stdin
+		if len(next.Raw) == 1 {
+			switch next.Raw[0] {
+			case 0:
+				continue
+			case 3:
+				os.Exit(1)
+			case 13:
+				if out != "" {
+					return strings.TrimSpace(out)
+				}
+			}
 		}
-		if x.Alt {
-			humanCode += "Alt+"
-		}
-		if x.Shift {
-			humanCode += "Shift+"
-		}
-		switch x.Direction {
-		case ecma48.Up:
-			humanCode += "Up"
-		case ecma48.Down:
-			humanCode += "Down"
-		case ecma48.Left:
-			humanCode += "Left"
-		case ecma48.Right:
-			humanCode += "Right"
+		switch x := next.Parsed.(type) {
+		case ecma48.Char:
+			fmt.Print(string(x.Rune))
+			fmt.Print(string(out[idx:]))
+			le := len(out[idx:])
+			if le > 0 {
+				fmt.Printf("\x1b[%dD", le)
+			}
+			out = out[:idx] + string(x.Rune) + out[idx:]
+			// fmt.Print("[", (out, idx, "]")
+			idx++
+		case ecma48.Backspace:
+			if idx > 0 {
+				out = out[:idx-1] + out[idx:]
+				idx--
+				fmt.Print("\b\x1b[K" + string(out[idx:]))
+				le := len(out[idx:])
+				if le > 0 {
+					fmt.Printf("\x1b[%dD", le)
+				}
+				// }
+			}
+		case ecma48.CursorMovement:
+			switch x.Direction {
+			case ecma48.Left:
+				if idx > 0 {
+					fmt.Print("\x1b[1D")
+					idx--
+				}
+			case ecma48.Right:
+				if idx < len(out) {
+					fmt.Print("\x1b[1C")
+					idx++
+				}
+			}
 		}
 	}
-	return humanCode
-}
-
-func humanifyRune(r rune) string {
-	switch r {
-	case '\n', '\r':
-		return "Enter"
-	default:
-		return string(r)
-	}
-}
-
-// GetTermSize returns the terminal dimensions w, h, err
-func GetTermSize() (int, int, error) {
-	cmd := exec.Command("stty", "size")
-	cmd.Stdin = os.Stdin
-	out, err := cmd.Output()
-	if err != nil {
-		return 0, 0, err
-	}
-
-	outStr := strings.TrimSpace(string(out))
-	parts := strings.Split(outStr, " ")
-
-	h, err := strconv.ParseInt(parts[0], 10, 64)
-	if err != nil {
-		return 0, 0, err
-	}
-	w, err := strconv.ParseInt(parts[1], 10, 64)
-	if err != nil {
-		return 0, 0, err
-	}
-
-	wInt := int(int64(w))
-	hInt := int(int64(h))
-	return wInt, hInt, nil
 }

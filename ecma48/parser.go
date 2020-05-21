@@ -8,10 +8,13 @@ package ecma48
 
 import (
 	"bufio"
+	"fmt"
 	"log"
+	"math/rand"
 	"strconv"
 	"strings"
 	"sync/atomic"
+	"time"
 	"unicode"
 
 	"github.com/mattn/go-runewidth"
@@ -33,6 +36,9 @@ type Parser struct {
 
 	// RuneCounter is useful for detecting if the processer is lagging
 	RuneCounter uint64
+
+	Shutdown chan error
+	isDead   bool
 }
 
 // NewParser creates a parser to be used for Parse()
@@ -46,6 +52,8 @@ func NewParser(keyboardMode bool) *Parser {
 		final:        0,
 		data:         []rune{},
 		RuneCounter:  0,
+		Shutdown:     make(chan error),
+		isDead:       false,
 	}
 }
 
@@ -58,46 +66,90 @@ func (p *Parser) Parse(input *bufio.Reader, output chan<- Output) error {
 		}
 	}()
 
-	p.out = output
-	for {
-		r, _, err := input.ReadRune()
-		if r == 65533 {
-			continue
-		}
-		if p.keyboardMode {
-			// log.Printf("R %q", r)
-		}
-		if err != nil {
-			return err
-		}
+	type unit struct {
+		Rune      rune
+		BufferLen int
+	}
 
-		p.data = append(p.data, r)
+	raw := make(chan unit)
 
-		if p.keyboardMode && r == 27 {
-			switch input.Buffered() {
-			case 0:
-				p.out <- p.wrap(Esc{})
-				continue
-			case 1:
-				r, _, err := input.ReadRune()
-				if err != nil {
-					return err
+	rand.Seed(time.Now().Unix())
+	id := rand.Int()
+
+	go func() {
+		defer func() {
+			r := recover()
+			fmt.Println("RECOVERED:", r)
+		}()
+
+		for {
+			if p.keyboardMode {
+				fmt.Println("(reading)", id)
+			}
+			r, _, err := input.ReadRune()
+			if p.isDead {
+				return
+			}
+			if err != nil {
+				if !p.isDead {
+					p.isDead = true
+					p.Shutdown <- err
 				}
-				p.data = append(p.data, r)
-
-				if 'a' <= r && r <= 'z' {
-					p.out <- p.wrap(AltChar{Char: unicode.ToUpper(r)})
-				} else if 'A' <= r && r <= 'Z' {
-					p.out <- p.wrap(AltShiftChar{Char: r})
-				} else {
-					p.out <- p.wrap(AltChar{Char: r})
-				}
-				p.state = stateGround
-				continue
+				return
+			}
+			if p.keyboardMode && r == 27 {
+				raw <- unit{Rune: r, BufferLen: input.Buffered()}
+			} else {
+				raw <- unit{Rune: r}
 			}
 		}
+	}()
 
-		p.anywhere(r)
+	p.out = output
+
+LOOP:
+	for {
+		select {
+		case err := <-p.Shutdown:
+			fmt.Println("Shutting down parser.", id)
+			p.isDead = true
+			return err
+		case u := <-raw:
+			r := u.Rune
+
+			if r == 65533 {
+				continue LOOP
+			}
+			if p.keyboardMode {
+				// log.Printf("R %q", r)
+			}
+
+			p.data = append(p.data, r)
+
+			if p.keyboardMode && r == 27 {
+				switch u.BufferLen {
+				case 0:
+					p.out <- p.wrap(Esc{})
+					continue LOOP
+				case 1:
+					u := <-raw
+					r := u.Rune
+					p.data = append(p.data, r)
+
+					if 'a' <= r && r <= 'z' {
+						p.out <- p.wrap(AltChar{Char: unicode.ToUpper(r)})
+					} else if 'A' <= r && r <= 'Z' {
+						p.out <- p.wrap(AltShiftChar{Char: r})
+					} else {
+						p.out <- p.wrap(AltChar{Char: r})
+					}
+					p.state = stateGround
+					continue LOOP
+				}
+			}
+
+			p.anywhere(r)
+		}
 	}
 }
 

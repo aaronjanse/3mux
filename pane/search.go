@@ -147,7 +147,11 @@ func (t *Pane) locateText(chars [][]ecma48.StyledChar, text string) (SearchMatch
 		var strB strings.Builder
 
 		for _, c := range chars[i] {
-			strB.WriteRune(c.Rune)
+			r := c.Rune
+			if r == '\x00' {
+				r = ' '
+			}
+			strB.WriteRune(r)
 		}
 
 		str := strB.String()

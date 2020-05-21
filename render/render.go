@@ -1,10 +1,9 @@
 package render
 
 import (
-	"fmt"
-	"log"
 	"strings"
 	"sync"
+	"syscall"
 	"time"
 	"unicode/utf8"
 
@@ -28,16 +27,26 @@ type Renderer struct {
 	Resume chan bool
 
 	DemoText string
+
+	OutFd int
 }
 
 // NewRenderer returns an initialized Renderer
-func NewRenderer() *Renderer {
+func NewRenderer(out int) *Renderer {
 	return &Renderer{
 		writingMutex:  &sync.Mutex{},
 		currentScreen: [][]ecma48.StyledChar{},
 		pendingScreen: [][]ecma48.StyledChar{},
 		Pause:         make(chan bool),
 		Resume:        make(chan bool),
+		OutFd:         out,
+	}
+}
+
+func (r *Renderer) Write(data []byte) {
+	if r.OutFd != -1 {
+		// log.Printf("%+q\n", data)
+		syscall.Write(r.OutFd, data)
 	}
 }
 
@@ -135,7 +144,7 @@ func (r *Renderer) ListenToQueue() {
 		if len(diffStr) > 0 {
 			// fmt.Print("\033[?25l") // hide cursor
 
-			fmt.Print(diffStr)
+			r.Write([]byte(diffStr))
 			// log.Printf("RENDER: %+q\n", diffStr)
 
 			if len(r.DemoText) > 0 {
@@ -187,7 +196,7 @@ func (r *Renderer) ListenToQueue() {
 					r.drawingCursor = newCursor
 				}
 
-				fmt.Print(demoTextDiff.String())
+				r.Write([]byte(demoTextDiff.String()))
 			}
 
 			// fmt.Print("\033[?25h") // show cursor
@@ -195,7 +204,7 @@ func (r *Renderer) ListenToQueue() {
 
 		if r.drawingCursor != r.restingCursor {
 			delta := deltaMarkup(r.drawingCursor, r.restingCursor)
-			fmt.Print(delta)
+			r.Write([]byte(delta))
 			r.drawingCursor = r.restingCursor
 		}
 
@@ -220,12 +229,18 @@ func (r *Renderer) SetCursor(x, y int) {
 	}
 }
 
+func (r *Renderer) UpdateOut(out int) {
+	r.Pause <- true
+	r.OutFd = out
+	r.HardRefresh()
+	r.Resume <- true
+}
+
 // HardRefresh force clears all cached chars. Used for handling terminal resize
 func (r *Renderer) HardRefresh() {
-	log.Println("HARD REFRESH")
-	fmt.Print("\033[2J")
-	fmt.Print("\033[0m")
-	fmt.Print("\033[H")
+	r.Write([]byte("\033[2J"))
+	r.Write([]byte("\033[0m"))
+	r.Write([]byte("\033[H"))
 	r.drawingCursor = ecma48.Cursor{}
 	for y := range r.currentScreen {
 		for x := range r.currentScreen[y] {

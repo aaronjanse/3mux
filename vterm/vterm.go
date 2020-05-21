@@ -56,8 +56,8 @@ type VTerm struct {
 
 // NewVTerm returns a VTerm ready to be used by its exported methods
 func NewVTerm(renderer ecma48.Renderer, parentSetCursor func(x, y int)) *VTerm {
-	w := 10
-	h := 10
+	w := 20
+	h := 20
 
 	screen := [][]ecma48.StyledChar{}
 	for j := 0; j < h; j++ {
