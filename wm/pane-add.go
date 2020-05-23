@@ -5,6 +5,9 @@ import (
 )
 
 func (u *Universe) AddPane() error {
+	u.wmOpMutex.Lock()
+	defer u.wmOpMutex.Unlock()
+
 	err := u.workspaces[u.selectionIdx].addPane()
 	if err != nil {
 		return err
@@ -24,6 +27,9 @@ func (s *workspace) addPane() error {
 }
 
 func (s *split) addPane() {
+	if len(s.elements) == 0 {
+		return
+	}
 	switch x := s.elements[s.selectionIdx].contents.(type) {
 	case Container:
 		x.addPane()
@@ -54,6 +60,9 @@ func (s *split) addPane() {
 }
 
 func (u *Universe) AddPaneTmux(vert bool) error {
+	u.wmOpMutex.Lock()
+	defer u.wmOpMutex.Unlock()
+
 	err := u.workspaces[u.selectionIdx].addPaneTmux(vert)
 	if err != nil {
 		return err
@@ -73,6 +82,9 @@ func (s *workspace) addPaneTmux(vert bool) error {
 }
 
 func (s *split) addPaneTmux(vert bool) {
+	if len(s.elements) == 0 {
+		return
+	}
 	switch x := s.elements[s.selectionIdx].contents.(type) {
 	case Container:
 		x.addPaneTmux(vert)

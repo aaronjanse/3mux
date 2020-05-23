@@ -5,6 +5,9 @@ import (
 )
 
 func (u *Universe) MoveWindow(dir Direction) error {
+	u.wmOpMutex.Lock()
+	defer u.wmOpMutex.Unlock()
+
 	err := u.workspaces[u.selectionIdx].moveWindow(dir)
 	if err != nil {
 		return err
@@ -39,6 +42,9 @@ func (s *split) moveWindow(d Direction) (bubble bool, superBubble bool, p Node) 
 	alignedForwards := (!s.verticallyStacked && d == Right) || (s.verticallyStacked && d == Down)
 	alignedBackward := (!s.verticallyStacked && d == Left) || (s.verticallyStacked && d == Up)
 
+	if len(s.elements) == 0 {
+		return
+	}
 	switch child := s.elements[s.selectionIdx].contents.(type) {
 	case Container:
 		bubble, superBubble, p := child.moveWindow(d)

@@ -198,6 +198,9 @@ func (u *Universe) drawHelpBar() {
 }
 
 func (u *Universe) HideHelpBar() {
+	u.wmOpMutex.Lock()
+	defer u.wmOpMutex.Unlock()
+
 	u.helpBar = false
 	u.refreshRenderRect()
 }

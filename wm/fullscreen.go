@@ -1,6 +1,9 @@
 package wm
 
 func (u *Universe) ToggleFullscreen() {
+	u.wmOpMutex.Lock()
+	defer u.wmOpMutex.Unlock()
+
 	u.workspaces[u.selectionIdx].toggleFullscreen()
 	u.redrawAllLines()
 	u.drawSelectionBorder()

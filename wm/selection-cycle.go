@@ -1,10 +1,16 @@
 package wm
 
 func (u *Universe) CycleSelection(forwards bool) {
+	u.wmOpMutex.Lock()
+	defer u.wmOpMutex.Unlock()
+
 	u.workspaces[u.selectionIdx].contents.cycleSelection(forwards)
 }
 
 func (s *split) cycleSelection(forwards bool) (bubble bool) {
+	if len(s.elements) == 0 {
+		return
+	}
 	switch child := s.elements[s.selectionIdx].contents.(type) {
 	case Container:
 		bubble := child.cycleSelection(forwards)

@@ -1,6 +1,9 @@
 package wm
 
 func (u *Universe) KillPane() {
+	u.wmOpMutex.Lock()
+	defer u.wmOpMutex.Unlock()
+
 	allDead := u.workspaces[u.selectionIdx].killPane()
 	if !allDead {
 		u.refreshRenderRect()
@@ -16,6 +19,9 @@ func (s *workspace) killPane() (dead bool) {
 }
 
 func (s *split) killPane() (dead bool) {
+	if len(s.elements) == 0 {
+		return
+	}
 	switch child := s.elements[s.selectionIdx].contents.(type) {
 	case Container:
 		child.killPane()

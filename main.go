@@ -40,7 +40,7 @@ func main() {
 	flag.Parse()
 
 	// setup logging
-	if *writeLogs || true {
+	if *writeLogs {
 		f, err := os.OpenFile("logs.txt", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 		if err != nil {
 			log.Fatalf("error opening file: %v", err)
@@ -79,7 +79,6 @@ func main() {
 	case "detach":
 		net.Dial("unix", fmt.Sprintf("/tmp/3mux/%s/detach-client.sock", parentSessionID))
 	case "_serve-id":
-		log.Println("Servind!")
 		sessionID := os.Args[2]
 		serve(sessionID)
 	case "new":
@@ -161,9 +160,14 @@ func launchServer(sessionName string) (sessionID string) {
 		panic(err)
 	}
 
+	args := []string{"3mux", "_serve-id", sessionID}
+	if *writeLogs {
+		args = append(args, "--log")
+	}
+
 	context := &daemon.Context{
 		PidFileName: "sample.pid",
-		Args:        []string{"3mux", "_serve-id", sessionID, "--log"},
+		Args:        args,
 	}
 	_, err = context.Reborn()
 	if err != nil {

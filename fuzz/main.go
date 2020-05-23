@@ -9,7 +9,6 @@ import (
 	"os"
 	"os/signal"
 	"sync"
-	"time"
 
 	mathRand "math/rand"
 
@@ -34,6 +33,7 @@ func main() {
 		fmt.Println("go run *.go wm")
 		fmt.Println("go run *.go vterm")
 		fmt.Println("go run *.go ecma48")
+		os.Exit(1)
 	}
 
 	switch os.Args[1] {
@@ -112,17 +112,6 @@ func fuzzWM() {
 	var pastStates []string
 	var pastFuncNames []string
 
-	defer func() {
-		if r := recover(); r != nil {
-			fmt.Println("=== WM Failed ===")
-			for i, state := range pastStates {
-				fmt.Println("State:", state)
-				fmt.Println("Func: ", pastFuncNames[i])
-			}
-			panic(r)
-		}
-	}()
-
 	r := &FakeRenderer{}
 	for {
 		var stop bool
@@ -134,13 +123,24 @@ func fuzzWM() {
 
 		var wg sync.WaitGroup
 
-		for count := 0; count < 32; count++ {
+		for count := 0; count < 4; count++ {
 			name, fn := getRandomFunc()
 			pastFuncNames = append(pastFuncNames, name)
 			pastStates = append(pastStates, u.Serialize())
 
 			wg.Add(1)
 			go func() {
+				defer func() {
+					if r := recover(); r != nil {
+						fmt.Println("=== WM Failed ===")
+						for i, state := range pastStates {
+							fmt.Println("State:", state)
+							fmt.Println("Func: ", pastFuncNames[i])
+						}
+						panic(r)
+					}
+				}()
+
 				fn(u)
 				wg.Done()
 			}()
@@ -152,8 +152,6 @@ func fuzzWM() {
 		}
 
 		wg.Wait()
-
-		time.Sleep(1 * time.Second)
 	}
 }
 

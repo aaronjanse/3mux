@@ -3,10 +3,16 @@ package wm
 import "github.com/aaronjanse/3mux/ecma48"
 
 func (u *Universe) ToggleSearch() {
+	u.wmOpMutex.Lock()
+	defer u.wmOpMutex.Unlock()
+
 	u.workspaces[u.selectionIdx].contents.ToggleSearch()
 }
 
 func (s *split) ToggleSearch() {
+	if len(s.elements) == 0 {
+		return
+	}
 	s.elements[s.selectionIdx].contents.ToggleSearch()
 }
 
@@ -14,6 +20,9 @@ func (u *Universe) ScrollUp() {
 	u.workspaces[u.selectionIdx].contents.ScrollUp()
 }
 func (s *split) ScrollUp() {
+	if len(s.elements) == 0 {
+		return
+	}
 	s.elements[s.selectionIdx].contents.ScrollUp()
 }
 

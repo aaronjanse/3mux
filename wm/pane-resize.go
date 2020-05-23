@@ -1,6 +1,9 @@
 package wm
 
 func (u *Universe) ResizePane(d Direction) {
+	u.wmOpMutex.Lock()
+	defer u.wmOpMutex.Unlock()
+
 	u.workspaces[u.selectionIdx].resizePane(d)
 	u.refreshRenderRect()
 }
@@ -10,6 +13,12 @@ func (s *workspace) resizePane(d Direction) {
 }
 
 func (s *split) resizePane(d Direction) (bubble bool) {
+	if s.selectionIdx >= len(s.elements) {
+		s.selectionIdx = len(s.elements) - 1
+	}
+	if len(s.elements) == 0 {
+		return false
+	}
 	switch child := s.elements[s.selectionIdx].contents.(type) {
 	case Container:
 		bubble := child.resizePane(d)

@@ -1,6 +1,9 @@
 package wm
 
 func (u *Universe) SelectAtCoords(x, y int) {
+	u.wmOpMutex.Lock()
+	defer u.wmOpMutex.Unlock()
+
 	u.workspaces[u.selectionIdx].selectAtCoords(x, y)
 	u.updateSelection()
 	u.refreshRenderRect() // FIXME only needs to redraw lines!

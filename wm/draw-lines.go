@@ -13,6 +13,9 @@ func (s *workspace) getSelectedNode() Node {
 }
 
 func (s *split) getSelectedNode() Node {
+	if len(s.elements) == 0 {
+		return s
+	}
 	switch child := s.elements[s.selectionIdx].contents.(type) {
 	case Container:
 		return child.getSelectedNode()
