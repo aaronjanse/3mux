@@ -3,6 +3,7 @@ package wm
 import (
 	"fmt"
 	"strings"
+	"sync"
 
 	"github.com/aaronjanse/3mux/ecma48"
 )
@@ -19,6 +20,8 @@ type Universe struct {
 
 	helpBar         bool
 	enableStatusBar bool
+
+	wmOpMutex *sync.Mutex
 }
 
 func NewUniverse(renderer ecma48.Renderer, helpBar bool, enableStatusBar bool, onDeath func(error), renderRect Rect, newPane NewPaneFunc) *Universe {
@@ -29,6 +32,7 @@ func NewUniverse(renderer ecma48.Renderer, helpBar bool, enableStatusBar bool, o
 		renderer:        renderer,
 		helpBar:         helpBar,
 		enableStatusBar: enableStatusBar,
+		wmOpMutex:       &sync.Mutex{},
 	}
 	u.workspaces = []*workspace{newWorkspace(renderer, u, u.handleChildDeath, renderRect, newPane)}
 	u.updateSelection()

@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"net"
 	"os"
 	"os/exec"
@@ -19,7 +18,7 @@ func attach(sessionID string) {
 
 	oldState, err := terminal.MakeRaw(0)
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 	defer terminal.Restore(0, oldState)
 
@@ -51,6 +50,7 @@ func attach(sessionID string) {
 	}
 
 	sendFds(os.Stdin, os.Stdout)
+	// os.Stdin.Write([]byte{1})
 
 	go func() {
 		for {
@@ -63,18 +63,14 @@ func attach(sessionID string) {
 
 	updateSize(dir)
 
+	os.Remove(dir + "detach-client.sock")
 	detachSocket, err := net.Listen("unix", dir+"detach-client.sock")
 	if err != nil {
 		panic(err)
 	}
 	detachSocket.Accept()
 
-	// fmt.Print("DONE")
-	// log.Print("WAITING")
 	net.Dial("unix", dir+"detach-server.sock")
-	// log.Print("... NOT WAITING")
-
-	// fmt.Print("DONE")
 }
 
 func updateSize(dir string) {

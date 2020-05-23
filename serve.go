@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net"
 	"os"
 	"runtime/debug"
@@ -14,16 +15,16 @@ import (
 	"github.com/aaronjanse/3mux/pane"
 	"github.com/aaronjanse/3mux/render"
 	"github.com/aaronjanse/3mux/wm"
+	"github.com/npat-efault/poller"
 )
 
 func serve(sessionID string) {
-	fmt.Println("Serving!")
 	dir := fmt.Sprintf("/tmp/3mux/%s/", sessionID)
 	os.MkdirAll(dir, 0755)
 	stateBeforeInput := ""
 
 	defer func() {
-		fmt.Println("Dying!")
+		log.Println("DYING")
 		if r := recover(); r != nil {
 			fmt.Println(r)
 			diagnostics := fmt.Sprintf(
@@ -33,6 +34,8 @@ func serve(sessionID string) {
 					"Please report this to https://github.com/aaronjanse/3mux/issues.",
 				r.(error).Error(), string(debug.Stack()), stateBeforeInput,
 			)
+
+			log.Println(diagnostics)
 
 			// tell the client to gracefully detach then warn the user
 			conn, err := net.Dial("unix", dir+"fatal.sock")
@@ -80,31 +83,25 @@ func serve(sessionID string) {
 	stdin := make(chan ecma48.Output, 64)
 	defer close(stdin)
 
-	fmt.Print("Creating init parser... ")
 	var parser *ecma48.Parser
-	fmt.Println("DONE")
 
-	var oldStdinFd int
+	var stdinBuf *bufio.Reader
+	var stdinPoller *poller.FD
 	listenFd(sessionID, func(stdinFd, stdoutFd int) {
-		oldStdinFd = stdinFd
-		fmt.Println("STDIN:  ", stdinFd)
-		fmt.Println("STDOUT: ", stdoutFd)
-		fmt.Print("Updating fds... ")
-		stdinBuf := bufio.NewReader(fdReader(stdinFd))
+		stdinPoller, _ = poller.NewFD(stdinFd)
+		stdinBuf = bufio.NewReader(stdinPoller)
 		parser = ecma48.NewParser(true)
 		go parser.Parse(stdinBuf, stdin)
 		renderer.UpdateOut(stdoutFd)
-		fmt.Println("DONE")
 	})
 
 	listenResize(sessionID, func(width, height int) {
-		fmt.Print("Updating size... ")
 		renderer.Resize(width, height)
 		u.SetRenderRect(0, 0, width, height)
-		fmt.Println("DONE")
 	})
 
 	go func() {
+		defer recover()
 		detachSocket, err := net.Listen("unix", dir+"detach-server.sock")
 		if err != nil {
 			panic(err)
@@ -112,11 +109,9 @@ func serve(sessionID string) {
 		for {
 			detachSocket.Accept()
 
-			fmt.Print("Detaching fds... ")
 			renderer.UpdateOut(-1)
-			// parser.Shutdown <- nil
-			syscall.Close(oldStdinFd)
-			fmt.Println("DONE")
+			parser.Shutdown <- nil
+			stdinPoller.Close()
 		}
 	}()
 

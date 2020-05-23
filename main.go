@@ -12,8 +12,10 @@ import (
 	"strconv"
 	"strings"
 	"syscall"
+	"time"
 
 	"github.com/aaronjanse/3mux/ecma48"
+	"github.com/npat-efault/poller"
 	"github.com/sevlyar/go-daemon"
 	"golang.org/x/crypto/ssh/terminal"
 )
@@ -35,9 +37,6 @@ var cmdHelp = flag.Bool("help", false, "show help")
 const dir = "/tmp/3mux/"
 
 func main() {
-
-	// log.Println("STARTING DAEMON")
-
 	flag.Parse()
 
 	// setup logging
@@ -79,7 +78,6 @@ func main() {
 	switch cmd {
 	case "detach":
 		net.Dial("unix", fmt.Sprintf("/tmp/3mux/%s/detach-client.sock", parentSessionID))
-		// net.Dial("unix", fmt.Sprintf("/tmp/3mux/%s/detach-server.sock", parentSessionID))
 	case "_serve-id":
 		log.Println("Servind!")
 		sessionID := os.Args[2]
@@ -118,16 +116,6 @@ func main() {
 
 		attach(sessionID)
 	}
-
-	// fmt.Print("\x1b[?1049h")
-	// defer fmt.Print("\x1b[?1049l")
-	// fmt.Print("\x1b[?1006h")
-	// defer fmt.Print("\x1b[?1006l")
-	// fmt.Print("\x1b[?1002h")
-	// defer fmt.Print("\x1b[?1002l")
-
-	// fmt.Print("\x1b[?1l")
-
 }
 
 func findSession(sessionName string) (sessionID string, err error) {
@@ -159,8 +147,6 @@ func launchServer(sessionName string) (sessionID string) {
 		path := fmt.Sprintf("/tmp/3mux/%d/", id)
 		if _, err := os.Stat(path); os.IsNotExist(err) {
 			break
-		} else {
-			fmt.Println(err)
 		}
 		id++
 	}
@@ -184,7 +170,6 @@ func launchServer(sessionName string) (sessionID string) {
 		panic(err)
 	}
 
-	fmt.Println(sessionID)
 	readySocket.Accept()
 	os.Remove(dir + "ready.sock")
 
@@ -197,9 +182,10 @@ func refuseNesting() {
 }
 
 func defaultPrompt() (sessionName string, isNew bool) {
+	os.MkdirAll("/tmp/3mux", 0755)
 	children, err := ioutil.ReadDir("/tmp/3mux/")
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 
 	optionIdx := 0
@@ -217,7 +203,7 @@ func defaultPrompt() (sessionName string, isNew bool) {
 
 	oldState, err := terminal.MakeRaw(0)
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 	defer terminal.Restore(0, oldState)
 
@@ -225,9 +211,13 @@ func defaultPrompt() (sessionName string, isNew bool) {
 	defer close(stdin)
 
 	parser := ecma48.NewParser(true)
-	go parser.Parse(bufio.NewReader(os.Stdin), stdin)
+	pollerIn, _ := poller.NewFD(int(os.Stdin.Fd()))
+
+	go parser.Parse(bufio.NewReader(pollerIn), stdin)
 	defer func() {
 		parser.Shutdown <- nil
+		// don't close because we need stdin to be available for the daemon later
+		pollerIn.SetReadDeadline(time.Now())
 	}()
 
 	if len(options) == 0 {

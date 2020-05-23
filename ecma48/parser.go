@@ -8,7 +8,6 @@ package ecma48
 
 import (
 	"bufio"
-	"fmt"
 	"log"
 	"math/rand"
 	"strconv"
@@ -74,18 +73,10 @@ func (p *Parser) Parse(input *bufio.Reader, output chan<- Output) error {
 	raw := make(chan unit)
 
 	rand.Seed(time.Now().Unix())
-	id := rand.Int()
 
 	go func() {
-		defer func() {
-			r := recover()
-			fmt.Println("RECOVERED:", r)
-		}()
-
+		defer recover()
 		for {
-			if p.keyboardMode {
-				fmt.Println("(reading)", id)
-			}
 			r, _, err := input.ReadRune()
 			if p.isDead {
 				return
@@ -111,7 +102,6 @@ LOOP:
 	for {
 		select {
 		case err := <-p.Shutdown:
-			fmt.Println("Shutting down parser.", id)
 			p.isDead = true
 			return err
 		case u := <-raw:
