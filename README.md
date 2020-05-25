@@ -8,6 +8,9 @@
 
 * batteries included
 * i3-like keybindings
+* session management
+  * optionally interactive
+  * self-documenting
 * search
 * scrollback
 * mouse support
