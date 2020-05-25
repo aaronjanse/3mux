@@ -289,6 +289,7 @@ func defaultPrompt() (sessionName string, isNew bool) {
 			for i := 0; i < len(options)+1; i++ {
 				fmt.Print("\x1b[K\x1b[A")
 			}
+			fmt.Print("\x1b[K")
 		}
 
 		for {

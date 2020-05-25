@@ -10,7 +10,7 @@ import (
 	"github.com/aaronjanse/3mux/ecma48"
 	"github.com/aaronjanse/3mux/vterm"
 	"github.com/aaronjanse/3mux/wm"
-	"github.com/kr/pty"
+	"github.com/aaronjanse/pty"
 )
 
 // A Pane is a tiling unit representing a terminal
