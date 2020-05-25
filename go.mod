@@ -8,7 +8,7 @@ require (
 	github.com/kardianos/osext v0.0.0-20190222173326-2bc1f35cddc0 // indirect
 	github.com/kr/pty v1.1.8
 	github.com/mattn/go-runewidth v0.0.9
-	github.com/npat-efault/poller v2.0.0+incompatible // indirect
+	github.com/npat-efault/poller v2.0.0+incompatible
 	github.com/sevlyar/go-daemon v0.1.5
 	golang.org/x/crypto v0.0.0-20200406173513-056763e48d71
 	golang.org/x/text v0.3.0

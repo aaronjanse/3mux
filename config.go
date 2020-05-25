@@ -248,11 +248,11 @@ split-pane-horiz = ['"']
 move-pane-left   = ['{']
 move-pane-right  = ['}']
 
-[modes.screen]
-mode-start  = ['Ctrl+A']
-mode-sticky = false
-
-split-pane-vert  = ['S']
-split-pane-horiz = ['|']
-cycle-selection-forward = ['Tab']
+# [modes.screen]
+# mode-start  = ['Ctrl+A']
+# mode-sticky = false
+# 
+# split-pane-vert  = ['S']
+# split-pane-horiz = ['|']
+# cycle-selection-forward = ['Tab']
 `

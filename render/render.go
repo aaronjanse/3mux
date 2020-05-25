@@ -80,7 +80,7 @@ func expandBuffer(buffer [][]ecma48.StyledChar, w, h int) [][]ecma48.StyledChar 
 
 // HandleCh places a PositionedChar in the pending screen buffer
 func (r *Renderer) HandleCh(ch ecma48.PositionedChar) {
-	if ch.Y < 0 || ch.Y >= len(r.pendingScreen)-1 {
+	if ch.Y < 0 || ch.Y >= len(r.pendingScreen) {
 		return
 	}
 	if ch.X < 0 || ch.X >= len(r.pendingScreen[ch.Y]) {

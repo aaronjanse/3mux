@@ -33,6 +33,7 @@ var cmdNew = flag.NewFlagSet("new", flag.ExitOnError)
 var cmdNewDetach = cmdNew.Bool("detach", false, "start session without attaching")
 
 var cmdHelp = flag.Bool("help", false, "show help")
+var cmdHelpShort = flag.Bool("h", false, "show help")
 
 const dir = "/tmp/3mux/"
 
@@ -66,18 +67,22 @@ func main() {
 	}
 
 	var cmd string
-	if len(os.Args) < 2 {
-
-	} else {
+	if len(os.Args) >= 2 {
 		cmd = os.Args[1]
+	}
 
+	if *cmdHelp || *cmdHelpShort {
+		showHelp()
+		return
 	}
 
 	parentSessionID := os.Getenv("THREEMUX")
 
 	switch cmd {
+	case "help":
+		showHelp()
 	case "detach":
-		net.Dial("unix", fmt.Sprintf("/tmp/3mux/%s/detach-client.sock", parentSessionID))
+		detach(parentSessionID)
 	case "_serve-id":
 		sessionID := os.Args[2]
 		serve(sessionID)
@@ -88,6 +93,18 @@ func main() {
 		sessionName := os.Args[2]
 		sessionID := launchServer(sessionName)
 		attach(sessionID)
+	case "ls":
+		os.MkdirAll("/tmp/3mux", 0755)
+		children, err := ioutil.ReadDir("/tmp/3mux/")
+		if err != nil {
+			panic(err)
+		}
+		fmt.Println("Sessions:")
+		for _, child := range children {
+			dir := fmt.Sprintf("/tmp/3mux/%s/", child.Name())
+			thisName, _ := ioutil.ReadFile(dir + "name")
+			fmt.Printf("- %s\n", string(thisName))
+		}
 	case "attach":
 		if parentSessionID != "" {
 			refuseNesting()
@@ -100,21 +117,46 @@ func main() {
 		}
 		attach(sessionID)
 	default:
-		sessionName, isNew := defaultPrompt()
+		if parentSessionID == "" {
+			sessionName, isNew := defaultPrompt()
+			if sessionName == "" {
+				return
+			}
 
-		var sessionID string
-		if isNew {
-			sessionID = launchServer(sessionName)
+			var sessionID string
+			if isNew {
+				sessionID = launchServer(sessionName)
+			} else {
+				var err error
+				sessionID, err = findSession(sessionName)
+				if err != nil {
+					fmt.Printf("Could not find session `%s`\n", sessionName)
+				}
+			}
+
+			attach(sessionID)
 		} else {
-			var err error
-			sessionID, err = findSession(sessionName)
-			if err != nil {
-				fmt.Printf("Could not find session `%s`\n", sessionName)
+			dir := fmt.Sprintf("/tmp/3mux/%s/", parentSessionID)
+			thisName, _ := ioutil.ReadFile(dir + "name")
+			fmt.Printf("You're in session `%s`\n", string(thisName))
+			var choice string
+			for choice != "y" && choice != "n" {
+				fmt.Print("Would you like to detach? [Y/n] ")
+				fmt.Scanf("%s", &choice)
+				choice = strings.ToLower(choice)
+				if choice == "" {
+					choice = "y"
+				}
+			}
+			if choice == "y" {
+				detach(parentSessionID)
 			}
 		}
-
-		attach(sessionID)
 	}
+}
+
+func detach(parentSessionID string) {
+	net.Dial("unix", fmt.Sprintf("/tmp/3mux/%s/detach-client.sock", parentSessionID))
 }
 
 func findSession(sessionName string) (sessionID string, err error) {
@@ -166,8 +208,8 @@ func launchServer(sessionName string) (sessionID string) {
 	}
 
 	context := &daemon.Context{
-		PidFileName: "sample.pid",
-		Args:        args,
+		// PidFileName: "sample.pid",
+		Args: args,
 	}
 	_, err = context.Reborn()
 	if err != nil {
@@ -265,7 +307,7 @@ func defaultPrompt() (sessionName string, isNew bool) {
 					}
 				case 3:
 					clearOptions()
-					os.Exit(1)
+					return
 				}
 			}
 			switch x := next.Parsed.(type) {
@@ -307,6 +349,9 @@ func promptNewSessionName(existing []string, stdin chan ecma48.Output) string {
 		fmt.Print("\r\x1b[2C")
 
 		name := surveyName(stdin)
+		if name == "" {
+			return ""
+		}
 
 		for _, existingName := range existing {
 			if name == existingName {
@@ -330,7 +375,7 @@ func surveyName(stdin chan ecma48.Output) string {
 			case 0:
 				continue
 			case 3:
-				os.Exit(1)
+				return ""
 			case 13:
 				if out != "" {
 					return strings.TrimSpace(out)

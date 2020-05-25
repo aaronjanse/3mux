@@ -103,7 +103,7 @@ func (u *Universe) refreshRenderRect() {
 		if u.helpBar {
 			child.setRenderRect(x, y, w, h-2)
 		} else if u.enableStatusBar {
-			child.setRenderRect(x, y, w, h-1)
+			child.setRenderRect(x, y, w, h-2)
 		} else {
 			child.setRenderRect(x, y, w, h)
 		}
@@ -117,6 +117,7 @@ func (u *Universe) refreshRenderRect() {
 
 	u.redrawAllLines()
 	u.drawSelectionBorder()
+	u.drawStatusBar()
 }
 
 func (u *Universe) drawStatusBar() {
@@ -132,7 +133,7 @@ func (u *Universe) drawStatusBar() {
 		ch := ecma48.PositionedChar{
 			Rune: r,
 			Cursor: ecma48.Cursor{
-				X: i, Y: u.renderRect.H - 1,
+				X: i, Y: u.renderRect.H,
 				Style: ecma48.Style{
 					Fg: ecma48.Color{
 						ColorMode: ecma48.ColorBit3Normal,
