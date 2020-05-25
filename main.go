@@ -62,10 +62,6 @@ func main() {
 		defer pprof.StopCPUProfile()
 	}
 
-	if os.Getenv("THREEMUX") == "1" {
-		return
-	}
-
 	var cmd string
 	if len(os.Args) >= 2 {
 		cmd = os.Args[1]
