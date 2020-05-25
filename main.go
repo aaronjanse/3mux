@@ -78,6 +78,10 @@ func main() {
 	case "help":
 		showHelp()
 	case "detach":
+		if parentSessionID == "" {
+			fmt.Println("Must be within session to detach")
+			return
+		}
 		detach(parentSessionID)
 	case "_serve-id":
 		sessionID := os.Args[2]
