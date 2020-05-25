@@ -1,0 +1,24 @@
+name: Release
+
+on: 
+  release:
+    types: [created]
+
+jobs:
+  releases-linux:
+    name: Release Linux Go Binary
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        goos: [ linux ]
+        goarch: [ amd64, arm64 ]
+    steps:
+    - uses: actions/checkout@v2
+    - uses: wangyoucao577/go-release-action@03b2ba5e80391d00d2939789911b63d63ee965ea
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        goos: ${{ matrix.goos }}
+        goarch: ${{ matrix.goarch }}
+        project_path: "./."
+        binary_name: "3mux"
+
