@@ -102,7 +102,7 @@ func main() {
 		sessionName := os.Args[2]
 		sessionID := launchServer(sessionName)
 		attach(sessionID)
-	case "ls":
+	case "ls", "ps":
 		os.MkdirAll(threemuxDir, 0755)
 		children, err := ioutil.ReadDir(threemuxDir)
 		if err != nil {

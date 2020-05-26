@@ -11,7 +11,7 @@ The terminal multiplexer inspired by i3
 
 USAGE:
     3mux				Interactive 3mux interface
-    3mux ls             List session names
+    3mux ls             List session names (has alias '3mux ps')
     3mux attach <name>  Attach to a session
     3mux detach			Detach from the current session
 
