@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
+	"path"
 	"strconv"
 	"strings"
 	"syscall"
@@ -14,7 +15,7 @@ import (
 )
 
 func attach(sessionID string) {
-	dir := fmt.Sprintf("/tmp/3mux/%s/", sessionID)
+	dir := path.Join(threemuxDir, sessionID)
 
 	oldState, err := terminal.MakeRaw(0)
 	if err != nil {
@@ -31,7 +32,7 @@ func attach(sessionID string) {
 
 	fmt.Print("\x1b[?1l")
 
-	fdConn, err := net.Dial("unix", dir+"fd.sock")
+	fdConn, err := net.Dial("unix", path.Join(dir, "fd.sock"))
 	if err != nil {
 		panic(err)
 	}
@@ -63,20 +64,20 @@ func attach(sessionID string) {
 
 	updateSize(dir)
 
-	os.Remove(dir + "detach-client.sock")
-	detachSocket, err := net.Listen("unix", dir+"detach-client.sock")
+	os.Remove(path.Join(dir, "detach-client.sock"))
+	detachSocket, err := net.Listen("unix", path.Join(dir, "detach-client.sock"))
 	if err != nil {
 		panic(err)
 	}
 	detachSocket.Accept()
 
-	net.Dial("unix", dir+"detach-server.sock")
+	net.Dial("unix", path.Join(dir, "detach-server.sock"))
 }
 
 func updateSize(dir string) {
 	w, h, _ := getTermSize()
 
-	conn, err := net.Dial("unix", dir+"resize.sock")
+	conn, err := net.Dial("unix", path.Join(dir, "resize.sock"))
 	if err != nil {
 		panic(err)
 	}

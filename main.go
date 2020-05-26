@@ -8,6 +8,7 @@ import (
 	"log"
 	"net"
 	"os"
+	"path"
 	"runtime/pprof"
 	"strconv"
 	"strings"
@@ -35,9 +36,16 @@ var cmdNewDetach = cmdNew.Bool("detach", false, "start session without attaching
 var cmdHelp = flag.Bool("help", false, "show help")
 var cmdHelpShort = flag.Bool("h", false, "show help")
 
-const dir = "/tmp/3mux/"
+var threemuxDir string
 
 func main() {
+	tmp := os.Getenv("TMPDIR")
+	if tmp == "" {
+		tmp = "/tmp"
+	}
+
+	threemuxDir = path.Join(tmp, "3mux")
+
 	flag.Parse()
 
 	// setup logging
@@ -95,15 +103,15 @@ func main() {
 		sessionID := launchServer(sessionName)
 		attach(sessionID)
 	case "ls":
-		os.MkdirAll("/tmp/3mux", 0755)
-		children, err := ioutil.ReadDir("/tmp/3mux/")
+		os.MkdirAll(threemuxDir, 0755)
+		children, err := ioutil.ReadDir(threemuxDir)
 		if err != nil {
 			panic(err)
 		}
 		fmt.Println("Sessions:")
 		for _, child := range children {
-			dir := fmt.Sprintf("/tmp/3mux/%s/", child.Name())
-			thisName, _ := ioutil.ReadFile(dir + "name")
+			namePath := path.Join(threemuxDir, child.Name(), "name")
+			thisName, _ := ioutil.ReadFile(namePath)
 			fmt.Printf("- %s\n", string(thisName))
 		}
 	case "attach":
@@ -138,8 +146,8 @@ func main() {
 
 			attach(sessionID)
 		} else {
-			dir := fmt.Sprintf("/tmp/3mux/%s/", parentSessionID)
-			thisName, _ := ioutil.ReadFile(dir + "name")
+			namePath := path.Join(threemuxDir, parentSessionID, "name")
+			thisName, _ := ioutil.ReadFile(namePath)
 			fmt.Printf("You're in session `%s`\n", string(thisName))
 			var choice string
 			for choice != "y" && choice != "n" {
@@ -158,20 +166,20 @@ func main() {
 }
 
 func detach(parentSessionID string) {
-	net.Dial("unix", fmt.Sprintf("/tmp/3mux/%s/detach-client.sock", parentSessionID))
+	net.Dial("unix", path.Join(threemuxDir, parentSessionID, "detach-client.sock"))
 }
 
 func findSession(sessionName string) (sessionID string, err error) {
-	os.MkdirAll("/tmp/3mux", 0666)
-	children, err := ioutil.ReadDir("/tmp/3mux/")
+	os.MkdirAll(threemuxDir, 0666)
+	children, err := ioutil.ReadDir(threemuxDir)
 	if err != nil {
 		panic(err)
 	}
 
 	for _, child := range children {
 		id := child.Name()
-		dir := fmt.Sprintf("/tmp/3mux/%s/", id)
-		nameRaw, _ := ioutil.ReadFile(dir + "name")
+		namePath := path.Join(threemuxDir, id, "name")
+		nameRaw, _ := ioutil.ReadFile(namePath)
 		nameCleaned := strings.TrimSpace(string(nameRaw))
 
 		if nameCleaned == sessionName {
@@ -183,23 +191,23 @@ func findSession(sessionName string) (sessionID string, err error) {
 }
 
 func launchServer(sessionName string) (sessionID string) {
-	os.MkdirAll("/tmp/3mux", 0777)
+	os.MkdirAll(threemuxDir, 0777)
 
 	id := 0
 	for {
-		path := fmt.Sprintf("/tmp/3mux/%d/", id)
-		if _, err := os.Stat(path); os.IsNotExist(err) {
+		dir := path.Join(threemuxDir, strconv.Itoa(id))
+		if _, err := os.Stat(dir); os.IsNotExist(err) {
 			break
 		}
 		id++
 	}
 	sessionID = strconv.Itoa(id)
 
-	dir := fmt.Sprintf("/tmp/3mux/%s/", sessionID)
-	os.MkdirAll(dir, 0755)                                  // FIXME perms
-	ioutil.WriteFile(dir+"name", []byte(sessionName), 0777) // FIXME perms
+	dir := path.Join(threemuxDir, sessionID)
+	os.MkdirAll(dir, 0755)                                              // FIXME perms
+	ioutil.WriteFile(path.Join(dir, "name"), []byte(sessionName), 0777) // FIXME perms
 
-	readySocket, err := net.Listen("unix", dir+"ready.sock")
+	readySocket, err := net.Listen("unix", path.Join(dir, "ready.sock"))
 	if err != nil {
 		panic(err)
 	}
@@ -219,7 +227,7 @@ func launchServer(sessionName string) (sessionID string) {
 	}
 
 	readySocket.Accept()
-	os.Remove(dir + "ready.sock")
+	os.Remove(path.Join(dir, "ready.sock"))
 
 	return sessionID
 }
@@ -230,8 +238,8 @@ func refuseNesting() {
 }
 
 func defaultPrompt() (sessionName string, isNew bool) {
-	os.MkdirAll("/tmp/3mux", 0755)
-	children, err := ioutil.ReadDir("/tmp/3mux/")
+	os.MkdirAll(threemuxDir, 0755)
+	children, err := ioutil.ReadDir(threemuxDir)
 	if err != nil {
 		panic(err)
 	}
@@ -241,8 +249,8 @@ func defaultPrompt() (sessionName string, isNew bool) {
 	idxToDir := map[int]string{}
 
 	for idx, child := range children {
-		dir := fmt.Sprintf("/tmp/3mux/%s/", child.Name())
-		thisName, _ := ioutil.ReadFile(dir + "name")
+		dir := path.Join(threemuxDir, child.Name())
+		thisName, _ := ioutil.ReadFile(path.Join(dir, "name"))
 
 		options = append(options, strings.TrimSpace(string(thisName)))
 

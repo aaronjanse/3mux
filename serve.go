@@ -7,6 +7,7 @@ import (
 	"log"
 	"net"
 	"os"
+	"path"
 	"runtime/debug"
 	"syscall"
 	"time"
@@ -19,7 +20,7 @@ import (
 )
 
 func serve(sessionID string) {
-	dir := fmt.Sprintf("/tmp/3mux/%s/", sessionID)
+	dir := path.Join(threemuxDir, sessionID)
 	os.MkdirAll(dir, 0755)
 	stateBeforeInput := ""
 
@@ -38,17 +39,17 @@ func serve(sessionID string) {
 			log.Println(diagnostics)
 
 			// tell the client to gracefully detach then warn the user
-			conn, err := net.Dial("unix", dir+"fatal.sock")
+			conn, err := net.Dial("unix", path.Join(dir, "fatal.sock"))
 			if err == nil {
 				conn.Write([]byte(diagnostics))
 			} else {
 				timestamp := time.Now().UTC().Format(time.RFC3339)
 				diagnostics = fmt.Sprintf("At %s...\n\n%s", timestamp, diagnostics)
-				ioutil.WriteFile(dir+"crash", []byte(diagnostics), 0666)
+				ioutil.WriteFile(path.Join(dir, "crash"), []byte(diagnostics), 0666)
 			}
 		} else {
 			// tell the client to gracefully detach
-			net.Dial("unix", dir+"detach-client.sock")
+			net.Dial("unix", path.Join(dir, "detach-client.sock"))
 		}
 
 		os.RemoveAll(dir)
@@ -102,7 +103,7 @@ func serve(sessionID string) {
 
 	go func() {
 		defer recover()
-		detachSocket, err := net.Listen("unix", dir+"detach-server.sock")
+		detachSocket, err := net.Listen("unix", path.Join(dir, "detach-server.sock"))
 		if err != nil {
 			panic(err)
 		}
@@ -116,7 +117,7 @@ func serve(sessionID string) {
 	}()
 
 	go func() {
-		detachSocket, err := net.Listen("unix", dir+"kill-server.sock")
+		detachSocket, err := net.Listen("unix", path.Join(dir, "kill-server.sock"))
 		if err != nil {
 			panic(err)
 		}
@@ -125,7 +126,7 @@ func serve(sessionID string) {
 		shutdown <- nil
 	}()
 
-	go net.Dial("unix", dir+"ready.sock")
+	go net.Dial("unix", path.Join(dir, "ready.sock"))
 
 	for {
 		select {
@@ -159,8 +160,8 @@ func serve(sessionID string) {
 }
 
 func listenResize(sessionID string, callback func(width, height int)) {
-	path := fmt.Sprintf("/tmp/3mux/%s/resize.sock", sessionID)
-	socket, err := net.Listen("unix", path)
+	sockPath := path.Join(threemuxDir, sessionID, "resize.sock")
+	socket, err := net.Listen("unix", sockPath)
 	if err != nil {
 		panic(err)
 	}
@@ -189,8 +190,8 @@ func listenResize(sessionID string, callback func(width, height int)) {
 }
 
 func listenFd(sessionID string, callback func(stdinFd, stdoutFd int)) {
-	path := fmt.Sprintf("/tmp/3mux/%s/fd.sock", sessionID)
-	socket, err := net.Listen("unix", path)
+	sockPath := path.Join(threemuxDir, sessionID, "fd.sock")
+	socket, err := net.Listen("unix", sockPath)
 	if err != nil {
 		panic(err)
 	}
