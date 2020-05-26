@@ -51,6 +51,16 @@
 
 ### Installation Instructions
 
+###### Binary (recommended)
+1. Download the `.tar.gz` for your OS from the Releases tab
+2. `tar -zxvf YOUR_FILE.tar.gz`
+3. Add the now-extracted `./3mux` to your `$PATH`
+
+###### Package manager
+
+[![Packages for 3mux](https://repology.org/badge/vertical-allrepos/3mux.svg)](https://repology.org/project/3mux/versions)
+
+###### Via `go get`
 1. Install Golang
 2. `go get github.com/aaronjanse/3mux`
 3. Run `3mux` to launch the terminal multiplexer
