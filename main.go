@@ -89,6 +89,7 @@ func main() {
 	case "new":
 		if parentSessionID != "" {
 			refuseNesting()
+			return
 		}
 		sessionName := os.Args[2]
 		sessionID := launchServer(sessionName)
@@ -108,6 +109,7 @@ func main() {
 	case "attach":
 		if parentSessionID != "" {
 			refuseNesting()
+			return
 		}
 
 		sessionName := os.Args[2]
