@@ -21,4 +21,4 @@ jobs:
         goarch: ${{ matrix.goarch }}
         project_path: "./."
         binary_name: "3mux"
-
+        pre_command: "export CGO_ENABLED=1"
