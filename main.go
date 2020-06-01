@@ -293,6 +293,7 @@ func defaultPrompt() (sessionName string, isNew bool) {
 
 		fmt.Print("+ create new session\r")
 		fmt.Printf("\x1b[%dA", len(options))
+		fmt.Printf("\x1b[m")
 
 		clearOptions := func() {
 			fmt.Printf("\r\x1b[%dB", len(options)-optionIdx)
