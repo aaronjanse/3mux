@@ -154,7 +154,7 @@ func (v *VTerm) putChar(ch rune, wide bool) {
 		rWidth = 1
 	}
 
-	if v.Cursor.X > v.w-rWidth+1 {
+	if v.Cursor.X >= v.w-rWidth+1 {
 		v.setCursorX(0)
 		if v.Cursor.Y == v.scrollingRegion.bottom {
 			v.scrollUp(1)
