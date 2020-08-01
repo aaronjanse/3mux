@@ -21,7 +21,6 @@ func attach(sessionID string) {
 	var shutdownMessage string
 	defer func() {
 		fmt.Print(shutdownMessage)
-		os.RemoveAll(dir)
 	}()
 
 	oldState, err := terminal.MakeRaw(0)

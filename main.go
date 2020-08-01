@@ -166,7 +166,7 @@ func main() {
 }
 
 func detach(parentSessionID string) {
-	net.Dial("unix", path.Join(threemuxDir, parentSessionID, "detach-client.sock"))
+	net.Dial("unix", path.Join(threemuxDir, parentSessionID, "shutdown.sock"))
 }
 
 func findSession(sessionName string) (sessionID string, err error) {
