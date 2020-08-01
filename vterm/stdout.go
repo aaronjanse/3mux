@@ -80,6 +80,12 @@ func (v *VTerm) ProcessStdout(input *bufio.Reader) {
 				} else {
 					v.shiftCursorY(1)
 				}
+			case ecma48.RI:
+				if v.Cursor.Y == v.scrollingRegion.top {
+					v.scrollDown(1)
+				} else {
+					v.shiftCursorY(-1)
+				}
 			case ecma48.CarriageReturn:
 				v.setCursorX(0)
 			case ecma48.Tab:
