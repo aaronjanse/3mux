@@ -27,11 +27,11 @@ func deltaMarkup(fromCur, toCur ecma48.Cursor) string {
 	from := fromCur.Style
 
 	if to.Bg.ColorMode != from.Bg.ColorMode || to.Bg.Code != from.Bg.Code {
-		out += ToANSI(to.Bg, true)
+		out += to.Bg.ToANSI(true)
 	}
 
 	if to.Fg.ColorMode != from.Fg.ColorMode || to.Fg.Code != from.Fg.Code {
-		out += ToANSI(to.Fg, false)
+		out += to.Fg.ToANSI(false)
 	}
 
 	/* remove effects */
