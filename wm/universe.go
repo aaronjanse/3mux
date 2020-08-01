@@ -209,8 +209,8 @@ func (u *Universe) HideHelpBar() {
 func helpBarMinLen(str string) int {
 	var x string
 	x = strings.ReplaceAll(str, "{", "")
-	x = strings.ReplaceAll(str, "}", "")
-	x = strings.ReplaceAll(str, "\t", " ")
+	x = strings.ReplaceAll(x, "}", "")
+	x = strings.ReplaceAll(x, "\t", " ")
 	return len(x)
 }
 

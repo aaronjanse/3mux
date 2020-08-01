@@ -243,6 +243,7 @@ func (v *VTerm) forceRedrawWindow() {
 							X: v.x + x, Y: v.y + y + v.ScrollbackPos, Style: ecma48.Style{},
 						},
 					}
+					v.renderer.HandleCh(ch)					
 				}
 
 			}

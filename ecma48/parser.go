@@ -75,7 +75,9 @@ func (p *Parser) Parse(input *bufio.Reader, output chan<- Output) error {
 	rand.Seed(time.Now().Unix())
 
 	go func() {
-		defer recover()
+		defer func() {
+			recover()
+		}()
 		for {
 			r, _, err := input.ReadRune()
 			if p.isDead {
