@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
 	"net"
 	"os"
 	"os/exec"
@@ -16,6 +17,12 @@ import (
 
 func attach(sessionID string) {
 	dir := path.Join(threemuxDir, sessionID)
+
+	var shutdownMessage string
+	defer func() {
+		fmt.Print(shutdownMessage)
+		os.RemoveAll(dir)
+	}()
 
 	oldState, err := terminal.MakeRaw(0)
 	if err != nil {
@@ -50,8 +57,8 @@ func attach(sessionID string) {
 		fConn.Close()
 	}
 
+	defer net.Dial("unix", path.Join(dir, "detach-server.sock"))
 	sendFds(os.Stdin, os.Stdout)
-	// os.Stdin.Write([]byte{1})
 
 	go func() {
 		for {
@@ -64,14 +71,16 @@ func attach(sessionID string) {
 
 	updateSize(dir)
 
-	os.Remove(path.Join(dir, "detach-client.sock"))
-	detachSocket, err := net.Listen("unix", path.Join(dir, "detach-client.sock"))
+	os.Remove(path.Join(dir, "shutdown.sock"))
+	detachSocket, err := net.Listen("unix", path.Join(dir, "shutdown.sock"))
 	if err != nil {
 		panic(err)
 	}
-	detachSocket.Accept()
-
-	net.Dial("unix", path.Join(dir, "detach-server.sock"))
+	conn, _ := detachSocket.Accept()
+	logs, _ := ioutil.ReadAll(conn)
+	if len(logs) > 0 {
+		shutdownMessage = string(logs)
+	}
 }
 
 func updateSize(dir string) {

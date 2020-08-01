@@ -20,12 +20,13 @@ import (
 )
 
 func serve(sessionID string) {
+	var clientExitSock = "booted.sock"
+
 	dir := path.Join(threemuxDir, sessionID)
 	os.MkdirAll(dir, 0755)
 	stateBeforeInput := ""
 
 	defer func() {
-		log.Println("DYING")
 		if r := recover(); r != nil {
 			fmt.Println(r)
 			diagnostics := fmt.Sprintf(
@@ -39,7 +40,7 @@ func serve(sessionID string) {
 			log.Println(diagnostics)
 
 			// tell the client to gracefully detach then warn the user
-			conn, err := net.Dial("unix", path.Join(dir, "fatal.sock"))
+			conn, err := net.Dial("unix", path.Join(dir, clientExitSock))
 			if err == nil {
 				conn.Write([]byte(diagnostics))
 			} else {
@@ -49,7 +50,7 @@ func serve(sessionID string) {
 			}
 		} else {
 			// tell the client to gracefully detach
-			net.Dial("unix", path.Join(dir, "detach-client.sock"))
+			net.Dial("unix", path.Join(dir, clientExitSock))
 		}
 
 		os.RemoveAll(dir)
@@ -102,7 +103,6 @@ func serve(sessionID string) {
 	})
 
 	go func() {
-		defer recover()
 		detachSocket, err := net.Listen("unix", path.Join(dir, "detach-server.sock"))
 		if err != nil {
 			panic(err)
@@ -126,7 +126,8 @@ func serve(sessionID string) {
 		shutdown <- nil
 	}()
 
-	go net.Dial("unix", path.Join(dir, "ready.sock"))
+	go net.Dial("unix", path.Join(dir, "booted.sock"))
+	clientExitSock = "shutdown.sock"
 
 	for {
 		select {

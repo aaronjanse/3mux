@@ -207,7 +207,7 @@ func launchServer(sessionName string) (sessionID string) {
 	os.MkdirAll(dir, 0755)                                              // FIXME perms
 	ioutil.WriteFile(path.Join(dir, "name"), []byte(sessionName), 0777) // FIXME perms
 
-	readySocket, err := net.Listen("unix", path.Join(dir, "ready.sock"))
+	readySocket, err := net.Listen("unix", path.Join(dir, "booted.sock"))
 	if err != nil {
 		panic(err)
 	}
@@ -226,8 +226,14 @@ func launchServer(sessionName string) (sessionID string) {
 		panic(err)
 	}
 
-	readySocket.Accept()
-	os.Remove(path.Join(dir, "ready.sock"))
+	conn, _ := readySocket.Accept()
+	logs, _ := ioutil.ReadAll(conn)
+	if len(logs) > 0 {
+		fmt.Print(string(logs))
+		os.Exit(1)
+	}
+
+	os.Remove(path.Join(dir, "booted.sock"))
 
 	return sessionID
 }
