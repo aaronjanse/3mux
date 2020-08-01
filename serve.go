@@ -43,11 +43,11 @@ func serve(sessionID string) {
 			conn, err := net.Dial("unix", path.Join(dir, clientExitSock))
 			if err == nil {
 				conn.Write([]byte(diagnostics))
-			} else {
-				timestamp := time.Now().UTC().Format(time.RFC3339)
-				diagnostics = fmt.Sprintf("At %s...\n\n%s", timestamp, diagnostics)
-				ioutil.WriteFile(path.Join(dir, "crash"), []byte(diagnostics), 0666)
 			}
+
+			timestamp := time.Now().UTC().Format(time.RFC3339)
+			diagnostics = fmt.Sprintf("At %s...\n\n%s", timestamp, diagnostics)
+			ioutil.WriteFile(path.Join(dir, "crash"), []byte(diagnostics), 0666)
 		} else {
 			// tell the client to gracefully detach
 			net.Dial("unix", path.Join(dir, clientExitSock))
