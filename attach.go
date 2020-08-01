@@ -15,6 +15,13 @@ import (
 	"golang.org/x/crypto/ssh/terminal"
 )
 
+const errorReportFormat = `That session has crashed :-(
+
+Here's what I know:
+
+%s
+`
+
 func attach(sessionID string) {
 	dir := path.Join(threemuxDir, sessionID)
 
@@ -31,10 +38,7 @@ func attach(sessionID string) {
 		// delete the old session data so we don't see it again
 		os.RemoveAll(path.Join(threemuxDir, sessionID))
 
-		fmt.Printf("\x1b[mThat session has crashed :-(\n")
-		fmt.Printf("Here's what I know:\n\n")
-		fmt.Print(string(diagnostics))
-		fmt.Println()
+		fmt.Printf("\x1b[m"+errorReportFormat, string(diagnostics))
 
 		return
 	}
