@@ -23,6 +23,22 @@ func attach(sessionID string) {
 		fmt.Print(shutdownMessage)
 	}()
 
+	// check if that session has crashed
+	if _, err := os.Stat(path.Join(dir, "crash")); err == nil {
+		logPath := path.Join(threemuxDir, sessionID, "crash")
+		diagnostics, _ := ioutil.ReadFile(logPath)
+
+		// delete the old session data so we don't see it again
+		os.RemoveAll(path.Join(threemuxDir, sessionID))
+
+		fmt.Printf("\x1b[mThat session has crashed :-(\n")
+		fmt.Printf("Here's what I know:\n\n")
+		fmt.Print(string(diagnostics))
+		fmt.Println()
+
+		return
+	}
+
 	oldState, err := terminal.MakeRaw(0)
 	if err != nil {
 		panic(err)

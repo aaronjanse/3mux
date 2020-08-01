@@ -51,9 +51,9 @@ func serve(sessionID string) {
 		} else {
 			// tell the client to gracefully detach
 			net.Dial("unix", path.Join(dir, clientExitSock))
-		}
 
-		os.RemoveAll(dir)
+			os.RemoveAll(dir)
+		}
 	}()
 
 	config := loadOrGenerateConfig()
@@ -103,6 +103,7 @@ func serve(sessionID string) {
 	})
 
 	go func() {
+		defer recover()
 		detachSocket, err := net.Listen("unix", path.Join(dir, "detach-server.sock"))
 		if err != nil {
 			panic(err)

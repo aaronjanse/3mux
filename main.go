@@ -243,6 +243,11 @@ func refuseNesting() {
 	fmt.Println("If you want to do so anyway, `unset THREEMUX`.")
 }
 
+type SessionEntry struct {
+	name    string
+	crashed bool
+}
+
 func defaultPrompt() (sessionName string, isNew bool) {
 	os.MkdirAll(threemuxDir, 0755)
 	children, err := ioutil.ReadDir(threemuxDir)
@@ -251,16 +256,41 @@ func defaultPrompt() (sessionName string, isNew bool) {
 	}
 
 	optionIdx := 0
-	options := []string{}
+	options := []SessionEntry{}
 	idxToDir := map[int]string{}
 
 	for idx, child := range children {
 		dir := path.Join(threemuxDir, child.Name())
 		thisName, _ := ioutil.ReadFile(path.Join(dir, "name"))
 
-		options = append(options, strings.TrimSpace(string(thisName)))
+		// if we can successfully `stat` the crash log, then the server crashed
+		_, statCrashLogErr := os.Stat(path.Join(dir, "crash"))
+		crashed := statCrashLogErr == nil
+
+		options = append(options, SessionEntry{
+			name:    strings.TrimSpace(string(thisName)),
+			crashed: crashed,
+		})
 
 		idxToDir[idx] = dir
+	}
+
+	formatSessionEntry := func(entry SessionEntry, selected bool) string {
+		var format string
+		if entry.crashed {
+			if selected {
+				format = "\x1b[;1;91m? %s (crashed)\x1b[39;2m"
+			} else {
+				format = "\x1b[;93m  %s (crashed)\x1b[39;2m"
+			}
+		} else {
+			if selected {
+				format = "\x1b[;1;36m> %s\x1b[39;2m"
+			} else {
+				format = "\x1b[m  %s\x1b[39;2m"
+			}
+		}
+		return fmt.Sprintf(format, entry.name)
 	}
 
 	oldState, err := terminal.MakeRaw(0)
@@ -291,10 +321,10 @@ func defaultPrompt() (sessionName string, isNew bool) {
 
 		// fmt.Print("\x1b[?25l") // hide cursor
 
-		fmt.Print("\x1b[1;36m> " + options[0] + "\x1b[39;2m\r\n")
+		fmt.Print(formatSessionEntry(options[0], true) + "\r\n")
 
 		for _, option := range options[1:] {
-			fmt.Print("  " + option + "\x1b[39m\r\n")
+			fmt.Print(formatSessionEntry(option, false) + "\r\n")
 		}
 
 		fmt.Print("+ create new session\r")
@@ -320,7 +350,7 @@ func defaultPrompt() (sessionName string, isNew bool) {
 						sessionName = promptNewSessionName(options, stdin)
 						return
 					} else if optionIdx < len(options) {
-						sessionName = options[optionIdx]
+						sessionName = options[optionIdx].name
 						return
 					}
 				case 3:
@@ -336,20 +366,20 @@ func defaultPrompt() (sessionName string, isNew bool) {
 						if optionIdx == len(options) {
 							fmt.Print("\r+ create new session\r")
 						} else {
-							fmt.Print("\r  " + options[optionIdx] + "\r")
+							fmt.Print(formatSessionEntry(options[optionIdx], false) + "\r")
 						}
 						optionIdx--
 						fmt.Print("\x1b[1A")
-						fmt.Print("\x1b[22;1;36m> " + options[optionIdx] + "\x1b[39;2m\r")
+						fmt.Print(formatSessionEntry(options[optionIdx], true) + "\r")
 					}
 				case ecma48.Down:
 					if optionIdx < len(options) {
-						fmt.Print("\r  " + options[optionIdx] + "\r\n")
+						fmt.Print(formatSessionEntry(options[optionIdx], false) + "\r\n")
 						optionIdx++
 						if optionIdx == len(options) {
 							fmt.Print("\x1b[22;1;36m+ create new session\x1b[39;2m\r")
 						} else {
-							fmt.Print("\x1b[22;1;36m> " + options[optionIdx] + "\x1b[39;2m\r")
+							fmt.Print(formatSessionEntry(options[optionIdx], true) + "\r")
 						}
 					}
 				}
@@ -358,7 +388,7 @@ func defaultPrompt() (sessionName string, isNew bool) {
 	}
 }
 
-func promptNewSessionName(existing []string, stdin chan ecma48.Output) string {
+func promptNewSessionName(existing []SessionEntry, stdin chan ecma48.Output) string {
 	problem := ""
 	for {
 		fmt.Print("\x1b[22mName of new session:\r\n")
@@ -372,7 +402,7 @@ func promptNewSessionName(existing []string, stdin chan ecma48.Output) string {
 		}
 
 		for _, existingName := range existing {
-			if name == existingName {
+			if name == existingName.name {
 				problem = "session names must be unique"
 				continue
 			}
