@@ -222,6 +222,9 @@ func parseFdConn(conn *net.UnixConn) (stdinFd, stdoutFd int) {
 		panic(err)
 	}
 	msgs, err := syscall.ParseSocketControlMessage(buf)
+	if err != nil {
+		panic(err)
+	}
 	fds := []int{}
 	for _, msg := range msgs {
 		newFds, err := syscall.ParseUnixRights(&msg)
