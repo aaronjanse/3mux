@@ -213,6 +213,7 @@ func main() {
 			fmt.Println("Failed to find session with name:", sessionName)
 			os.Exit(1)
 		}
+
 		_, err = net.Dial("unix", sessionInfo.killServerPath)
 		if err != nil {
 			fmt.Println("Killing the server failed.")
@@ -220,9 +221,14 @@ func main() {
 			fmt.Println("1. Ensure there are no unwanted 3mux processes running")
 			fmt.Printf("2. Run `rm -rf %s`\n", sessionInfo.path)
 			os.Exit(1)
-		} else {
-			fmt.Println("Session sucessfully killed.")
 		}
+
+		err = os.RemoveAll(sessionInfo.path)
+		if err != nil {
+			fmt.Printf("Failed to remove metadata directory `%s`: %s\n", sessionInfo.path, err)
+			os.Exit(1)
+		}
+		fmt.Println("Session sucessfully killed.")
 	case "ls", "ps":
 		children, err := ioutil.ReadDir(threemuxDir)
 		if err != nil {
