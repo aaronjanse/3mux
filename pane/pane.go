@@ -82,8 +82,7 @@ func (t *Pane) SetRenderRect(fullscreen bool, x, y, w, h int) {
 				if r := recover(); r != nil {
 					t.Dead = true
 					t.OnDeath(fmt.Errorf("%s\n%s",
-						r.(error).Error(),
-						debug.Stack(),
+						r.(error), debug.Stack(),
 					))
 				}
 			}()

@@ -193,7 +193,7 @@ func main() {
 		}
 		err = attach(sessionInfo)
 		if err != nil {
-			fmt.Println(err.Error())
+			fmt.Println(err)
 			fmt.Println("See server-side logs at", path.Join(sessionInfo.path, "logs-server.txt"))
 			fmt.Printf("To manually kill this session, run `3mux kill %s`\n", sessionName)
 			os.Exit(1)
@@ -309,7 +309,7 @@ func initializeSession(sessionName string) SessionInfo {
 		if err != nil {
 			fmt.Printf(
 				"Session clean-up failed. Error while removing directory `%s`: %s",
-				sessionPath, err.Error(),
+				sessionPath, err,
 			)
 		}
 		fmt.Printf("Please report this to %s\n", BUG_REPORT_URL)

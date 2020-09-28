@@ -20,7 +20,7 @@ func serve(sessionInfo SessionInfo) error {
 
 	config, err := loadOrGenerateConfig()
 	if err != nil {
-		return fmt.Errorf("Failed to load or generate config: %s", err.Error())
+		return fmt.Errorf("Failed to load or generate config: %s", err)
 	}
 
 	renderer := render.NewRenderer(-1)
@@ -39,7 +39,7 @@ func serve(sessionInfo SessionInfo) error {
 		func(err error) {
 			go func() {
 				if err != nil {
-					shutdown <- fmt.Errorf("%s\n%s", err.Error(), debug.Stack())
+					shutdown <- fmt.Errorf("%s\n%s", err, debug.Stack())
 				} else {
 					shutdown <- nil
 				}
