@@ -226,8 +226,7 @@ func main() {
 
 		err = os.RemoveAll(sessionInfo.path)
 		if err != nil {
-			fmt.Printf("Failed to remove metadata directory `%s`: %s\n", sessionInfo.path, err)
-			fmt.Println("")
+			fmt.Printf("Failed to remove metadata directory `%s`: %s\n\n", sessionInfo.path, err)
 			fmt.Println("To create a new session with this name:")
 			fmt.Println("1. Ensure there are no unwanted 3mux processes running")
 			fmt.Printf("2. Run `rm -rf %s`\n\n", sessionInfo.path)
