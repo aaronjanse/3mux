@@ -70,7 +70,7 @@ func main() {
 		}
 
 		name, isNew := defaultPrompt()
-		if name == "" {
+		if name == "" { // only happens upon Ctrl-C
 			os.Exit(1)
 		}
 		if isNew {
@@ -355,6 +355,7 @@ func refuseNesting() {
 	os.Exit(1)
 }
 
+// returns empty name upon Ctrl-C
 func defaultPrompt() (sessionName string, isNew bool) {
 	os.MkdirAll(threemuxDir, 0755)
 	children, err := ioutil.ReadDir(threemuxDir)
