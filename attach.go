@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"net"
 	"os"
@@ -15,7 +16,7 @@ import (
 	"golang.org/x/crypto/ssh/terminal"
 )
 
-func attach(sessionInfo SessionInfo) {
+func attach(sessionInfo SessionInfo) error {
 	fdSocketPath := path.Join(sessionInfo.path, "fd.sock")
 	fmt.Printf("Waiting for server to be online... (%s)\n", fdSocketPath)
 
@@ -23,62 +24,37 @@ func attach(sessionInfo SessionInfo) {
 
 	oldState, err := terminal.MakeRaw(0)
 	if err != nil {
-		panic(err)
+		return errors.New("failed to enable terminal raw mode")
 	}
+	defer terminal.Restore(0, oldState)
 
 	fmt.Print("\x1b[?1049h")
+	defer fmt.Print("\x1b[?1049l")
 	fmt.Print("\x1b[?1006h")
+	defer fmt.Print("\x1b[?1006l")
 	fmt.Print("\x1b[?1002h")
-
-	restoreTerminal := func() {
-		terminal.Restore(0, oldState)
-		fmt.Print("\x1b[?1049l")
-		fmt.Print("\x1b[?1006l")
-		fmt.Print("\x1b[?1002l")
-	}
-
-	defer restoreTerminal()
+	defer fmt.Print("\x1b[?1002l")
 
 	fmt.Print("\x1b[?1l")
 
 	fdConn, err := net.Dial("unix", fdSocketPath)
 	if err != nil {
-		restoreTerminal()
-		fmt.Println("Although the server socket exists, connection to it failed:", err)
-		_, err = net.Dial("unix", path.Join(sessionInfo.path, "kill-server.sock"))
-		if err != nil {
-			fmt.Println("Killing the server failed.")
-		}
-		fmt.Println("See logs at", path.Join(sessionInfo.path, "logs-server.txt"))
-		fmt.Println("To allow a new session to be created with this name, run:")
-		fmt.Printf("$ rm -rf %s\n", sessionInfo.path)
-		os.Exit(1)
+		return fmt.Errorf("Although the server socket exists, connection to it failed: %s", err.Error())
+
 	}
 	fConn, err := fdConn.(*net.UnixConn).File()
 	if err != nil {
-		restoreTerminal()
-		fmt.Println("After connection to the server socket, processing failed:", err)
-		_, err = net.Dial("unix", path.Join(sessionInfo.path, "kill-server.sock"))
-		if err != nil {
-			fmt.Println("Killing the server failed.")
-		}
-		fmt.Println("See logs at", path.Join(sessionInfo.path, "logs-server.txt"))
-		os.Exit(1)
+		return fmt.Errorf("After connection to the server socket, processing failed: %s", err)
 	}
 
 	rights := syscall.UnixRights(int(os.Stdin.Fd()), int(os.Stdout.Fd()))
 	err = syscall.Sendmsg(int(fConn.Fd()), nil, rights, nil, 0)
 	if err != nil {
-		restoreTerminal()
-		fmt.Println("Passing terminal control to the session server failed:", err)
-		_, err = net.Dial("unix", path.Join(sessionInfo.path, "kill-server.sock"))
-		if err != nil {
-			fmt.Println("Killing the server failed.")
-		}
-		fmt.Println("See logs at", path.Join(sessionInfo.path, "logs-server.txt"))
-		os.Exit(1)
+		return fmt.Errorf("Passing terminal control to the session server failed: %s", err)
 	}
 	fConn.Close()
+
+	defer net.Dial("unix", path.Join(sessionInfo.path, "detach-server.sock"))
 
 	go func() {
 		for {
@@ -95,28 +71,14 @@ func attach(sessionInfo SessionInfo) {
 	os.Remove(killClientPath)
 	detachSocket, err := net.Listen("unix", killClientPath)
 	if err != nil {
-		net.Dial("unix", path.Join(sessionInfo.path, "detach-server.sock"))
-		restoreTerminal()
-		fmt.Println("Client shutdown scenario planning failed:", err)
-		_, err = net.Dial("unix", path.Join(sessionInfo.path, "kill-server.sock"))
-		if err != nil {
-			fmt.Println("Killing the server failed.")
-		}
-		fmt.Println("See logs at", path.Join(sessionInfo.path, "logs-server.txt"))
-		os.Exit(1)
+		return fmt.Errorf("Client shutdown scenario planning failed: %s", err)
 	}
 	_, err = detachSocket.Accept()
 	if err != nil {
-		net.Dial("unix", path.Join(sessionInfo.path, "detach-server.sock"))
-		restoreTerminal()
-		fmt.Println("Waiting for client shutdown failed:", err)
-		_, err = net.Dial("unix", path.Join(sessionInfo.path, "kill-server.sock"))
-		if err != nil {
-			fmt.Println("Killing the server failed.")
-		}
-		fmt.Println("See logs at", path.Join(sessionInfo.path, "logs-server.txt"))
-		os.Exit(1)
+		return fmt.Errorf("Waiting for client shutdown failed: %s", err)
 	}
+
+	return nil
 }
 
 func waitForFdSock(sessionInfo SessionInfo, fdSocketPath string) {

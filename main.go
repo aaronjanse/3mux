@@ -135,8 +135,8 @@ func main() {
 			refuseNesting()
 			os.Exit(1)
 		}
-		if len(os.Args) < 3 {
-			fmt.Println("Missing `name` argument.")
+		if len(os.Args) != 3 {
+			fmt.Println("Usage: 3mux new <name>")
 			os.Exit(1)
 		}
 		sessionName := os.Args[2]
@@ -177,8 +177,8 @@ func main() {
 			refuseNesting()
 			os.Exit(1)
 		}
-		if len(os.Args) < 3 {
-			fmt.Println("Missing `name` argument.")
+		if len(os.Args) != 3 {
+			fmt.Println("Usage: 3mux attach <name>")
 			os.Exit(1)
 		}
 		sessionName := os.Args[2]
@@ -191,7 +191,38 @@ func main() {
 			fmt.Println("Failed to find session with name:", sessionName)
 			os.Exit(1)
 		}
-		attach(sessionInfo)
+		err = attach(sessionInfo)
+		if err != nil {
+			fmt.Println(err.Error())
+			fmt.Println("See server-side logs at", path.Join(sessionInfo.path, "logs-server.txt"))
+			fmt.Printf("To manually kill this session, run `3mux kill %s`\n", sessionName)
+			os.Exit(1)
+		}
+	case "kill":
+		if len(os.Args) != 3 {
+			fmt.Println("Usage: 3mux kill <name>")
+			os.Exit(1)
+		}
+		sessionName := os.Args[2]
+		sessionInfo, found, err := findSession(sessionName)
+		if err != nil {
+			fmt.Println("Error while querying sessions:", err)
+			os.Exit(1)
+		}
+		if !found {
+			fmt.Println("Failed to find session with name:", sessionName)
+			os.Exit(1)
+		}
+		_, err = net.Dial("unix", path.Join(sessionInfo.path, "kill-server.sock"))
+		if err != nil {
+			fmt.Println("Killing the server failed.")
+			fmt.Println("To create a new session with this name:")
+			fmt.Println("1. Ensure there are no unwanted 3mux processes running")
+			fmt.Printf("2. Run `rm -rf %s`\n", sessionInfo.path)
+			os.Exit(1)
+		} else {
+			fmt.Println("Session sucessfully killed.")
+		}
 	case "ls", "ps":
 		children, err := ioutil.ReadDir(threemuxDir)
 		if err != nil {
