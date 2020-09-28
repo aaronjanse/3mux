@@ -111,13 +111,15 @@ func (r *Renderer) ListenToQueue() {
 		for {
 			fullyWritten := true
 			var diff strings.Builder
+		outer:
 			for y := 0; y <= r.h; y++ {
-				// some terminals truncate long stdout
-				if diff.Len() > 4000 {
-					fullyWritten = false
-					break
-				}
 				for x := 0; x < r.w; x++ {
+					// some terminals truncate long stdout
+					// 4000 to allow some extra chars to be added before crossing 4096
+					if diff.Len() > 4000 {
+						fullyWritten = false
+						break outer
+					}
 					r.writingMutex.Lock()
 					current := r.currentScreen[y][x]
 					pending := r.pendingScreen[y][x]
