@@ -41,7 +41,6 @@ func attach(sessionInfo SessionInfo) error {
 	fdConn, err := net.Dial("unix", sessionInfo.fdPath)
 	if err != nil {
 		return fmt.Errorf("Although the server socket exists, connection to it failed: %s", err.Error())
-
 	}
 	fConn, err := fdConn.(*net.UnixConn).File()
 	if err != nil {
