@@ -125,7 +125,12 @@ func main() {
 		err = serve(sessionInfo)
 		if err == nil {
 			log.Println("Exiting cleanly...")
-			os.RemoveAll(sessionInfo.path)
+			err := os.RemoveAll(sessionInfo.path)
+			if err != nil {
+				log.Printf("Failed to remove metadata directory `%s`: %s\n", sessionInfo.path, err)
+				log.Printf("It can be removed manually with `rm -rf %s`, although the above error "+
+					"message is likely relevant.", sessionInfo.path)
+			}
 		} else {
 			log.Println(err)
 			os.Exit(1)
