@@ -29,5 +29,5 @@ func (c *Color) ToANSI(bg bool) string {
 		)
 	default:
 		panic(fmt.Sprintf("Unexpected ColorMode: %v", c.ColorMode))
-	}	
+	}
 }

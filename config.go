@@ -39,7 +39,7 @@ type CompiledConfigGeneral struct {
 	EnableStatusBar bool `toml:"enable-status-bar"`
 }
 
-func loadOrGenerateConfig() CompiledConfig {
+func loadOrGenerateConfig() (CompiledConfig, error) {
 	var userTOML string
 	firstRun := false
 
@@ -49,7 +49,7 @@ func loadOrGenerateConfig() CompiledConfig {
 
 		usr, err := user.Current()
 		if err != nil {
-			panic(err)
+			return CompiledConfig{}, fmt.Errorf("Failed to get current user: %s", err)
 		}
 		dirPath := filepath.Join(usr.HomeDir, ".config", "3mux")
 		os.MkdirAll(dirPath, os.ModePerm)
@@ -60,22 +60,22 @@ func loadOrGenerateConfig() CompiledConfig {
 				userTOML = defaultConfig
 				ioutil.WriteFile(configPath, []byte(defaultConfig), 0664)
 			} else {
-				panic("Cannot read file: " + configPath + "\n" + err.Error())
+				return CompiledConfig{}, fmt.Errorf("Failed to read config at `%s`: %s", configPath, err)
 			}
 		} else {
-			panic(fmt.Errorf("Found in home but not in XDG? %s", os.Getenv("XDG_CONFIG_DIRS")))
+			return CompiledConfig{}, fmt.Errorf("Found in home but not XDG? %s", err.Error())
 		}
 	} else {
 		data, err := ioutil.ReadFile(xdgConfigPath)
 		if err != nil {
-			panic(err)
+			return CompiledConfig{}, fmt.Errorf("Failed to read config at `%s`: %s", xdgConfigPath, err)
 		}
 		userTOML = string(data)
 	}
 
 	var conf UserConfig
 	if _, err := toml.Decode(userTOML, &conf); err != nil {
-		panic(err)
+		return CompiledConfig{}, fmt.Errorf("Failed to parse config TOML: %s", err)
 	}
 
 	conf.General.EnableHelpBar = conf.General.EnableHelpBar || firstRun
@@ -83,7 +83,7 @@ func loadOrGenerateConfig() CompiledConfig {
 	return compileConfig(conf)
 }
 
-func compileConfig(user UserConfig) CompiledConfig {
+func compileConfig(user UserConfig) (CompiledConfig, error) {
 	conf := CompiledConfig{
 		modeStarters:   map[string]string{},
 		isSticky:       map[string]bool{},
@@ -107,11 +107,11 @@ func compileConfig(user UserConfig) CompiledConfig {
 					conf.modeStarters[starter] = modeName
 				}
 			default:
-				panic(fmt.Errorf("Expected []string: %+v (%s)", x, reflect.TypeOf(x)))
+				return CompiledConfig{}, fmt.Errorf("Expected []string: %+v (%s)", x, reflect.TypeOf(x))
 			}
 			delete(mode, "mode-start")
 		} else {
-			panic(errors.New("Could not find starter for mode " + modeName))
+			return CompiledConfig{}, errors.New("Could not find starter for mode " + modeName)
 		}
 
 		mode := castMapInterface(mode)
@@ -122,7 +122,7 @@ func compileConfig(user UserConfig) CompiledConfig {
 
 	conf.generalSettings = user.General
 
-	return conf
+	return conf, nil
 }
 
 func castMapInterface(source map[string]interface{}) map[string][]string {

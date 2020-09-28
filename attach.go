@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"net"
 	"os"
 	"os/exec"
@@ -11,74 +10,143 @@ import (
 	"strconv"
 	"strings"
 	"syscall"
+	"time"
 
 	"golang.org/x/crypto/ssh/terminal"
 )
 
-func attach(sessionID string) {
-	dir := path.Join(threemuxDir, sessionID)
+func attach(sessionInfo SessionInfo) {
+	fdSocketPath := path.Join(sessionInfo.path, "fd.sock")
+	fmt.Printf("Waiting for server to be online... (%s)\n", fdSocketPath)
 
-	var shutdownMessage string
-	defer func() {
-		fmt.Print(shutdownMessage)
-	}()
+	waitForFdSock(sessionInfo, fdSocketPath)
 
 	oldState, err := terminal.MakeRaw(0)
 	if err != nil {
 		panic(err)
 	}
-	defer terminal.Restore(0, oldState)
 
 	fmt.Print("\x1b[?1049h")
-	defer fmt.Print("\x1b[?1049l")
 	fmt.Print("\x1b[?1006h")
-	defer fmt.Print("\x1b[?1006l")
 	fmt.Print("\x1b[?1002h")
-	defer fmt.Print("\x1b[?1002l")
+
+	restoreTerminal := func() {
+		terminal.Restore(0, oldState)
+		fmt.Print("\x1b[?1049l")
+		fmt.Print("\x1b[?1006l")
+		fmt.Print("\x1b[?1002l")
+	}
+
+	defer restoreTerminal()
 
 	fmt.Print("\x1b[?1l")
 
-	fdConn, err := net.Dial("unix", path.Join(dir, "fd.sock"))
+	fdConn, err := net.Dial("unix", fdSocketPath)
 	if err != nil {
-		panic(err)
+		restoreTerminal()
+		fmt.Println("Although the server socket exists, connection to it failed:", err)
+		_, err = net.Dial("unix", path.Join(sessionInfo.path, "kill-server.sock"))
+		if err != nil {
+			fmt.Println("Killing the server failed.")
+		}
+		fmt.Println("See logs at", path.Join(sessionInfo.path, "logs-server.txt"))
+		fmt.Println("To allow a new session to be created with this name, run:")
+		fmt.Printf("$ rm -rf %s\n", sessionInfo.path)
+		os.Exit(1)
 	}
 	fConn, err := fdConn.(*net.UnixConn).File()
 	if err != nil {
-		panic(err)
-	}
-
-	sendFds := func(in, out *os.File) {
-		rights := syscall.UnixRights(int(in.Fd()), int(out.Fd()))
-		err = syscall.Sendmsg(int(fConn.Fd()), nil, rights, nil, 0)
+		restoreTerminal()
+		fmt.Println("After connection to the server socket, processing failed:", err)
+		_, err = net.Dial("unix", path.Join(sessionInfo.path, "kill-server.sock"))
 		if err != nil {
-			panic(err)
+			fmt.Println("Killing the server failed.")
 		}
-		fConn.Close()
+		fmt.Println("See logs at", path.Join(sessionInfo.path, "logs-server.txt"))
+		os.Exit(1)
 	}
 
-	defer net.Dial("unix", path.Join(dir, "detach-server.sock"))
-	sendFds(os.Stdin, os.Stdout)
+	// defer net.Dial("unix", path.Join(dir, "detach-server.sock"))
+	rights := syscall.UnixRights(int(os.Stdin.Fd()), int(os.Stdout.Fd()))
+	err = syscall.Sendmsg(int(fConn.Fd()), nil, rights, nil, 0)
+	if err != nil {
+		restoreTerminal()
+		fmt.Println("Passing terminal control to the session server failed:", err)
+		_, err = net.Dial("unix", path.Join(sessionInfo.path, "kill-server.sock"))
+		if err != nil {
+			fmt.Println("Killing the server failed.")
+		}
+		fmt.Println("See logs at", path.Join(sessionInfo.path, "logs-server.txt"))
+		os.Exit(1)
+	}
+	fConn.Close()
 
 	go func() {
 		for {
 			c := make(chan os.Signal, 1)
 			signal.Notify(c, syscall.SIGWINCH)
 			<-c
-			updateSize(dir)
+			updateSize(sessionInfo.path)
 		}
 	}()
 
-	updateSize(dir)
+	updateSize(sessionInfo.path)
 
-	os.Remove(path.Join(dir, "shutdown.sock"))
-	detachSocket, err := net.Listen("unix", path.Join(dir, "shutdown.sock"))
+	killClientPath := path.Join(sessionInfo.path, "kill-client.sock")
+	os.Remove(killClientPath)
+	detachSocket, err := net.Listen("unix", killClientPath)
 	if err != nil {
-		panic(err)
+		net.Dial("unix", path.Join(sessionInfo.path, "detach-server.sock"))
+		restoreTerminal()
+		fmt.Println("Client shutdown scenario planning failed:", err)
+		_, err = net.Dial("unix", path.Join(sessionInfo.path, "kill-server.sock"))
+		if err != nil {
+			fmt.Println("Killing the server failed.")
+		}
+		fmt.Println("See logs at", path.Join(sessionInfo.path, "logs-server.txt"))
+		os.Exit(1)
 	}
-	conn, _ := detachSocket.Accept()
-	logs, _ := ioutil.ReadAll(conn)
-	if len(logs) > 0 {
-		shutdownMessage = string(logs)
+	_, err = detachSocket.Accept()
+	if err != nil {
+		net.Dial("unix", path.Join(sessionInfo.path, "detach-server.sock"))
+		restoreTerminal()
+		fmt.Println("Waiting for client shutdown failed:", err)
+		_, err = net.Dial("unix", path.Join(sessionInfo.path, "kill-server.sock"))
+		if err != nil {
+			fmt.Println("Killing the server failed.")
+		}
+		fmt.Println("See logs at", path.Join(sessionInfo.path, "logs-server.txt"))
+		os.Exit(1)
+	}
+}
+
+func waitForFdSock(sessionInfo SessionInfo, fdSocketPath string) {
+	for i := 10; ; i-- {
+		fdata, err := os.Stat(fdSocketPath)
+		if err == nil && fdata != nil {
+			break
+		}
+		time.Sleep(time.Millisecond * 50)
+
+		if i == 0 {
+			fmt.Println("Server failed to boot.")
+			serverLogsPath := path.Join(sessionInfo.path, "logs-server.txt")
+			if fdata, err := os.Stat(serverLogsPath); err != nil && fdata == nil {
+				fmt.Println("The server never wrote logs.")
+				err = os.RemoveAll(sessionInfo.path)
+				if err != nil {
+					fmt.Printf(
+						"Failed to remove metadata directory `%s`: %s\n",
+						sessionInfo.path, err.Error(),
+					)
+				}
+			} else {
+				fmt.Println("Server logs can be found at:", serverLogsPath)
+				fmt.Println("To allow a new session to be created with this name, run:")
+				fmt.Printf("$ rm -rf %s\n", sessionInfo.path)
+			}
+			os.Exit(1)
+		}
 	}
 }
 

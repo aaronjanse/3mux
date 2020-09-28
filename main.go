@@ -9,14 +9,13 @@ import (
 	"net"
 	"os"
 	"path"
-	"runtime/pprof"
-	"strconv"
 	"strings"
 	"syscall"
 	"time"
 
 	"github.com/aaronjanse/3mux/ecma48"
 	"github.com/npat-efault/poller"
+	uuid "github.com/nu7hatch/gouuid"
 	"github.com/sevlyar/go-daemon"
 	"golang.org/x/crypto/ssh/terminal"
 )
@@ -30,122 +29,27 @@ func (fd fdReader) Read(p []byte) (n int, err error) {
 var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
 var writeLogs = flag.Bool("log", false, "write logs to ./logs.txt")
 
-var cmdNew = flag.NewFlagSet("new", flag.ExitOnError)
-var cmdNewDetach = cmdNew.Bool("detach", false, "start session without attaching")
-
-var cmdHelp = flag.Bool("help", false, "show help")
-var cmdHelpShort = flag.Bool("h", false, "show help")
-
 var threemuxDir string
 
-func main() {
+const BUG_REPORT_URL = "https://github.com/aaronjanse/3mux/issues"
+
+func init() {
 	tmp := os.Getenv("TMPDIR")
 	if tmp == "" {
 		tmp = "/tmp"
 	}
 
 	threemuxDir = path.Join(tmp, "3mux")
+	os.MkdirAll(threemuxDir, 0700)
+}
 
+func main() {
 	flag.Parse()
-
-	// setup logging
-	if *writeLogs {
-		f, err := os.OpenFile("logs.txt", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
-		if err != nil {
-			log.Fatalf("error opening file: %v", err)
-		}
-		defer f.Close()
-		log.SetOutput(f)
-	} else {
-		log.SetOutput(ioutil.Discard)
-	}
-
-	// setup cpu profiling
-	if *cpuprofile != "" {
-		f, err := os.Create(*cpuprofile)
-		if err != nil {
-			log.Fatal(err.Error())
-		}
-		pprof.StartCPUProfile(f)
-		defer pprof.StopCPUProfile()
-	}
-
-	var cmd string
-	if len(os.Args) >= 2 {
-		cmd = os.Args[1]
-	}
-
-	if *cmdHelp || *cmdHelpShort {
-		showHelp()
-		return
-	}
 
 	parentSessionID := os.Getenv("THREEMUX")
 
-	switch cmd {
-	case "help":
-		showHelp()
-	case "detach":
-		if parentSessionID == "" {
-			fmt.Println("Must be within session to detach")
-			return
-		}
-		detach(parentSessionID)
-	case "_serve-id":
-		sessionID := os.Args[2]
-		serve(sessionID)
-	case "new":
+	if len(os.Args) < 2 {
 		if parentSessionID != "" {
-			refuseNesting()
-			return
-		}
-		sessionName := os.Args[2]
-		sessionID := launchServer(sessionName)
-		attach(sessionID)
-	case "ls", "ps":
-		os.MkdirAll(threemuxDir, 0755)
-		children, err := ioutil.ReadDir(threemuxDir)
-		if err != nil {
-			panic(err)
-		}
-		fmt.Println("Sessions:")
-		for _, child := range children {
-			namePath := path.Join(threemuxDir, child.Name(), "name")
-			thisName, _ := ioutil.ReadFile(namePath)
-			fmt.Printf("- %s\n", string(thisName))
-		}
-	case "attach":
-		if parentSessionID != "" {
-			refuseNesting()
-			return
-		}
-
-		sessionName := os.Args[2]
-		sessionID, err := findSession(sessionName)
-		if err != nil {
-			fmt.Printf("Could not find session `%s`\n", sessionName)
-		}
-		attach(sessionID)
-	default:
-		if parentSessionID == "" {
-			sessionName, isNew := defaultPrompt()
-			if sessionName == "" {
-				return
-			}
-
-			var sessionID string
-			if isNew {
-				sessionID = launchServer(sessionName)
-			} else {
-				var err error
-				sessionID, err = findSession(sessionName)
-				if err != nil {
-					fmt.Printf("Could not find session `%s`\n", sessionName)
-				}
-			}
-
-			attach(sessionID)
-		} else {
 			namePath := path.Join(threemuxDir, parentSessionID, "name")
 			thisName, _ := ioutil.ReadFile(namePath)
 			fmt.Printf("You're in session `%s`\n", string(thisName))
@@ -160,82 +64,233 @@ func main() {
 			}
 			if choice == "y" {
 				detach(parentSessionID)
+				os.Exit(0)
 			}
+			os.Exit(1)
 		}
-	}
-}
 
-func detach(parentSessionID string) {
-	net.Dial("unix", path.Join(threemuxDir, parentSessionID, "shutdown.sock"))
-}
-
-func findSession(sessionName string) (sessionID string, err error) {
-	os.MkdirAll(threemuxDir, 0666)
-	children, err := ioutil.ReadDir(threemuxDir)
-	if err != nil {
-		panic(err)
-	}
-
-	for _, child := range children {
-		id := child.Name()
-		namePath := path.Join(threemuxDir, id, "name")
-		nameRaw, _ := ioutil.ReadFile(namePath)
-		nameCleaned := strings.TrimSpace(string(nameRaw))
-
-		if nameCleaned == sessionName {
-			return id, nil
+		name, isNew := defaultPrompt()
+		if name == "" {
+			os.Exit(1)
+		}
+		if isNew {
+			os.Args = []string{os.Args[0], "new", name}
+		} else {
+			os.Args = []string{os.Args[0], "attach", name}
 		}
 	}
 
-	return "", fmt.Errorf("Could not find session: `%s`", sessionName)
+	switch os.Args[1] {
+	case "new-server-internal-only":
+		if len(os.Args) < 3 {
+			fmt.Println("Missing `name` argument.")
+			os.Exit(1)
+		}
+		sessionName := os.Args[2]
+
+		daemonContext := &daemon.Context{
+			Args: []string{
+				os.Args[0],
+				"new-server-internal-only",
+				sessionName,
+			},
+		}
+		defer daemonContext.Release()
+
+		sessionInfo, found, err := findSession(sessionName)
+		if !found || err != nil {
+			fmt.Println("We couldn't find the session we're supposed to serve, so we couldn't even setup proper logging. Exiting.")
+			os.Exit(1)
+		}
+
+		logsPath := path.Join(sessionInfo.path, "logs-server.txt")
+		f, err := os.OpenFile(logsPath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0600)
+		if err != nil {
+			fmt.Printf("While initializing server logging, error opening file: %v", err)
+			os.Exit(1)
+		}
+		defer f.Close()
+		log.SetOutput(f)
+
+		child, err := daemonContext.Reborn()
+		if err != nil {
+			log.Println("Error occured while serving session daemon:", err)
+			os.Exit(1)
+		}
+		if child != nil {
+			log.Println("Encountered 'unreachable' state with server-client mismatch. Args:", os.Args)
+			os.Exit(1)
+		}
+
+		err = serve(sessionInfo)
+		if err == nil {
+			log.Println("Exiting cleanly...")
+			os.RemoveAll(sessionInfo.path)
+		} else {
+			log.Println(err)
+			os.Exit(1)
+		}
+	case "new":
+		if parentSessionID != "" {
+			refuseNesting()
+			os.Exit(1)
+		}
+		if len(os.Args) < 3 {
+			fmt.Println("Missing `name` argument.")
+			os.Exit(1)
+		}
+		sessionName := os.Args[2]
+
+		_, found, err := findSession(sessionName)
+		if err != nil {
+			fmt.Println("Error while querying sessions:", err)
+			os.Exit(1)
+		}
+		if found {
+			fmt.Println("Session with this name already exists:", sessionName)
+			os.Exit(1)
+		}
+
+		initializeSession(sessionName)
+
+		daemonContext := &daemon.Context{
+			Args: []string{
+				os.Args[0],
+				"new-server-internal-only",
+				sessionName,
+			},
+		}
+		child, err := daemonContext.Reborn()
+		if err != nil {
+			fmt.Println("Error occured while spawning session daemon:", err)
+			os.Exit(1)
+		}
+		if child == nil {
+			fmt.Println("Encountered 'unreachable' state with server-client mismatch. Args:", os.Args)
+			os.Exit(1)
+		}
+
+		os.Args[1] = "attach"
+		fallthrough
+	case "attach":
+		if parentSessionID != "" {
+			refuseNesting()
+			os.Exit(1)
+		}
+		if len(os.Args) < 3 {
+			fmt.Println("Missing `name` argument.")
+			os.Exit(1)
+		}
+		sessionName := os.Args[2]
+		sessionInfo, found, err := findSession(sessionName)
+		if err != nil {
+			fmt.Println("Error while querying sessions:", err)
+			os.Exit(1)
+		}
+		if !found {
+			fmt.Println("Failed to find session with name:", sessionName)
+			os.Exit(1)
+		}
+		attach(sessionInfo)
+	case "ls", "ps":
+		children, err := ioutil.ReadDir(threemuxDir)
+		if err != nil {
+			panic(err)
+		}
+		fmt.Println("Sessions:")
+		for _, child := range children {
+			namePath := path.Join(threemuxDir, child.Name(), "name")
+			thisName, _ := ioutil.ReadFile(namePath)
+			fmt.Printf("- %s\n", string(thisName))
+		}
+	case "detach":
+		if parentSessionID == "" {
+			fmt.Println("Must be within session to detach")
+			return
+		}
+		detach(parentSessionID)
+	default:
+		fmt.Println(helpText)
+		os.Exit(1)
+	}
 }
 
-func launchServer(sessionName string) (sessionID string) {
-	os.MkdirAll(threemuxDir, 0777)
+type SessionInfo struct {
+	name string
+	uuid string
+	path string
+}
 
-	id := 0
-	for {
-		dir := path.Join(threemuxDir, strconv.Itoa(id))
-		if _, err := os.Stat(dir); os.IsNotExist(err) {
-			break
-		}
-		id++
-	}
-	sessionID = strconv.Itoa(id)
-
-	dir := path.Join(threemuxDir, sessionID)
-	os.MkdirAll(dir, 0755)                                              // FIXME perms
-	ioutil.WriteFile(path.Join(dir, "name"), []byte(sessionName), 0777) // FIXME perms
-
-	readySocket, err := net.Listen("unix", path.Join(dir, "booted.sock"))
+func initializeSession(sessionName string) SessionInfo {
+	sessionUUIDObj, err := uuid.NewV4()
 	if err != nil {
-		panic(err)
+		fmt.Println("Session creation failed. Error while generating session UUID:", err)
+		fmt.Printf("Please report this to %s\n", BUG_REPORT_URL)
+		os.Exit(1)
 	}
+	sessionUUID := sessionUUIDObj.String()
 
-	args := []string{"3mux", "_serve-id", sessionID}
-	if *writeLogs {
-		args = append(args, "--log")
-	}
+	sessionPath := path.Join(threemuxDir, sessionUUID)
 
-	context := &daemon.Context{
-		// PidFileName: "sample.pid",
-		Args: args,
-	}
-	_, err = context.Reborn()
+	err = os.Mkdir(sessionPath, 0700)
 	if err != nil {
-		panic(err)
-	}
-
-	conn, _ := readySocket.Accept()
-	logs, _ := ioutil.ReadAll(conn)
-	if len(logs) > 0 {
-		fmt.Print(string(logs))
+		fmt.Println("Session creation failed. Error while creating session data directory:", err)
+		fmt.Printf("Please report this to %s\n", BUG_REPORT_URL)
 		os.Exit(1)
 	}
 
-	os.Remove(path.Join(dir, "booted.sock"))
+	nameFilePath := path.Join(sessionPath, "name")
+	err = ioutil.WriteFile(nameFilePath, []byte(sessionName), 0600)
+	if err != nil {
+		fmt.Println("Session creation failed. Error while recording session metadata:", err)
+		err = os.Remove(sessionPath)
+		if err != nil {
+			fmt.Printf(
+				"Session clean-up failed. Error while removing directory `%s`: %s",
+				sessionPath, err.Error(),
+			)
+		}
+		fmt.Printf("Please report this to %s\n", BUG_REPORT_URL)
+		os.Exit(1)
+	}
 
-	return sessionID
+	return SessionInfo{
+		name: sessionName,
+		uuid: sessionUUID,
+		path: sessionPath,
+	}
+}
+
+func findSession(sessionName string) (sessionInfo SessionInfo, found bool, err error) {
+	children, err := ioutil.ReadDir(threemuxDir)
+	if err != nil {
+		return SessionInfo{}, false, err
+	}
+
+	for _, child := range children {
+		uuid := child.Name()
+		dirPath := path.Join(threemuxDir, uuid)
+		namePath := path.Join(dirPath, "name")
+		nameRaw, err := ioutil.ReadFile(namePath)
+		if err != nil {
+			return SessionInfo{}, false, err
+		}
+		nameCleaned := strings.TrimSpace(string(nameRaw))
+
+		if nameCleaned == sessionName {
+			return SessionInfo{
+				name: sessionName,
+				uuid: uuid,
+				path: dirPath,
+			}, true, nil
+		}
+	}
+
+	return SessionInfo{}, false, nil
+}
+
+func detach(parentSessionID string) {
+	net.Dial("unix", path.Join(threemuxDir, parentSessionID, "detach-server.sock"))
 }
 
 func refuseNesting() {
