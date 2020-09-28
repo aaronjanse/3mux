@@ -57,7 +57,7 @@ func main() {
 			for choice != "y" && choice != "n" {
 				fmt.Print("Would you like to detach? [Y/n] ")
 				fmt.Scanf("%s", &choice)
-				choice = strings.ToLower(choice)
+				choice = strings.TrimSpace(strings.ToLower(choice))
 				if choice == "" {
 					choice = "y"
 				}
