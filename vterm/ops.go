@@ -57,8 +57,19 @@ func (v *VTerm) forceRefreshCursor() {
 // Lines pushed out of view are put in the scrollback.
 func (v *VTerm) scrollUp(n int) {
 	if !v.UsingAltScreen {
-		rows := v.Screen[v.scrollingRegion.top : v.scrollingRegion.top+n]
+		var rows [][]ecma48.StyledChar
+		if v.scrollingRegion.top+n >= v.scrollingRegion.bottom {
+			rows = v.Screen[v.scrollingRegion.top:]
+			blankLines := make([][]ecma48.StyledChar, v.scrollingRegion.top+n-v.scrollingRegion.bottom+1)
+			rows = append(rows, blankLines...)
+		} else {
+			rows = v.Screen[v.scrollingRegion.top : v.scrollingRegion.top+n]
+		}
 		v.Scrollback = append(v.Scrollback, rows...)
+	}
+
+	if v.scrollingRegion.top+n >= v.scrollingRegion.bottom {
+		n = v.scrollingRegion.bottom - v.scrollingRegion.top
 	}
 
 	newLines := make([][]ecma48.StyledChar, n)
@@ -71,9 +82,9 @@ func (v *VTerm) scrollUp(n int) {
 
 	v.Screen = append(append(append(
 		v.Screen[:v.scrollingRegion.top],
-		v.Screen[v.scrollingRegion.top+n:v.scrollingRegion.bottom+1]...),
+		v.Screen[v.scrollingRegion.top+n:v.scrollingRegion.bottom]...),
 		newLines...),
-		v.Screen[v.scrollingRegion.bottom+1:]...)
+		v.Screen[v.scrollingRegion.bottom:]...)
 
 	if !v.usingSlowRefresh {
 		v.RedrawWindow()
@@ -88,11 +99,15 @@ func (v *VTerm) scrollDown(n int) {
 		newLines[i] = make([]ecma48.StyledChar, v.w)
 	}
 
+	if n > v.scrollingRegion.bottom-v.scrollingRegion.top {
+		n = v.scrollingRegion.bottom - v.scrollingRegion.top
+	}
+
 	v.Screen =
 		append(v.Screen[:v.scrollingRegion.top],
 			append(newLines,
-				append(v.Screen[v.scrollingRegion.top:v.scrollingRegion.bottom+1-n],
-					v.Screen[v.scrollingRegion.bottom+1:]...)...)...)
+				append(v.Screen[v.scrollingRegion.top:v.scrollingRegion.bottom-n],
+					v.Screen[v.scrollingRegion.bottom:]...)...)...)
 
 	if !v.usingSlowRefresh {
 		v.RedrawWindow()
@@ -104,8 +119,8 @@ func (v *VTerm) setCursorPos(x, y int) {
 
 	if x < 0 {
 		v.Cursor.X = 0
-	} else if x > v.w {
-		v.Cursor.X = v.w
+	} else if x >= v.w {
+		v.Cursor.X = v.w - 1
 	} else {
 		v.Cursor.X = x
 	}
@@ -120,8 +135,8 @@ func (v *VTerm) setCursorPos(x, y int) {
 
 	if y < 0 {
 		v.Cursor.Y = 0
-	} else if y > v.h {
-		v.Cursor.Y = v.h
+	} else if y >= v.h {
+		v.Cursor.Y = v.h - 1
 	} else {
 		v.Cursor.Y = y
 	}
@@ -156,9 +171,7 @@ func (v *VTerm) putChar(ch rune, wide bool) {
 
 	if v.Cursor.X >= v.w-rWidth+1 {
 		v.setCursorX(0)
-		if v.Cursor.Y == v.scrollingRegion.bottom {
-			v.scrollUp(1)
-		} else {
+		if v.Cursor.Y < v.scrollingRegion.bottom {
 			v.shiftCursorY(1)
 		}
 	}
@@ -173,13 +186,17 @@ func (v *VTerm) putChar(ch rune, wide bool) {
 		Style:  v.Cursor.Style,
 	}
 
-	if v.Cursor.Y >= 0 && v.Cursor.Y < len(v.Screen) {
-		if v.Cursor.X >= 0 && v.Cursor.X < len(v.Screen[v.Cursor.Y])-rWidth+1 {
-			v.Screen[v.Cursor.Y][v.Cursor.X] = char
-			if rWidth > 1 { // WARN: assumes max width of two
-				v.Screen[v.Cursor.Y][v.Cursor.X+1] = ecma48.StyledChar{PrevWide: true, Style: v.Cursor.Style}
-			}
-		}
+	if v.Cursor.Y >= len(v.Screen) {
+		v.Screen = append(v.Screen, []ecma48.StyledChar{})
+	}
+	xDiff := v.Cursor.X - len(v.Screen[v.Cursor.Y]) + 1
+	if xDiff > 0 {
+		v.Screen = append(v.Screen, make([]ecma48.StyledChar, xDiff))
+	}
+
+	v.Screen[v.Cursor.Y][v.Cursor.X] = char
+	if rWidth > 1 { // WARN: assumes max width of two
+		v.Screen[v.Cursor.Y][v.Cursor.X+1] = ecma48.StyledChar{PrevWide: true, Style: v.Cursor.Style}
 	}
 
 	positionedChar := ecma48.PositionedChar{
