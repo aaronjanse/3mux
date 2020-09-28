@@ -170,7 +170,7 @@ const (
 	stateCsiEntry
 	stateCsiParam
 	stateOscString
-	stateCharSet
+	stateCharSetG0
 )
 
 func (p *Parser) anywhere(r rune) {
@@ -202,8 +202,8 @@ func (p *Parser) anywhere(r rune) {
 			p.stateCsiParam(r)
 		case stateOscString:
 			p.stateOscString(r)
-		case stateCharSet:
-			p.stateCharSet(r)
+		case stateCharSetG0:
+			p.stateCharSetG0(r)
 		default:
 			log.Printf("? STATE %d", p.state)
 			p.state = stateGround
@@ -261,13 +261,13 @@ func (p *Parser) stateEscape(r rune) {
 		// TODO: p.dispatchEsc()
 		p.state = stateGround
 	case r == '(':
-		p.state = stateCharSet
+		p.state = stateCharSetG0
 	default:
 		log.Printf("? ESC %q", r)
 	}
 }
 
-func (p *Parser) stateCharSet(r rune) {
+func (p *Parser) stateCharSetG0(r rune) {
 	p.state = stateGround
 	log.Printf("? (char set) ESC ( %q", r)
 }
