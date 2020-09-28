@@ -11,7 +11,9 @@ import (
 
 // ScrollingRegion holds the state for an ANSI scrolling region
 type ScrollingRegion struct {
-	top    int
+	// cursor within when cursor.Y >= top
+	top int
+	// cursor within when cursor.Y < bottom
 	bottom int
 }
 
@@ -21,7 +23,10 @@ VTerm acts as a virtual terminal emulator between a shell and the host terminal 
 It both transforms an inbound stream of bytes into Char's and provides the option of dumping all the Char's that need to be rendered to display the currently visible terminal window from scratch.
 */
 type VTerm struct {
-	x, y, w, h int
+	// starting at (0, 0) in top left
+	x, y int
+	// x < w && y < h
+	w, h int
 
 	// visible screen; char cursor coords are ignored
 	Screen [][]ecma48.StyledChar
@@ -82,7 +87,7 @@ func NewVTerm(renderer ecma48.Renderer, parentSetCursor func(x, y int)) *VTerm {
 		usingSlowRefresh: false,
 		renderer:         renderer,
 		parentSetCursor:  parentSetCursor,
-		scrollingRegion:  ScrollingRegion{top: 0, bottom: h - 1},
+		scrollingRegion:  ScrollingRegion{top: 0, bottom: h},
 		NeedsRedraw:      false,
 		ChangePause:      make(chan bool, 1),
 		IsPaused:         false,
@@ -102,8 +107,8 @@ func (v *VTerm) Reshape(x, y, w, h int) {
 	v.x = x
 	v.y = y
 
-	if len(v.Screen)-1 > h {
-		diff := len(v.Screen) - h - 1
+	if len(v.Screen) > h {
+		diff := len(v.Screen) - h
 		v.Scrollback = append(v.Scrollback, v.Screen[:diff]...)
 		v.Screen = v.Screen[diff:]
 	}
@@ -116,8 +121,8 @@ func (v *VTerm) Reshape(x, y, w, h int) {
 		}
 	}
 
-	if v.scrollingRegion.top == 0 && v.scrollingRegion.bottom == v.h-1 {
-		v.scrollingRegion.bottom = h - 1
+	if v.scrollingRegion.top == 0 && v.scrollingRegion.bottom == v.h {
+		v.scrollingRegion.bottom = h
 	}
 
 	v.w = w
