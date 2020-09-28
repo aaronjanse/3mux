@@ -105,7 +105,10 @@ func (v *VTerm) ProcessStdout(input *bufio.Reader) {
 				}
 				copy(v.Screen[v.Cursor.Y][v.Cursor.X:], v.Screen[v.Cursor.Y][v.Cursor.X+x.N:])
 				for i := 0; i < x.N; i++ {
-					v.Screen[v.Cursor.Y][v.Cursor.X+x.N+i] = ecma48.StyledChar{
+					if v.w-1-i >= len(v.Screen[v.Cursor.Y]) {
+						continue
+					}
+					v.Screen[v.Cursor.Y][v.w-1-i] = ecma48.StyledChar{
 						Rune: ' ', IsWide: false, Style: v.Cursor.Style,
 					}
 				}
