@@ -87,25 +87,29 @@ func (v *VTerm) ProcessStdout(input *bufio.Reader) {
 			case ecma48.Tab:
 				tabWidth := 8 // FIXME
 				v.shiftCursorX(tabWidth - (v.Cursor.X % tabWidth))
-
 			case ecma48.ICH: // insert characters
-				w := len(v.Screen[v.Cursor.Y])
-				new := make([]ecma48.StyledChar, w)
-				copy(new[:v.Cursor.X], v.Screen[v.Cursor.Y][:v.Cursor.X])
-				new = append(new, make([]ecma48.StyledChar, x.N)...)
-				new = append(new, v.Screen[v.Cursor.Y][v.Cursor.X:]...)
-				new = new[:w]
-				v.Screen[v.Cursor.Y] = new
+				if v.Cursor.X+x.N >= v.w {
+					x.N = v.w - v.Cursor.X - 1
+				}
+				copy(v.Screen[v.Cursor.Y][v.Cursor.X+x.N:], v.Screen[v.Cursor.Y][v.Cursor.X:])
+				for i := 0; i < x.N; i++ {
+					v.Screen[v.Cursor.Y][v.Cursor.X+i] = ecma48.StyledChar{
+						Rune: ' ', IsWide: false, Style: v.Cursor.Style,
+					}
+				}
+
 				v.RedrawWindow() // FIXME inefficient
 			case ecma48.DCH: // delete characters
 				if x.N > v.w-v.Cursor.X {
 					x.N = v.w - v.Cursor.X // FIXME: verify that we don't need +/- 1
 				}
-				new := make([]ecma48.StyledChar, len(v.Screen[v.Cursor.Y]))
-				copy(new[:v.Cursor.X], v.Screen[v.Cursor.Y][:v.Cursor.X])
-				new = append(new, v.Screen[v.Cursor.Y][v.Cursor.X+x.N:]...)
-				new = append(new, make([]ecma48.StyledChar, x.N)...)
-				v.Screen[v.Cursor.Y] = new
+				copy(v.Screen[v.Cursor.Y][v.Cursor.X:], v.Screen[v.Cursor.Y][v.Cursor.X+x.N:])
+				for i := 0; i < x.N; i++ {
+					v.Screen[v.Cursor.Y][v.Cursor.X+x.N+i] = ecma48.StyledChar{
+						Rune: ' ', IsWide: false, Style: v.Cursor.Style,
+					}
+				}
+
 				v.RedrawWindow() // FIXME inefficient
 			case ecma48.PrivateDEC:
 				switch x.Code {
