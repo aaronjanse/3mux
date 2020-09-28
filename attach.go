@@ -66,7 +66,6 @@ func attach(sessionInfo SessionInfo) {
 		os.Exit(1)
 	}
 
-	// defer net.Dial("unix", path.Join(dir, "detach-server.sock"))
 	rights := syscall.UnixRights(int(os.Stdin.Fd()), int(os.Stdout.Fd()))
 	err = syscall.Sendmsg(int(fConn.Fd()), nil, rights, nil, 0)
 	if err != nil {
