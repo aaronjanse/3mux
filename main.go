@@ -138,7 +138,6 @@ func main() {
 	case "new":
 		if parentSessionID != "" {
 			refuseNesting()
-			os.Exit(1)
 		}
 		if len(os.Args) != 3 {
 			fmt.Println("Usage: 3mux new <name>")
@@ -180,7 +179,6 @@ func main() {
 	case "attach":
 		if parentSessionID != "" {
 			refuseNesting()
-			os.Exit(1)
 		}
 		if len(os.Args) != 3 {
 			fmt.Println("Usage: 3mux attach <name>")
@@ -351,6 +349,7 @@ func findSession(sessionName string) (sessionInfo SessionInfo, found bool, err e
 func refuseNesting() {
 	fmt.Println("Refusing to run 3mux inside itself.")
 	fmt.Println("If you want to do so anyway, `unset THREEMUX`.")
+	os.Exit(1)
 }
 
 func defaultPrompt() (sessionName string, isNew bool) {
