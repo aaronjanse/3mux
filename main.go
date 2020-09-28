@@ -219,16 +219,18 @@ func main() {
 
 		_, err = net.Dial("unix", sessionInfo.killServerPath)
 		if err != nil {
-			fmt.Println("Killing the server failed.")
-			fmt.Println("To create a new session with this name:")
-			fmt.Println("1. Ensure there are no unwanted 3mux processes running")
-			fmt.Printf("2. Run `rm -rf %s`\n", sessionInfo.path)
+			fmt.Println("Killing the server failed. Maybe one isn't running?")
 			os.Exit(1)
 		}
 
 		err = os.RemoveAll(sessionInfo.path)
 		if err != nil {
 			fmt.Printf("Failed to remove metadata directory `%s`: %s\n", sessionInfo.path, err)
+			fmt.Println("")
+			fmt.Println("To create a new session with this name:")
+			fmt.Println("1. Ensure there are no unwanted 3mux processes running")
+			fmt.Printf("2. Run `rm -rf %s`\n\n", sessionInfo.path)
+			fmt.Printf("Please also report this to %s\n", BUG_REPORT_URL)
 			os.Exit(1)
 		}
 		fmt.Println("Session sucessfully killed.")
