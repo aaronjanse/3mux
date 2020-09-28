@@ -130,6 +130,7 @@ func main() {
 				log.Printf("Failed to remove metadata directory `%s`: %s\n", sessionInfo.path, err)
 				log.Printf("It can be removed manually with `rm -rf %s`, although the above error "+
 					"message is likely relevant.", sessionInfo.path)
+				os.Exit(1)
 			}
 		} else {
 			log.Println(err)
