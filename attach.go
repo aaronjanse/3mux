@@ -7,7 +7,6 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
-	"path"
 	"strconv"
 	"strings"
 	"syscall"
@@ -17,10 +16,12 @@ import (
 )
 
 func attach(sessionInfo SessionInfo) error {
-	fdSocketPath := path.Join(sessionInfo.path, "fd.sock")
-	fmt.Printf("Waiting for server to be online... (%s)\n", fdSocketPath)
+	fmt.Printf("Waiting for server to be online... (%s)\n", sessionInfo.fdPath)
 
-	waitForFdSock(sessionInfo, fdSocketPath)
+	err := waitForFdSock(sessionInfo)
+	if err != nil {
+		return err
+	}
 
 	oldState, err := terminal.MakeRaw(0)
 	if err != nil {
@@ -37,7 +38,7 @@ func attach(sessionInfo SessionInfo) error {
 
 	fmt.Print("\x1b[?1l")
 
-	fdConn, err := net.Dial("unix", fdSocketPath)
+	fdConn, err := net.Dial("unix", sessionInfo.fdPath)
 	if err != nil {
 		return fmt.Errorf("Although the server socket exists, connection to it failed: %s", err.Error())
 
@@ -54,22 +55,21 @@ func attach(sessionInfo SessionInfo) error {
 	}
 	fConn.Close()
 
-	defer net.Dial("unix", path.Join(sessionInfo.path, "detach-server.sock"))
+	defer net.Dial("unix", sessionInfo.detachPath)
 
 	go func() {
 		for {
 			c := make(chan os.Signal, 1)
 			signal.Notify(c, syscall.SIGWINCH)
 			<-c
-			updateSize(sessionInfo.path)
+			updateSize(sessionInfo)
 		}
 	}()
 
-	updateSize(sessionInfo.path)
+	updateSize(sessionInfo)
 
-	killClientPath := path.Join(sessionInfo.path, "kill-client.sock")
-	os.Remove(killClientPath)
-	detachSocket, err := net.Listen("unix", killClientPath)
+	os.Remove(sessionInfo.killClientPath)
+	detachSocket, err := net.Listen("unix", sessionInfo.killClientPath)
 	if err != nil {
 		return fmt.Errorf("Client shutdown scenario planning failed: %s", err)
 	}
@@ -81,40 +81,25 @@ func attach(sessionInfo SessionInfo) error {
 	return nil
 }
 
-func waitForFdSock(sessionInfo SessionInfo, fdSocketPath string) {
+func waitForFdSock(sessionInfo SessionInfo) error {
 	for i := 10; ; i-- {
-		fdata, err := os.Stat(fdSocketPath)
+		fdata, err := os.Stat(sessionInfo.fdPath)
 		if err == nil && fdata != nil {
 			break
 		}
 		time.Sleep(time.Millisecond * 50)
 
 		if i == 0 {
-			fmt.Println("Server failed to boot.")
-			serverLogsPath := path.Join(sessionInfo.path, "logs-server.txt")
-			if fdata, err := os.Stat(serverLogsPath); err != nil && fdata == nil {
-				fmt.Println("The server never wrote logs.")
-				err = os.RemoveAll(sessionInfo.path)
-				if err != nil {
-					fmt.Printf(
-						"Failed to remove metadata directory `%s`: %s\n",
-						sessionInfo.path, err.Error(),
-					)
-				}
-			} else {
-				fmt.Println("Server logs can be found at:", serverLogsPath)
-				fmt.Println("To allow a new session to be created with this name, run:")
-				fmt.Printf("$ rm -rf %s\n", sessionInfo.path)
-			}
-			os.Exit(1)
+			return fmt.Errorf("server failed to boot")
 		}
 	}
+	return nil
 }
 
-func updateSize(dir string) {
+func updateSize(sessionInfo SessionInfo) {
 	w, h, _ := getTermSize()
 
-	conn, err := net.Dial("unix", path.Join(dir, "resize.sock"))
+	conn, err := net.Dial("unix", sessionInfo.resizePath)
 	if err != nil {
 		panic(err)
 	}

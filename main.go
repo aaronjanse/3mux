@@ -213,7 +213,7 @@ func main() {
 			fmt.Println("Failed to find session with name:", sessionName)
 			os.Exit(1)
 		}
-		_, err = net.Dial("unix", path.Join(sessionInfo.path, "kill-server.sock"))
+		_, err = net.Dial("unix", sessionInfo.killServerPath)
 		if err != nil {
 			fmt.Println("Killing the server failed.")
 			fmt.Println("To create a new session with this name:")
@@ -247,9 +247,34 @@ func main() {
 }
 
 type SessionInfo struct {
-	name string
-	uuid string
-	path string
+	name           string
+	uuid           string
+	path           string
+	fdPath         string
+	killClientPath string
+	killServerPath string
+	detachPath     string
+	resizePath     string
+	logsPath       string
+}
+
+func detach(parentSessionID string) {
+	net.Dial("unix", elaborateSessionInfo("", parentSessionID).detachPath)
+}
+
+func elaborateSessionInfo(name string, uuid string) SessionInfo {
+	dirPath := path.Join(threemuxDir, uuid)
+	return SessionInfo{
+		name:           name,
+		uuid:           uuid,
+		path:           dirPath,
+		fdPath:         path.Join(dirPath, "fd.sock"),
+		killClientPath: path.Join(dirPath, "kill-client.sock"),
+		killServerPath: path.Join(dirPath, "kill-server.sock"),
+		detachPath:     path.Join(dirPath, "detach-server.sock"),
+		resizePath:     path.Join(dirPath, "resize.sock"),
+		logsPath:       path.Join(dirPath, "logs-server.txt"),
+	}
 }
 
 func initializeSession(sessionName string) SessionInfo {
@@ -285,11 +310,7 @@ func initializeSession(sessionName string) SessionInfo {
 		os.Exit(1)
 	}
 
-	return SessionInfo{
-		name: sessionName,
-		uuid: sessionUUID,
-		path: sessionPath,
-	}
+	return elaborateSessionInfo(sessionName, sessionUUID)
 }
 
 func findSession(sessionName string) (sessionInfo SessionInfo, found bool, err error) {
@@ -309,19 +330,11 @@ func findSession(sessionName string) (sessionInfo SessionInfo, found bool, err e
 		nameCleaned := strings.TrimSpace(string(nameRaw))
 
 		if nameCleaned == sessionName {
-			return SessionInfo{
-				name: sessionName,
-				uuid: uuid,
-				path: dirPath,
-			}, true, nil
+			return elaborateSessionInfo(sessionName, uuid), true, nil
 		}
 	}
 
 	return SessionInfo{}, false, nil
-}
-
-func detach(parentSessionID string) {
-	net.Dial("unix", path.Join(threemuxDir, parentSessionID, "detach-server.sock"))
 }
 
 func refuseNesting() {
@@ -354,6 +367,7 @@ func defaultPrompt() (sessionName string, isNew bool) {
 		panic(err)
 	}
 	defer terminal.Restore(0, oldState)
+	defer fmt.Print("\x1b[m")
 
 	stdin := make(chan ecma48.Output, 64)
 	defer close(stdin)

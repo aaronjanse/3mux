@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"net"
-	"path"
 	"runtime/debug"
 	"syscall"
 
@@ -55,7 +54,7 @@ func serve(sessionInfo SessionInfo) error {
 
 	var stdinBuf *bufio.Reader
 	var stdinPoller *poller.FD
-	listenFd(sessionInfo.uuid, func(stdinFd, stdoutFd int) {
+	listenFd(sessionInfo, func(stdinFd, stdoutFd int) {
 		stdinPoller, _ = poller.NewFD(stdinFd)
 		stdinBuf = bufio.NewReader(stdinPoller)
 		parser = ecma48.NewParser(true)
@@ -63,15 +62,15 @@ func serve(sessionInfo SessionInfo) error {
 		renderer.UpdateOut(stdoutFd)
 	})
 
-	defer net.Dial("unix", path.Join(sessionInfo.path, "kill-client.sock"))
+	defer net.Dial("unix", sessionInfo.killClientPath)
 
-	listenResize(sessionInfo.uuid, func(width, height int) {
+	listenResize(sessionInfo, func(width, height int) {
 		renderer.Resize(width, height)
 		u.SetRenderRect(0, 0, width, height)
 	})
 
 	go func() {
-		detachSocket, err := net.Listen("unix", path.Join(sessionInfo.path, "detach-server.sock"))
+		detachSocket, err := net.Listen("unix", sessionInfo.detachPath)
 		if err != nil {
 			log.Println("Detach error:", err)
 			panic(err)
@@ -90,12 +89,12 @@ func serve(sessionInfo SessionInfo) error {
 			stdinPoller.Close()
 
 			log.Println("Detaching... DONE")
-			net.Dial("unix", path.Join(sessionInfo.path, "kill-client.sock"))
+			net.Dial("unix", sessionInfo.killClientPath)
 		}
 	}()
 
 	go func() {
-		detachSocket, err := net.Listen("unix", path.Join(sessionInfo.path, "kill-server.sock"))
+		detachSocket, err := net.Listen("unix", sessionInfo.killServerPath)
 		if err != nil {
 			panic(err)
 		}
@@ -133,9 +132,8 @@ func serve(sessionInfo SessionInfo) error {
 	}
 }
 
-func listenResize(sessionID string, callback func(width, height int)) {
-	sockPath := path.Join(threemuxDir, sessionID, "resize.sock")
-	socket, err := net.Listen("unix", sockPath)
+func listenResize(sessionInfo SessionInfo, callback func(width, height int)) {
+	socket, err := net.Listen("unix", sessionInfo.resizePath)
 	if err != nil {
 		panic(err)
 	}
@@ -163,9 +161,8 @@ func listenResize(sessionID string, callback func(width, height int)) {
 	}()
 }
 
-func listenFd(sessionID string, callback func(stdinFd, stdoutFd int)) {
-	sockPath := path.Join(threemuxDir, sessionID, "fd.sock")
-	socket, err := net.Listen("unix", sockPath)
+func listenFd(sessionInfo SessionInfo, callback func(stdinFd, stdoutFd int)) {
+	socket, err := net.Listen("unix", sessionInfo.fdPath)
 	if err != nil {
 		panic(err)
 	}
