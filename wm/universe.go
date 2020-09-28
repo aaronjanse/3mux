@@ -41,6 +41,9 @@ func NewUniverse(renderer ecma48.Renderer, helpBar bool, enableStatusBar bool, o
 }
 
 func (u *Universe) Serialize() string {
+	u.wmOpMutex.Lock()
+	defer u.wmOpMutex.Unlock()
+
 	out := fmt.Sprintf("Universe[%d]", u.selectionIdx)
 
 	out += "("
