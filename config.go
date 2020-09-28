@@ -111,7 +111,7 @@ func compileConfig(user UserConfig) (CompiledConfig, error) {
 			}
 			delete(mode, "mode-start")
 		} else {
-			return CompiledConfig{}, errors.New("Could not find starter for mode " + modeName)
+			return CompiledConfig{}, fmt.Errorf("Could not find starter for mode %s", modeName)
 		}
 
 		mode := castMapInterface(mode)
