@@ -119,8 +119,8 @@ func (v *VTerm) setCursorPos(x, y int) {
 
 	if x < 0 {
 		v.Cursor.X = 0
-	} else if x > v.w {
-		v.Cursor.X = v.w
+	} else if x >= v.w {
+		v.Cursor.X = v.w - 1
 	} else {
 		v.Cursor.X = x
 	}
@@ -135,8 +135,8 @@ func (v *VTerm) setCursorPos(x, y int) {
 
 	if y < 0 {
 		v.Cursor.Y = 0
-	} else if y > v.h {
-		v.Cursor.Y = v.h
+	} else if y >= v.h {
+		v.Cursor.Y = v.h - 1
 	} else {
 		v.Cursor.Y = y
 	}
