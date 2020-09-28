@@ -12,7 +12,6 @@ func (c *Color) ToANSI(bg bool) string {
 	} else {
 		offset = 0
 	}
-
 	switch c.ColorMode {
 	case ColorNone:
 		return fmt.Sprintf("\033[%dm", 39+offset)
