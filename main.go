@@ -249,7 +249,7 @@ func main() {
 	case "detach":
 		if parentSessionID == "" {
 			fmt.Println("Must be within session to detach")
-			return
+			os.Exit(1)
 		}
 		detach(parentSessionID)
 	default:
