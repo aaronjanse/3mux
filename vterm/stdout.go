@@ -107,11 +107,13 @@ func (v *VTerm) ProcessStdout(input *bufio.Reader) {
 				if x.N > v.w-v.Cursor.X {
 					x.N = v.w - v.Cursor.X // FIXME: verify that we don't need +/- 1
 				}
-				new := make([]ecma48.StyledChar, len(v.Screen[v.Cursor.Y]))
-				copy(new[:v.Cursor.X], v.Screen[v.Cursor.Y][:v.Cursor.X])
-				new = append(new, v.Screen[v.Cursor.Y][v.Cursor.X+x.N:]...)
-				new = append(new, make([]ecma48.StyledChar, x.N)...)
-				v.Screen[v.Cursor.Y] = new
+				copy(v.Screen[v.Cursor.Y][v.Cursor.X:], v.Screen[v.Cursor.Y][v.Cursor.X+x.N:])
+				for i := 0; i < x.N; i++ {
+					v.Screen[v.Cursor.Y][v.Cursor.X+x.N+i] = ecma48.StyledChar{
+						Rune: ' ', IsWide: false, Style: v.Cursor.Style,
+					}
+				}
+
 				v.RedrawWindow() // FIXME inefficient
 			case ecma48.PrivateDEC:
 				switch x.Code {
