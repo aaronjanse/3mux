@@ -71,15 +71,15 @@ func (v *VTerm) ProcessStdout(input *bufio.Reader) {
 				}
 				v.RedrawWindow()
 			case ecma48.Newline:
-				if v.Cursor.Y == v.scrollingRegion.bottom {
+				if v.Cursor.Y == v.scrollingRegion.bottom-1 {
 					v.scrollUp(1)
-				} else {
+				} else if v.Cursor.Y < v.h {
 					v.shiftCursorY(1)
 				}
 			case ecma48.RI:
 				if v.Cursor.Y == v.scrollingRegion.top {
 					v.scrollDown(1)
-				} else {
+				} else if v.Cursor.Y > 0 {
 					v.shiftCursorY(-1)
 				}
 			case ecma48.CarriageReturn:
@@ -162,11 +162,21 @@ func (v *VTerm) ProcessStdout(input *bufio.Reader) {
 			case ecma48.EL:
 				v.handleEraseInLine(x.Directive)
 			case ecma48.IL:
-				v.setCursorX(0)
+				if v.Cursor.Y < v.scrollingRegion.top {
+					break
+				}
+				if v.Cursor.Y >= v.scrollingRegion.bottom {
+					break
+				}
+
+				if x.N > v.scrollingRegion.bottom-v.Cursor.Y {
+					x.N = v.scrollingRegion.bottom - v.Cursor.Y
+				}
 
 				newLines := make([][]ecma48.StyledChar, x.N)
 				for i := range newLines {
 					newLines[i] = make([]ecma48.StyledChar, v.w)
+					// if we're at the top, use *blank* lines
 					if v.Cursor.Y == v.scrollingRegion.top {
 						for x := range newLines[i] {
 							newLines[i][x].Style = v.Cursor.Style
@@ -176,13 +186,24 @@ func (v *VTerm) ProcessStdout(input *bufio.Reader) {
 
 				newLines = append(append(
 					newLines,
-					v.Screen[v.Cursor.Y:v.scrollingRegion.bottom-x.N+1]...),
-					v.Screen[v.scrollingRegion.bottom+1:]...)
+					v.Screen[v.Cursor.Y:v.scrollingRegion.bottom-x.N]...),
+					v.Screen[v.scrollingRegion.bottom:]...)
 
 				copy(v.Screen[v.Cursor.Y:], newLines)
 
 				v.RedrawWindow()
 			case ecma48.DL:
+				if v.Cursor.Y < v.scrollingRegion.top {
+					break
+				}
+				if v.Cursor.Y >= v.scrollingRegion.bottom {
+					break
+				}
+
+				if x.N > v.scrollingRegion.bottom-v.Cursor.Y {
+					x.N = v.scrollingRegion.bottom - v.Cursor.Y
+				}
+
 				newLines := make([][]ecma48.StyledChar, x.N)
 				for i := range newLines {
 					newLines[i] = make([]ecma48.StyledChar, v.w)
@@ -193,19 +214,28 @@ func (v *VTerm) ProcessStdout(input *bufio.Reader) {
 
 				v.Screen = append(append(append(
 					v.Screen[:v.Cursor.Y],
-					v.Screen[v.Cursor.Y+x.N:v.scrollingRegion.bottom+1]...),
+					v.Screen[v.Cursor.Y+x.N:v.scrollingRegion.bottom]...),
 					newLines...),
-					v.Screen[v.scrollingRegion.bottom+1:]...)
+					v.Screen[v.scrollingRegion.bottom:]...)
 
 				if !v.usingSlowRefresh {
 					v.RedrawWindow()
 				}
 			case ecma48.DECSTBM:
-				v.scrollingRegion.top = x.Top
-				if x.Bottom == -1 {
-					v.scrollingRegion.bottom = v.h + 1
+				if x.Top < 1 {
+					v.scrollingRegion.top = 0
+				} else if x.Top > v.h {
+					v.scrollingRegion.top = v.h - 1
 				} else {
-					v.scrollingRegion.bottom = x.Bottom
+					v.scrollingRegion.top = x.Top - 1
+				}
+				if x.Bottom == -1 || x.Bottom >= v.h {
+					v.scrollingRegion.bottom = v.h
+				} else {
+					v.scrollingRegion.bottom = x.Bottom + 1
+				}
+				if v.scrollingRegion.bottom <= v.scrollingRegion.top {
+					v.scrollingRegion.bottom = v.scrollingRegion.top + 1
 				}
 				v.setCursorPos(0, 0)
 			case ecma48.SU:
