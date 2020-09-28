@@ -89,7 +89,7 @@ func waitForFdSock(sessionInfo SessionInfo) error {
 		time.Sleep(time.Millisecond * 50)
 
 		if i == 0 {
-			return fmt.Errorf("server failed to boot")
+			return fmt.Errorf("Server failed to boot in 0.5s")
 		}
 	}
 	return nil
