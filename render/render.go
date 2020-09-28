@@ -5,7 +5,6 @@ import (
 	"sync"
 	"syscall"
 	"time"
-	"unicode/utf8"
 
 	"github.com/aaronjanse/3mux/ecma48"
 )
@@ -109,97 +108,53 @@ func (r *Renderer) DemoKeypress(str string) {
 // ListenToQueue is a blocking function that processes data sent to the RenderQueue
 func (r *Renderer) ListenToQueue() {
 	for {
-		var diff strings.Builder
-		for y := 0; y <= r.h; y++ {
-			for x := 0; x < r.w; x++ {
-				r.writingMutex.Lock()
-				current := r.currentScreen[y][x]
-				pending := r.pendingScreen[y][x]
-				if current != pending {
-					r.currentScreen[y][x] = pending
-
-					if !pending.PrevWide {
-						newCursor := ecma48.Cursor{
-							X: x, Y: y, Style: pending.Style,
-						}
-
-						delta := deltaMarkup(r.drawingCursor, newCursor)
-						diff.WriteString(delta)
-						diff.WriteString(string(pending.Rune))
-
-						if pending.IsWide {
-							newCursor.X += 2
-						} else {
-							newCursor.X++
-						}
-
-						r.drawingCursor = newCursor
-					}
+		for {
+			fullyWritten := true
+			var diff strings.Builder
+			for y := 0; y <= r.h; y++ {
+				// some terminals truncate long stdout
+				if diff.Len() > 4000 {
+					fullyWritten = false
+					break
 				}
-				r.writingMutex.Unlock()
-			}
-		}
+				for x := 0; x < r.w; x++ {
+					r.writingMutex.Lock()
+					current := r.currentScreen[y][x]
+					pending := r.pendingScreen[y][x]
+					if current != pending {
+						r.currentScreen[y][x] = pending
 
-		diffStr := diff.String()
-		if len(diffStr) > 0 {
-			// fmt.Print("\033[?25l") // hide cursor
+						if !pending.PrevWide {
+							newCursor := ecma48.Cursor{
+								X: x, Y: y, Style: pending.Style,
+							}
 
-			r.Write([]byte(diffStr))
-			// log.Printf("RENDER: %+q\n", diffStr)
+							delta := deltaMarkup(r.drawingCursor, newCursor)
+							diff.WriteString(delta)
+							diff.WriteString(string(pending.Rune))
 
-			if len(r.DemoText) > 0 {
-				var demoTextDiff strings.Builder
+							if pending.IsWide {
+								newCursor.X += 2
+							} else {
+								newCursor.X++
+							}
 
-				demoTextLen := utf8.RuneCountInString(r.DemoText)
-
-				for x := r.w - 2 - demoTextLen - 1; x <= r.w-2; x++ {
-					for y := r.h - 5; y <= r.h-3; y++ {
-						newCursor := ecma48.Cursor{
-							X: x, Y: y, Style: ecma48.Style{
-								Bg: ecma48.Color{
-									ColorMode: ecma48.ColorBit3Bright,
-									Code:      6,
-								},
-								Fg: ecma48.Color{
-									ColorMode: ecma48.ColorBit3Normal,
-									Code:      0,
-								},
-							},
+							r.drawingCursor = newCursor
 						}
-
-						delta := deltaMarkup(r.drawingCursor, newCursor)
-						demoTextDiff.WriteString(delta)
-						demoTextDiff.WriteString(string(' '))
-						newCursor.X++
-						r.drawingCursor = newCursor
 					}
+					r.writingMutex.Unlock()
 				}
-
-				for i, c := range r.DemoText {
-					newCursor := ecma48.Cursor{
-						X: r.w - 2 - demoTextLen + i, Y: r.h - 4, Style: ecma48.Style{
-							Bg: ecma48.Color{
-								ColorMode: ecma48.ColorBit3Bright,
-								Code:      6,
-							},
-							Fg: ecma48.Color{
-								ColorMode: ecma48.ColorBit3Normal,
-								Code:      0,
-							},
-						},
-					}
-
-					delta := deltaMarkup(r.drawingCursor, newCursor)
-					demoTextDiff.WriteString(delta)
-					demoTextDiff.WriteString(string(c))
-					newCursor.X++
-					r.drawingCursor = newCursor
-				}
-
-				r.Write([]byte(demoTextDiff.String()))
 			}
 
-			// fmt.Print("\033[?25h") // show cursor
+			diffStr := diff.String()
+			if len(diffStr) > 0 {
+				diffBytes := []byte(diffStr)
+				r.Write(diffBytes)
+			}
+
+			if fullyWritten {
+				break
+			}
 		}
 
 		if r.drawingCursor != r.restingCursor {
