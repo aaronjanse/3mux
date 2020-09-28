@@ -226,10 +226,10 @@ func (v *VTerm) ProcessStdout(input *bufio.Reader) {
 				} else {
 					v.scrollingRegion.top = x.Top - 1
 				}
-				if x.Bottom == -1 || x.Bottom > v.h {
+				if x.Bottom == -1 || x.Bottom >= v.h {
 					v.scrollingRegion.bottom = v.h
 				} else {
-					v.scrollingRegion.bottom = x.Bottom
+					v.scrollingRegion.bottom = x.Bottom + 1
 				}
 				if v.scrollingRegion.bottom <= v.scrollingRegion.top {
 					v.scrollingRegion.bottom = v.scrollingRegion.top + 1
