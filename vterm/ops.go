@@ -171,9 +171,7 @@ func (v *VTerm) putChar(ch rune, wide bool) {
 
 	if v.Cursor.X >= v.w-rWidth+1 {
 		v.setCursorX(0)
-		if v.Cursor.Y == v.scrollingRegion.bottom-1 {
-			v.scrollUp(1)
-		} else {
+		if v.Cursor.Y < v.scrollingRegion.bottom {
 			v.shiftCursorY(1)
 		}
 	}
