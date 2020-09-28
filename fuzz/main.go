@@ -21,7 +21,6 @@ import (
 	"github.com/aaronjanse/3mux/wm"
 )
 
-var vtermCount int
 var ecmaCount int
 var wmCount int
 
@@ -56,9 +55,10 @@ func main() {
 	go func() {
 		for range c {
 			p := message.NewPrinter(language.English)
+			p.Println()
 			p.Printf("WM operations:     %d\n", wmCount)
 			p.Printf("ECMA48 operations: %d\n", ecmaCount)
-			p.Printf("VTerm operations:  %d\n", vtermCount)
+			p.Printf("VTerm operations:  (not recorded)\n")
 
 			os.Exit(0)
 		}
