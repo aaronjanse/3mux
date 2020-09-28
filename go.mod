@@ -9,6 +9,7 @@ require (
 	github.com/kardianos/osext v0.0.0-20190222173326-2bc1f35cddc0 // indirect
 	github.com/mattn/go-runewidth v0.0.9
 	github.com/npat-efault/poller v2.0.0+incompatible
+	github.com/nu7hatch/gouuid v0.0.0-20131221200532-179d4d0c4d8d
 	github.com/sevlyar/go-daemon v0.1.5
 	golang.org/x/crypto v0.0.0-20200510223506-06a226fb4e37
 	golang.org/x/text v0.3.2

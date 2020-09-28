@@ -3,14 +3,10 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net"
-	"os"
-	"path"
 	"runtime/debug"
 	"syscall"
-	"time"
 
 	"github.com/aaronjanse/3mux/ecma48"
 	"github.com/aaronjanse/3mux/pane"
@@ -19,44 +15,13 @@ import (
 	"github.com/npat-efault/poller"
 )
 
-func serve(sessionID string) {
-	var clientExitSock = "booted.sock"
+func serve(sessionInfo SessionInfo) error {
+	log.Println("Booting...")
 
-	dir := path.Join(threemuxDir, sessionID)
-	os.MkdirAll(dir, 0755)
-	stateBeforeInput := ""
-
-	defer func() {
-		if r := recover(); r != nil {
-			fmt.Println(r)
-			diagnostics := fmt.Sprintf(
-				"3mux has encountered a fatal error: %s\n"+
-					"%s\n\n"+
-					"Window manager state before error: `%s`\n\n"+
-					"Please report this to https://github.com/aaronjanse/3mux/issues.",
-				r.(error).Error(), string(debug.Stack()), stateBeforeInput,
-			)
-
-			log.Println(diagnostics)
-
-			// tell the client to gracefully detach then warn the user
-			conn, err := net.Dial("unix", path.Join(dir, clientExitSock))
-			if err == nil {
-				conn.Write([]byte(diagnostics))
-			} else {
-				timestamp := time.Now().UTC().Format(time.RFC3339)
-				diagnostics = fmt.Sprintf("At %s...\n\n%s", timestamp, diagnostics)
-				ioutil.WriteFile(path.Join(dir, "crash"), []byte(diagnostics), 0666)
-			}
-		} else {
-			// tell the client to gracefully detach
-			net.Dial("unix", path.Join(dir, clientExitSock))
-		}
-
-		os.RemoveAll(dir)
-	}()
-
-	config := loadOrGenerateConfig()
+	config, err := loadOrGenerateConfig()
+	if err != nil {
+		return fmt.Errorf("Failed to load or generate config: %s", err)
+	}
 
 	renderer := render.NewRenderer(-1)
 	renderer.Resize(20, 20)
@@ -65,7 +30,7 @@ func serve(sessionID string) {
 	shutdown := make(chan error)
 
 	newPane := func(renderer ecma48.Renderer) wm.Node {
-		return pane.NewPane(renderer, true, sessionID)
+		return pane.NewPane(renderer, true, sessionInfo.uuid)
 	}
 
 	u := wm.NewUniverse(renderer,
@@ -74,12 +39,12 @@ func serve(sessionID string) {
 		func(err error) {
 			go func() {
 				if err != nil {
-					shutdown <- fmt.Errorf("%s\n%s", err.Error(), debug.Stack())
+					shutdown <- fmt.Errorf("%s\n%s", err, debug.Stack())
 				} else {
 					shutdown <- nil
 				}
 			}()
-		}, wm.Rect{X: 0, Y: 0, W: 20, H: 20}, newPane)
+		}, wm.Rect{X: 0, Y: 0, W: 50, H: 20}, newPane)
 	defer u.Kill()
 
 	stdin := make(chan ecma48.Output, 64)
@@ -89,7 +54,7 @@ func serve(sessionID string) {
 
 	var stdinBuf *bufio.Reader
 	var stdinPoller *poller.FD
-	listenFd(sessionID, func(stdinFd, stdoutFd int) {
+	listenFd(sessionInfo, func(stdinFd, stdoutFd int) {
 		stdinPoller, _ = poller.NewFD(stdinFd)
 		stdinBuf = bufio.NewReader(stdinPoller)
 		parser = ecma48.NewParser(true)
@@ -97,27 +62,39 @@ func serve(sessionID string) {
 		renderer.UpdateOut(stdoutFd)
 	})
 
-	listenResize(sessionID, func(width, height int) {
+	defer net.Dial("unix", sessionInfo.killClientPath)
+
+	listenResize(sessionInfo, func(width, height int) {
 		renderer.Resize(width, height)
 		u.SetRenderRect(0, 0, width, height)
 	})
 
 	go func() {
-		detachSocket, err := net.Listen("unix", path.Join(dir, "detach-server.sock"))
+		detachSocket, err := net.Listen("unix", sessionInfo.detachPath)
 		if err != nil {
+			log.Println("Detach error:", err)
 			panic(err)
 		}
 		for {
-			detachSocket.Accept()
+			_, err = detachSocket.Accept()
+			if err != nil {
+				log.Println("Detach accept error:", err)
+				panic(err)
+			}
+
+			log.Println("Detaching...")
 
 			renderer.UpdateOut(-1)
 			parser.Shutdown <- nil
 			stdinPoller.Close()
+
+			log.Println("Detaching... DONE")
+			net.Dial("unix", sessionInfo.killClientPath)
 		}
 	}()
 
 	go func() {
-		detachSocket, err := net.Listen("unix", path.Join(dir, "kill-server.sock"))
+		detachSocket, err := net.Listen("unix", sessionInfo.killServerPath)
 		if err != nil {
 			panic(err)
 		}
@@ -126,18 +103,14 @@ func serve(sessionID string) {
 		shutdown <- nil
 	}()
 
-	go net.Dial("unix", path.Join(dir, "booted.sock"))
-	clientExitSock = "shutdown.sock"
-
 	for {
 		select {
 		case next := <-stdin:
-			stateBeforeInput = u.Serialize()
-
 			human := humanify(next)
+			log.Println("Keypress:", human)
 
 			if human == "Ctrl+Q" {
-				return
+				return nil
 			}
 
 			if seiveMouseEvents(u, human, next) {
@@ -152,17 +125,15 @@ func serve(sessionID string) {
 			u.HandleStdin(next)
 		case err := <-shutdown:
 			if err != nil {
-				panic(err)
-			} else {
-				return
+				return err
 			}
+			return nil
 		}
 	}
 }
 
-func listenResize(sessionID string, callback func(width, height int)) {
-	sockPath := path.Join(threemuxDir, sessionID, "resize.sock")
-	socket, err := net.Listen("unix", sockPath)
+func listenResize(sessionInfo SessionInfo, callback func(width, height int)) {
+	socket, err := net.Listen("unix", sessionInfo.resizePath)
 	if err != nil {
 		panic(err)
 	}
@@ -190,9 +161,8 @@ func listenResize(sessionID string, callback func(width, height int)) {
 	}()
 }
 
-func listenFd(sessionID string, callback func(stdinFd, stdoutFd int)) {
-	sockPath := path.Join(threemuxDir, sessionID, "fd.sock")
-	socket, err := net.Listen("unix", sockPath)
+func listenFd(sessionInfo SessionInfo, callback func(stdinFd, stdoutFd int)) {
+	socket, err := net.Listen("unix", sessionInfo.fdPath)
 	if err != nil {
 		panic(err)
 	}

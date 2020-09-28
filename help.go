@@ -14,10 +14,9 @@ USAGE:
     3mux ls             List session names (has alias '3mux ps')
     3mux attach <name>  Attach to a session
     3mux detach			Detach from the current session
+    3mux new <name>     Create a new session
+    3mux kill <name>    Kill a session
 
-FLAGS:
-	-h, --help       Prints help information
-	
 SHORTCUTS:
 	Alt+N/Alt+Enter  Create new pane
 	Alt+Shift+Q		 Close pane
