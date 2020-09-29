@@ -186,12 +186,12 @@ func (v *VTerm) putChar(ch rune, wide bool) {
 		Style:  v.Cursor.Style,
 	}
 
-	if v.Cursor.Y >= len(v.Screen) {
+	for v.Cursor.Y >= len(v.Screen) {
 		v.Screen = append(v.Screen, []ecma48.StyledChar{})
 	}
 	xDiff := v.Cursor.X - len(v.Screen[v.Cursor.Y]) + 1
 	if xDiff > 0 {
-		v.Screen = append(v.Screen, make([]ecma48.StyledChar, xDiff))
+		v.Screen[v.Cursor.Y] = append(v.Screen[v.Cursor.Y], make([]ecma48.StyledChar, xDiff)...)
 	}
 
 	v.Screen[v.Cursor.Y][v.Cursor.X] = char
