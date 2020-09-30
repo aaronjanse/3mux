@@ -3,6 +3,7 @@ package render
 import (
 	"strings"
 	"sync"
+	"sync/atomic"
 	"syscall"
 	"time"
 
@@ -28,6 +29,10 @@ type Renderer struct {
 	DemoText string
 
 	OutFd int
+
+	charCounter uint64
+	asleep      bool
+	spark       chan bool
 }
 
 // NewRenderer returns an initialized Renderer
@@ -39,6 +44,7 @@ func NewRenderer(out int) *Renderer {
 		Pause:         make(chan bool),
 		Resume:        make(chan bool),
 		OutFd:         out,
+		spark:         make(chan bool),
 	}
 }
 
@@ -86,7 +92,13 @@ func (r *Renderer) HandleCh(ch ecma48.PositionedChar) {
 		return
 	}
 
+	if r.asleep {
+		r.spark <- true
+	}
+
 	r.writingMutex.Lock()
+	atomic.AddUint64(&r.charCounter, 1)
+
 	if ch.Rune == 0 {
 		ch.Rune = ' '
 	}
@@ -107,7 +119,10 @@ func (r *Renderer) DemoKeypress(str string) {
 
 // ListenToQueue is a blocking function that processes data sent to the RenderQueue
 func (r *Renderer) ListenToQueue() {
+	numUnchanged := 0
 	for {
+		counterStart := atomic.LoadUint64(&r.charCounter)
+
 		for {
 			fullyWritten := true
 			var diff strings.Builder
@@ -171,6 +186,20 @@ func (r *Renderer) ListenToQueue() {
 		select {
 		case <-timer.C:
 			timer.Stop()
+			// check if any chars have been written during this iteration
+			unchanged := atomic.CompareAndSwapUint64(&r.charCounter, counterStart, 0)
+			if unchanged {
+				numUnchanged++
+			} else {
+				numUnchanged = 0
+			}
+			// after 40 idle cycles, go to sleep
+			if numUnchanged >= 40 {
+				numUnchanged = 0
+				r.asleep = true
+				<-r.spark
+				r.asleep = false
+			}
 		case <-r.Pause:
 			<-r.Resume
 			// fmt.Print("\033[0;0H\033[0m") // reset real cursor
