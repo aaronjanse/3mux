@@ -19,7 +19,7 @@ import (
 )
 
 type UserConfig struct {
-	General CompiledConfigGeneral
+	General *CompiledConfigGeneral
 	Keys    map[string][]string               `toml:"keys"`
 	Modes   map[string]map[string]interface{} `toml:"modes"`
 }
@@ -31,7 +31,7 @@ type CompiledConfig struct {
 	normalBindings map[string]func(*wm.Universe)
 	modeBindings   map[string]map[string]func(*wm.Universe)
 
-	generalSettings CompiledConfigGeneral
+	generalSettings *CompiledConfigGeneral
 }
 
 type CompiledConfigGeneral struct {
@@ -39,7 +39,7 @@ type CompiledConfigGeneral struct {
 	EnableStatusBar bool `toml:"enable-status-bar"`
 }
 
-func loadOrGenerateConfig() (CompiledConfig, error) {
+func loadOrGenerateConfig() (*CompiledConfig, error) {
 	var userTOML string
 	firstRun := false
 
@@ -49,7 +49,7 @@ func loadOrGenerateConfig() (CompiledConfig, error) {
 
 		usr, err := user.Current()
 		if err != nil {
-			return CompiledConfig{}, fmt.Errorf("Failed to get current user: %s", err)
+			return nil, fmt.Errorf("Failed to get current user: %s", err)
 		}
 		dirPath := filepath.Join(usr.HomeDir, ".config", "3mux")
 		os.MkdirAll(dirPath, os.ModePerm)
@@ -60,22 +60,24 @@ func loadOrGenerateConfig() (CompiledConfig, error) {
 				userTOML = defaultConfig
 				ioutil.WriteFile(configPath, []byte(defaultConfig), 0664)
 			} else {
-				return CompiledConfig{}, fmt.Errorf("Failed to read config at `%s`: %s", configPath, err)
+				return nil, fmt.Errorf("Failed to read config at `%s`: %s", configPath, err)
 			}
 		} else {
-			return CompiledConfig{}, fmt.Errorf("Found in home but not XDG? %s", err)
+			return nil, fmt.Errorf("Found in home but not XDG? %s", err)
 		}
 	} else {
 		data, err := ioutil.ReadFile(xdgConfigPath)
 		if err != nil {
-			return CompiledConfig{}, fmt.Errorf("Failed to read config at `%s`: %s", xdgConfigPath, err)
+			return nil, fmt.Errorf("Failed to read config at `%s`: %s", xdgConfigPath, err)
 		}
 		userTOML = string(data)
 	}
 
-	var conf UserConfig
+	conf := new(UserConfig)
+	conf.General = new(CompiledConfigGeneral)
+
 	if _, err := toml.Decode(userTOML, &conf); err != nil {
-		return CompiledConfig{}, fmt.Errorf("Failed to parse config TOML: %s", err)
+		return nil, fmt.Errorf("Failed to parse config TOML: %s", err)
 	}
 
 	conf.General.EnableHelpBar = conf.General.EnableHelpBar || firstRun
@@ -83,8 +85,8 @@ func loadOrGenerateConfig() (CompiledConfig, error) {
 	return compileConfig(conf)
 }
 
-func compileConfig(user UserConfig) (CompiledConfig, error) {
-	conf := CompiledConfig{
+func compileConfig(user *UserConfig) (*CompiledConfig, error) {
+	conf := &CompiledConfig{
 		modeStarters:   map[string]string{},
 		isSticky:       map[string]bool{},
 		normalBindings: map[string]func(*wm.Universe){},
@@ -107,11 +109,11 @@ func compileConfig(user UserConfig) (CompiledConfig, error) {
 					conf.modeStarters[starter] = modeName
 				}
 			default:
-				return CompiledConfig{}, fmt.Errorf("Expected []string: %+v (%s)", x, reflect.TypeOf(x))
+				return nil, fmt.Errorf("Expected []string: %+v (%s)", x, reflect.TypeOf(x))
 			}
 			delete(mode, "mode-start")
 		} else {
-			return CompiledConfig{}, fmt.Errorf("Could not find starter for mode %s", modeName)
+			return nil, fmt.Errorf("Could not find starter for mode %s", modeName)
 		}
 
 		mode := castMapInterface(mode)
@@ -159,7 +161,7 @@ func compileBindings(sourceBindings map[string][]string) map[string]func(*wm.Uni
 
 var mode = ""
 
-func seiveConfigEvents(config CompiledConfig, u *wm.Universe, human string) bool {
+func seiveConfigEvents(config *CompiledConfig, u *wm.Universe, human string) bool {
 	hu := strings.ToLower(human)
 	if mode == "" {
 		for key, theMode := range config.modeStarters {
