@@ -273,9 +273,9 @@ func detach(parentSessionID string) {
 	net.Dial("unix", elaborateSessionInfo("", parentSessionID).detachPath)
 }
 
-func elaborateSessionInfo(name string, uuid string) SessionInfo {
+func elaborateSessionInfo(name string, uuid string) *SessionInfo {
 	dirPath := path.Join(threemuxDir, uuid)
-	return SessionInfo{
+	return &SessionInfo{
 		name:           name,
 		uuid:           uuid,
 		path:           dirPath,
@@ -288,7 +288,7 @@ func elaborateSessionInfo(name string, uuid string) SessionInfo {
 	}
 }
 
-func initializeSession(sessionName string) SessionInfo {
+func initializeSession(sessionName string) *SessionInfo {
 	sessionUUIDObj, err := uuid.NewV4()
 	if err != nil {
 		fmt.Println("Session creation failed. Error while generating session UUID:", err)
@@ -324,10 +324,10 @@ func initializeSession(sessionName string) SessionInfo {
 	return elaborateSessionInfo(sessionName, sessionUUID)
 }
 
-func findSession(sessionName string) (sessionInfo SessionInfo, found bool, err error) {
+func findSession(sessionName string) (sessionInfo *SessionInfo, found bool, err error) {
 	children, err := ioutil.ReadDir(threemuxDir)
 	if err != nil {
-		return SessionInfo{}, false, err
+		return nil, false, err
 	}
 
 	for _, child := range children {
@@ -336,7 +336,7 @@ func findSession(sessionName string) (sessionInfo SessionInfo, found bool, err e
 		namePath := path.Join(dirPath, "name")
 		nameRaw, err := ioutil.ReadFile(namePath)
 		if err != nil {
-			return SessionInfo{}, false, err
+			return nil, false, err
 		}
 		nameCleaned := strings.TrimSpace(string(nameRaw))
 
@@ -345,7 +345,7 @@ func findSession(sessionName string) (sessionInfo SessionInfo, found bool, err e
 		}
 	}
 
-	return SessionInfo{}, false, nil
+	return nil, false, nil
 }
 
 func refuseNesting() {

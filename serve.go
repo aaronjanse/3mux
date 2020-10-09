@@ -15,7 +15,7 @@ import (
 	"github.com/npat-efault/poller"
 )
 
-func serve(sessionInfo SessionInfo) error {
+func serve(sessionInfo *SessionInfo) error {
 	log.Println("Booting...")
 
 	config, err := loadOrGenerateConfig()
@@ -132,7 +132,7 @@ func serve(sessionInfo SessionInfo) error {
 	}
 }
 
-func listenResize(sessionInfo SessionInfo, callback func(width, height int)) {
+func listenResize(sessionInfo *SessionInfo, callback func(width, height int)) {
 	socket, err := net.Listen("unix", sessionInfo.resizePath)
 	if err != nil {
 		panic(err)
@@ -161,7 +161,7 @@ func listenResize(sessionInfo SessionInfo, callback func(width, height int)) {
 	}()
 }
 
-func listenFd(sessionInfo SessionInfo, callback func(stdinFd, stdoutFd int)) {
+func listenFd(sessionInfo *SessionInfo, callback func(stdinFd, stdoutFd int)) {
 	socket, err := net.Listen("unix", sessionInfo.fdPath)
 	if err != nil {
 		panic(err)

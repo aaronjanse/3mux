@@ -15,7 +15,7 @@ import (
 	"golang.org/x/crypto/ssh/terminal"
 )
 
-func attach(sessionInfo SessionInfo) error {
+func attach(sessionInfo *SessionInfo) error {
 	fmt.Printf("Waiting for server to be online... (%s)\n", sessionInfo.fdPath)
 
 	err := waitForFdSock(sessionInfo)
@@ -80,7 +80,7 @@ func attach(sessionInfo SessionInfo) error {
 	return nil
 }
 
-func waitForFdSock(sessionInfo SessionInfo) error {
+func waitForFdSock(sessionInfo *SessionInfo) error {
 	for i := 10; ; i-- {
 		fdata, err := os.Stat(sessionInfo.fdPath)
 		if err == nil && fdata != nil {
@@ -95,7 +95,7 @@ func waitForFdSock(sessionInfo SessionInfo) error {
 	return nil
 }
 
-func updateSize(sessionInfo SessionInfo) {
+func updateSize(sessionInfo *SessionInfo) {
 	w, h, _ := getTermSize()
 
 	conn, err := net.Dial("unix", sessionInfo.resizePath)
