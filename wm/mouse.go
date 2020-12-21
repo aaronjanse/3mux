@@ -1,12 +1,16 @@
 package wm
 
 func (u *Universe) SelectAtCoords(x, y int) {
+	if u.workspaces[0].doFullscreen {
+		return
+	}
+
 	u.wmOpMutex.Lock()
 	defer u.wmOpMutex.Unlock()
 
 	u.workspaces[u.selectionIdx].selectAtCoords(x, y)
 	u.updateSelection()
-	u.refreshRenderRect() // FIXME only needs to redraw lines!
+	u.drawSelectionBorder()
 }
 
 func (s *workspace) selectAtCoords(x, y int) {
@@ -33,8 +37,13 @@ func (s *split) selectAtCoords(x, y int) {
 }
 
 func (u *Universe) DragBorder(x1, y1, x2, y2 int) {
+	if u.workspaces[u.selectionIdx].doFullscreen {
+		return
+	}
+
 	u.workspaces[u.selectionIdx].dragBorder(x1, y1, x2, y2)
-	u.refreshRenderRect() // FIXME only needs to redraw lines!
+	u.redrawAllLines()
+	u.drawSelectionBorder()
 }
 
 func (s *workspace) dragBorder(x1, y1, x2, y2 int) {
@@ -75,6 +84,7 @@ func (s *split) dragBorder(x1, y1, x2, y2 int) {
 
 			s.elements[idx].size = wantedBorderRatio * totalProportion
 			s.elements[idx+1].size = (1 - wantedBorderRatio) * totalProportion
+			s.refreshRenderRect(false)
 			return
 		}
 

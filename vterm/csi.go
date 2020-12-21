@@ -10,23 +10,21 @@ func (v *VTerm) handleEraseInDisplay(directive int) {
 	switch directive {
 	case 0: // clear from Cursor to end of screen
 		for i := v.Cursor.X; i < len(v.Screen[v.Cursor.Y]); i++ {
-			v.Screen[v.Cursor.Y][i] = ecma48.StyledChar{Rune: ' ', Style: v.Cursor.Style}
+			v.setChar(i, v.Cursor.Y, ' ', v.Cursor.Style)
 		}
 		if v.Cursor.Y+1 < len(v.Screen) {
 			for j := v.Cursor.Y + 1; j < len(v.Screen); j++ {
 				for i := 0; i < len(v.Screen[j]); i++ {
-					v.Screen[j][i] = ecma48.StyledChar{Rune: ' ', Style: v.Cursor.Style}
+					v.setChar(i, j, ' ', v.Cursor.Style)
 				}
 			}
 		}
-		v.RedrawWindow()
 	case 1: // clear from Cursor to beginning of screen
 		for j := 0; j < v.Cursor.Y; j++ {
 			for i := 0; i < len(v.Screen[j]); i++ {
-				v.Screen[j][i] = ecma48.StyledChar{Rune: ' ', Style: v.Cursor.Style}
+				v.setChar(i, j, ' ', v.Cursor.Style)
 			}
 		}
-		v.RedrawWindow()
 	case 2: // clear entire screen (and move Cursor to top left?)
 		for i := 0; i < v.h; i++ {
 			if i >= len(v.Screen) {
@@ -37,41 +35,42 @@ func (v *VTerm) handleEraseInDisplay(directive int) {
 				v.Screen = append(v.Screen, newLine)
 			}
 			for j := range v.Screen[i] {
-				v.Screen[i][j] = ecma48.StyledChar{Rune: ' ', Style: v.Cursor.Style}
+				v.setChar(j, i, ' ', v.Cursor.Style)
 			}
 		}
 		v.setCursorPos(0, 0)
-		v.RedrawWindow()
 	case 3: // clear entire screen and delete all lines saved in scrollback buffer
 		v.Scrollback = [][]ecma48.StyledChar{}
-		for i := range v.Screen {
-			for j := range v.Screen[i] {
-				v.Screen[i][j] = ecma48.StyledChar{Rune: ' ', Style: v.Cursor.Style}
+		for j := range v.Screen {
+			for i := range v.Screen[j] {
+				v.setChar(i, j, ' ', v.Cursor.Style)
 			}
 		}
 		v.setCursorPos(0, 0)
-		v.RedrawWindow()
 	default:
 		log.Printf("Unrecognized erase in display directive: %d", directive)
 	}
+	v.RedrawWindow()
 }
 
 func (v *VTerm) handleEraseInLine(directive int) {
+	var min, max int
 	switch directive {
 	case 0: // clear from Cursor to end of line
-		for i := v.Cursor.X; i < len(v.Screen[v.Cursor.Y]); i++ {
-			v.Screen[v.Cursor.Y][i] = ecma48.StyledChar{Rune: ' ', Style: v.Cursor.Style}
-		}
+		min = v.Cursor.X
+		max = len(v.Screen[v.Cursor.Y])
 	case 1: // clear from Cursor to beginning of line
-		for i := 0; i < v.Cursor.X; i++ {
-			v.Screen[v.Cursor.Y][i] = ecma48.StyledChar{Rune: ' ', Style: v.Cursor.Style}
-		}
+		min = 0
+		max = v.Cursor.X
 	case 2: // clear entire line; Cursor position remains the same
-		for i := 0; i < len(v.Screen[v.Cursor.Y]); i++ {
-			v.Screen[v.Cursor.Y][i] = ecma48.StyledChar{Rune: ' ', Style: v.Cursor.Style}
-		}
+		min = 0
+		max = len(v.Screen[v.Cursor.Y])
 	default:
 		log.Printf("Unrecognized erase in line directive: %d", directive)
+		return
 	}
-	v.RedrawWindow()
+
+	for i := min; i < max; i++ {
+		v.setChar(i, v.Cursor.Y, ' ', v.Cursor.Style)
+	}
 }

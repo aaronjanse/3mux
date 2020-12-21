@@ -69,7 +69,7 @@ func (v *VTerm) ProcessStdout(input *bufio.Reader) {
 				if v.Cursor.X > 0 {
 					v.shiftCursorX(-1)
 				}
-				v.RedrawWindow()
+				v.RefreshCursor()
 			case ecma48.Newline:
 				if v.Cursor.Y == v.scrollingRegion.bottom-1 {
 					v.scrollUp(1)

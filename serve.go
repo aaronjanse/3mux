@@ -25,7 +25,7 @@ func serve(sessionInfo *SessionInfo) error {
 
 	renderer := render.NewRenderer(-1)
 	renderer.Resize(20, 20)
-	go renderer.ListenToQueue()
+	go renderer.Render()
 
 	shutdown := make(chan error)
 
