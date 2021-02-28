@@ -10,19 +10,19 @@ func (v *VTerm) handleEraseInDisplay(directive int) {
 	switch directive {
 	case 0: // clear from Cursor to end of screen
 		for i := v.Cursor.X; i < len(v.Screen[v.Cursor.Y]); i++ {
-			v.setChar(i, v.Cursor.Y, ' ', v.Cursor.Style)
+			v.setChar(i, v.Cursor.Y, ' ')
 		}
 		if v.Cursor.Y+1 < len(v.Screen) {
 			for j := v.Cursor.Y + 1; j < len(v.Screen); j++ {
 				for i := 0; i < len(v.Screen[j]); i++ {
-					v.setChar(i, j, ' ', v.Cursor.Style)
+					v.setChar(i, j, ' ')
 				}
 			}
 		}
 	case 1: // clear from Cursor to beginning of screen
 		for j := 0; j < v.Cursor.Y; j++ {
 			for i := 0; i < len(v.Screen[j]); i++ {
-				v.setChar(i, j, ' ', v.Cursor.Style)
+				v.setChar(i, j, ' ')
 			}
 		}
 	case 2: // clear entire screen (and move Cursor to top left?)
@@ -35,7 +35,7 @@ func (v *VTerm) handleEraseInDisplay(directive int) {
 				v.Screen = append(v.Screen, newLine)
 			}
 			for j := range v.Screen[i] {
-				v.setChar(j, i, ' ', v.Cursor.Style)
+				v.setChar(j, i, ' ')
 			}
 		}
 		v.setCursorPos(0, 0)
@@ -43,7 +43,7 @@ func (v *VTerm) handleEraseInDisplay(directive int) {
 		v.Scrollback = [][]ecma48.StyledChar{}
 		for j := range v.Screen {
 			for i := range v.Screen[j] {
-				v.setChar(i, j, ' ', v.Cursor.Style)
+				v.setChar(i, j, ' ')
 			}
 		}
 		v.setCursorPos(0, 0)
@@ -71,6 +71,6 @@ func (v *VTerm) handleEraseInLine(directive int) {
 	}
 
 	for i := min; i < max; i++ {
-		v.setChar(i, v.Cursor.Y, ' ', v.Cursor.Style)
+		v.setChar(i, v.Cursor.Y, ' ')
 	}
 }
