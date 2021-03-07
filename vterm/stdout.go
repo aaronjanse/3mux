@@ -227,7 +227,7 @@ func (v *VTerm) ProcessStdout(input *bufio.Reader) {
 				} else if x.Top > v.h {
 					v.scrollingRegion.top = v.h - 1
 				} else {
-					v.scrollingRegion.top = x.Top - 1
+					v.scrollingRegion.top = x.Top
 				}
 				if x.Bottom == -1 || x.Bottom >= v.h {
 					v.scrollingRegion.bottom = v.h
