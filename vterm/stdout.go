@@ -154,7 +154,7 @@ func (v *VTerm) ProcessStdout(input *bufio.Reader) {
 				v.shiftCursorY(-int(x.YDiff))
 				v.setCursorX(0)
 			case ecma48.CHA:
-				v.shiftCursorX(x.X)
+				v.setCursorX(x.X)
 			case ecma48.CUP:
 				v.setCursorPos(x.X, x.Y)
 			case ecma48.ED:
