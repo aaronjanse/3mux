@@ -12,19 +12,10 @@
       });
       defaultPackage = forEachSystem (system: nixpkgs.legacyPackages."${system}".callPackage
         ({ lib, buildGoModule, fetchFromGitHub }:
-          let inherit (import
-            (fetchFromGitHub {
-              owner = "hercules-ci";
-              repo = "gitignore";
-              rev = "c4662e662462e7bf3c2a968483478a665d00e717";
-              sha256 = "sha256-nbZfz02QoVe1yYK7EtCV7wMi4VdHzZEoPg20ZSDo9to=";
-            })
-            { inherit lib; }) gitignoreSource;
-          in
           buildGoModule rec {
             name = "3mux-latest";
             execName = "3mux";
-            src = gitignoreSource ./.;
+            src = ./.;
             vendorSha256 = "sha256-tbziQZIA1+b+ZtvA/865c8YQxn+r8HQy6Pqaac2kwcU=";
             excludedPackages = [ "fuzz" ];
             meta = with lib; {
