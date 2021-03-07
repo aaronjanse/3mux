@@ -56,11 +56,18 @@
 2. `tar -zxvf YOUR_FILE.tar.gz`
 3. Add the now-extracted `./3mux` to your `$PATH`
 
+###### Using Nix flakes
+
+```
+nix run github:aaronjanse/3mux
+```
+
+
 ###### Package manager
 
 [![Packages for 3mux](https://repology.org/badge/vertical-allrepos/3mux.svg)](https://repology.org/project/3mux/versions)
 
-###### Via `go get`
+###### Building from source
 1. Install Golang
 2. `go get github.com/aaronjanse/3mux`
 3. Run `3mux` to launch the terminal multiplexer
