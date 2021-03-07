@@ -26,6 +26,10 @@ func (s *split) getSelectedNode() Node {
 }
 
 func (u *Universe) drawSelectionBorder() {
+	// don't draw when there's only one pane
+	if len(u.workspaces[u.selectionIdx].contents.elements) == 1 {
+		return
+	}
 	maxH := u.workspaces[u.selectionIdx].contents.GetRenderRect().H
 
 	r := u.getSelectedNode().GetRenderRect()

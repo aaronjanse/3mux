@@ -47,4 +47,8 @@ func (s *Style) Reset() {
 
 	s.Fg.ColorMode = ColorNone
 	s.Bg.ColorMode = ColorNone
+
+	// Resetting the codes makes styles easier to compare
+	s.Fg.Code = 0
+	s.Bg.Code = 0
 }
