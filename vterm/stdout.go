@@ -104,16 +104,7 @@ func (v *VTerm) ProcessStdout(input *bufio.Reader) {
 					x.N = v.w - v.Cursor.X - 1
 				}
 				for i := 0; i < x.N; i++ {
-					x := v.Cursor.X + i
-					y := v.Cursor.Y
-					v.Screen[y][x] = ecma48.StyledChar{
-						Rune: ' ', IsWide: false, Style: v.Cursor.Style,
-					}
-					v.renderer.HandleCh(ecma48.PositionedChar{
-						Rune: ' ', IsWide: false, Cursor: ecma48.Cursor{
-							X: v.x + x, Y: v.y + y, Style: v.Cursor.Style,
-						},
-					})
+					v.setChar(v.Cursor.X+i, v.Cursor.Y, ' ')
 				}
 			case ecma48.DCH: // delete characters - like pressing the "delete" key
 				if x.N > v.w-v.Cursor.X {
