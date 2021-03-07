@@ -455,6 +455,9 @@ func (p *Parser) dispatchCsi() {
 		case 'T': // Scroll Down; new lines added to top
 			seq := parseSemicolonNumSeq(p.params, 1)
 			p.out <- p.wrap(SD{N: uint(seq[0])}) // FIXME
+		case 'X':
+			seq := parseSemicolonNumSeq(p.params, 1)
+			p.out <- p.wrap(ECH{N: int(seq[0])})
 		// case 't': // Window Manipulation
 		// 	// TODO
 		case 'm': // Select Graphic Rendition
