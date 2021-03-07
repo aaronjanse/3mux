@@ -302,8 +302,8 @@ func (r *Renderer) UpdateOut(out int) {
 
 // HardRefresh force clears all cached chars. Used for handling terminal resize
 func (r *Renderer) HardRefresh() {
-	r.Write([]byte("\033[2J"))
 	r.Write([]byte("\033[0m"))
+	r.Write([]byte("\033[2J"))
 	r.Write([]byte("\033[H"))
 	r.drawingCursor = ecma48.Cursor{}
 	r.currentScreen = expandBuffer([][]ecma48.StyledChar{}, r.w, r.h)
