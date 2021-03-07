@@ -110,6 +110,11 @@ type EL struct {
 	Directive int
 }
 
+// ECH (Erase Characters)
+type ECH struct {
+	N int
+}
+
 // IL (Insert Lines)
 type IL struct {
 	N int

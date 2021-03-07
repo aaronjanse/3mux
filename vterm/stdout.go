@@ -99,9 +99,16 @@ func (v *VTerm) ProcessStdout(input *bufio.Reader) {
 				}
 
 				v.RedrawWindow() // FIXME inefficient
-			case ecma48.DCH: // delete characters
+			case ecma48.ECH: // erase characters - makes characters to the right blank
 				if x.N > v.w-v.Cursor.X {
-					x.N = v.w - v.Cursor.X // FIXME: verify that we don't need +/- 1
+					x.N = v.w - v.Cursor.X - 1
+				}
+				for i := 0; i < x.N; i++ {
+					v.setChar(v.Cursor.X+i, v.Cursor.Y, ' ')
+				}
+			case ecma48.DCH: // delete characters - like pressing the "delete" key
+				if x.N > v.w-v.Cursor.X {
+					x.N = v.w - v.Cursor.X - 1
 				}
 				copy(v.Screen[v.Cursor.Y][v.Cursor.X:], v.Screen[v.Cursor.Y][v.Cursor.X+x.N:])
 				for i := 0; i < x.N; i++ {
