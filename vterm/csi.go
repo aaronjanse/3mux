@@ -61,7 +61,7 @@ func (v *VTerm) handleEraseInLine(directive int) {
 		max = len(v.Screen[v.Cursor.Y])
 	case 1: // clear from Cursor to beginning of line
 		min = 0
-		max = v.Cursor.X
+		max = v.Cursor.X + 1
 	case 2: // clear entire line; Cursor position remains the same
 		min = 0
 		max = len(v.Screen[v.Cursor.Y])
