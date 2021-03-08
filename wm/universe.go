@@ -206,6 +206,15 @@ func (u *Universe) HideHelpBar() {
 	defer u.wmOpMutex.Unlock()
 
 	u.helpBar = false
+	for i := 0; i < u.renderRect.W; i++ {
+		u.renderer.HandleCh(ecma48.PositionedChar{
+			Rune: ' ',
+			Cursor: ecma48.Cursor{
+				X: i, Y: u.renderRect.H - 2,
+				Style: ecma48.Style{},
+			},
+		})
+	}
 	u.refreshRenderRect()
 }
 
