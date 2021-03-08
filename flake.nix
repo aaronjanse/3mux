@@ -26,8 +26,6 @@
               '';
               homepage = "https://github.com/aaronjanse/3mux";
               license = licenses.mit;
-              # Br1ght0ne co-maintains the Nix derivation in Nixpkgs
-              maintainers = with maintainers; [ aaronjanse ];
               platforms = platforms.unix;
             };
           }
