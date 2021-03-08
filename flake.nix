@@ -14,7 +14,6 @@
         ({ lib, buildGoModule, fetchFromGitHub }:
           buildGoModule rec {
             name = "3mux-latest";
-            execName = "3mux";
             src = ./.;
             vendorSha256 = "sha256-tbziQZIA1+b+ZtvA/865c8YQxn+r8HQy6Pqaac2kwcU=";
             excludedPackages = [ "fuzz" ];
