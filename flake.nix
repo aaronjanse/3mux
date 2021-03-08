@@ -11,12 +11,16 @@
         program = "${self.defaultPackage."${system}"}/bin/3mux";
       });
       defaultPackage = forEachSystem (system: nixpkgs.legacyPackages."${system}".callPackage
-        ({ lib, buildGoModule, fetchFromGitHub }:
-          buildGoModule rec {
+        ({ lib, buildGoModule, makeWrapper, fetchFromGitHub }:
+          buildGoModule {
             name = "3mux-latest";
             src = ./.;
             vendorSha256 = "sha256-tbziQZIA1+b+ZtvA/865c8YQxn+r8HQy6Pqaac2kwcU=";
             excludedPackages = [ "fuzz" ];
+            buildInputs = [ makeWrapper ];
+            postInstall = ''
+              wrapProgram $out/bin/3mux --prefix PATH : $out/bin
+            '';
             meta = with lib; {
               description = "Terminal multiplexer inspired by i3";
               longDescription = ''
