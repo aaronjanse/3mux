@@ -56,7 +56,7 @@
 2. `tar -zxvf YOUR_FILE.tar.gz`
 3. Add the now-extracted `./3mux` to your `$PATH`
 
-###### Using Nix flakes
+###### Using Nix flakes (requires Nix 2.4+)
 
 ```
 nix run github:aaronjanse/3mux
