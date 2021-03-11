@@ -164,6 +164,9 @@ func (v *VTerm) setChar(x, y int, r rune) {
 	if x >= v.w {
 		return
 	}
+	if y >= v.h {
+		return
+	}
 	v.Screen[y][x] = ecma48.StyledChar{Rune: r, Style: v.Cursor.Style}
 	if !v.usingSlowRefresh {
 		v.renderer.HandleCh(ecma48.PositionedChar{
