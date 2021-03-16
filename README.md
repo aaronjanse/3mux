@@ -51,17 +51,18 @@
 
 ### Installation Instructions
 
-###### Binary (recommended)
-1. Download the `.tar.gz` for your OS from the Releases tab
-2. `tar -zxvf YOUR_FILE.tar.gz`
-3. Add the now-extracted `./3mux` to your `$PATH`
+###### Using Homebrew
+
+```
+brew update
+brew install 3mux
+```
 
 ###### Using Nix flakes (requires Nix 2.4+)
 
 ```
 nix run github:aaronjanse/3mux
 ```
-
 
 ###### Package manager
 
