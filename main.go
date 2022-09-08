@@ -2,10 +2,12 @@ package main
 
 import (
 	"bufio"
+	"crypto/rand"
 	"flag"
 	"fmt"
 	"io/ioutil"
 	"log"
+	"math/big"
 	"net"
 	"os"
 	"path"
@@ -15,7 +17,6 @@ import (
 
 	"github.com/aaronjanse/3mux/ecma48"
 	"github.com/npat-efault/poller"
-	uuid "github.com/nu7hatch/gouuid"
 	"github.com/sevlyar/go-daemon"
 	"golang.org/x/crypto/ssh/terminal"
 )
@@ -289,13 +290,12 @@ func elaborateSessionInfo(name string, uuid string) *SessionInfo {
 }
 
 func initializeSession(sessionName string) *SessionInfo {
-	sessionUUIDObj, err := uuid.NewV4()
+	sessionUUID, err := randomIdentifier()
 	if err != nil {
 		fmt.Println("Session creation failed. Error while generating session UUID:", err)
 		fmt.Printf("Please report this to %s\n", BUG_REPORT_URL)
 		os.Exit(1)
 	}
-	sessionUUID := sessionUUIDObj.String()
 
 	sessionPath := path.Join(threemuxDir, sessionUUID)
 
@@ -550,4 +550,20 @@ func surveyName(stdin chan ecma48.Output) string {
 			}
 		}
 	}
+}
+
+// log2(36^16) = 82 bits of entropy should be enough
+const randIdentChars = "abcdefghijklmnopqrstuvwxyz0123456789"
+const randIdentLen = 16
+
+func randomIdentifier() (string, error) {
+	out := make([]byte, randIdentLen)
+	for i := 0; i < randIdentLen; i++ {
+		n, err := rand.Int(rand.Reader, big.NewInt(int64(len(randIdentChars))))
+		if err != nil {
+			return "", fmt.Errorf("cannot get random number: %w", err)
+		}
+		out[i] = randIdentChars[int(n.Int64())]
+	}
+	return string(out), nil
 }
