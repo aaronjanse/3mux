@@ -11,5 +11,6 @@ require (
 	github.com/npat-efault/poller v2.0.0+incompatible
 	github.com/sevlyar/go-daemon v0.1.5
 	golang.org/x/crypto v0.0.0-20200510223506-06a226fb4e37
+	golang.org/x/sys v0.0.0-20220804214406-8e32c043e418 // indirect
 	golang.org/x/text v0.3.2
 )
