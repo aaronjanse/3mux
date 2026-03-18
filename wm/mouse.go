@@ -1,7 +1,7 @@
 package wm
 
 func (u *Universe) SelectAtCoords(x, y int) {
-	if u.workspaces[0].doFullscreen {
+	if u.workspaces[u.selectionIdx].doFullscreen {
 		return
 	}
 

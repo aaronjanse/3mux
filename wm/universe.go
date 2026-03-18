@@ -120,7 +120,9 @@ func (u *Universe) refreshRenderRect() {
 
 	u.redrawAllLines()
 	u.drawSelectionBorder()
-	u.drawStatusBar()
+	if u.enableStatusBar {
+		u.drawStatusBar()
+	}
 }
 
 func (u *Universe) drawStatusBar() {

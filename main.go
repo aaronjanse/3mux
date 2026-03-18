@@ -484,11 +484,16 @@ func promptNewSessionName(existing []string, stdin chan ecma48.Output) string {
 			return ""
 		}
 
+		isDuplicate := false
 		for _, existingName := range existing {
 			if name == existingName {
 				problem = "session names must be unique"
-				continue
+				isDuplicate = true
+				break
 			}
+		}
+		if isDuplicate {
+			continue
 		}
 
 		return name
