@@ -115,7 +115,7 @@ func main() {
 
 		child, err := daemonContext.Reborn()
 		if err != nil {
-			log.Println("Error occured while serving session daemon:", err)
+			log.Println("Error occurred while serving session daemon:", err)
 			os.Exit(1)
 		}
 		if child != nil {
@@ -168,7 +168,7 @@ func main() {
 		}
 		child, err := daemonContext.Reborn()
 		if err != nil {
-			fmt.Println("Error occured while spawning session daemon:", err)
+			fmt.Println("Error occurred while spawning session daemon:", err)
 			os.Exit(1)
 		}
 		if child == nil {
