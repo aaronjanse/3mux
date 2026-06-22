@@ -234,7 +234,7 @@ func main() {
 			fmt.Printf("Please also report this to %s\n", BUG_REPORT_URL)
 			os.Exit(1)
 		}
-		fmt.Println("Session sucessfully killed.")
+		fmt.Println("Session successfully killed.")
 	case "ls", "ps":
 		children, err := ioutil.ReadDir(threemuxDir)
 		if err != nil {
