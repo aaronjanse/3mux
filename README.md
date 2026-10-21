@@ -69,11 +69,11 @@ nix run github:aaronjanse/3mux
 [![Packages for 3mux](https://repology.org/badge/vertical-allrepos/3mux.svg)](https://repology.org/project/3mux/versions)
 
 ###### Building from source
-1. Install Golang
-2. `go get github.com/aaronjanse/3mux`
-3. Run `3mux` to launch the terminal multiplexer
+1. Install Go 1.16 or newer.
+2. Run `go install github.com/aaronjanse/3mux@latest`.
+3. Ensure the Go binary directory (`GOBIN`, or the `bin` directory under `GOPATH` if `GOBIN` is unset) is on your `PATH`, then run `3mux`.
 
-To update `3mux`, run `go get -u github.com/aaronjanse/3mux`
+To update `3mux`, rerun `go install github.com/aaronjanse/3mux@latest`.
 
 #### Terminal.app
 _**Warning: Arrow-key-controlled pane management is currently unsupported on Terminal.app. Please use the default vim-like keybindings instead.**_  
